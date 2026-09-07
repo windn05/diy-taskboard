@@ -1,0 +1,37 @@
+# 오라클 클라우드 VM.Standard.E2.1.Micro (1 OCPU / 1GB RAM) 기준.
+# 메모리가 빠듯하므로 각 서비스에 mem_limit을 명시적으로 건다 (스왑 없이는 OOM killer가 골라 죽인다).
+services:
+  db:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    mem_limit: 200m
+    environment:
+      POSTGRES_DB: taskboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      # 기본 100MB인 shared_buffers를 낮춰 컨테이너 메모리 제한 안에 여유를 둔다.
+      POSTGRES_INITDB_ARGS: "-c shared_buffers=32MB"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    ports:
+      - "127.0.0.1:5432:5432" # 서버 내부에서만 접속 가능 (외부 노출 안 함)
+
+  backend:
+    build: ./backend
+    restart: unless-stopped
+    mem_limit: 480m
+    depends_on:
+      - db
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/taskboard
+      DB_USERNAME: postgres
+      DB_PASSWORD: ${DB_PASSWORD}
+      JWT_SECRET: ${JWT_SECRET}
+      JPA_DDL_AUTO: update # 최초 배포 확인 후 validate로 낮추는 것을 권장 (프로젝트 기획서 4.3절)
+      JPA_SHOW_SQL: "false"
+      PORT: 8080
+    ports:
+      - "8080:8080"
+
+volumes:
+  pgdata:
