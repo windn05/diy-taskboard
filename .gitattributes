@@ -1,0 +1,9 @@
+# 윈도우에서 작업하지만 빌드·실행은 리눅스(Actions, 컨테이너)에서 한다.
+# 셸이 해석하는 파일에 CRLF가 섞이면 조용히 깨지므로 LF로 못박는다.
+* text=auto
+
+gradlew    text eol=lf
+Dockerfile text eol=lf
+Caddyfile  text eol=lf
+*.sh       text eol=lf
+*.yml      text eol=lf

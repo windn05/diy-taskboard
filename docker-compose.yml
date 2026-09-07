@@ -1,6 +1,9 @@
 # 오라클 클라우드 VM.Standard.E2.1.Micro (1 OCPU / 1GB RAM) 기준.
 # 메모리가 빠듯하므로 각 서비스에 mem_limit을 명시적으로 건다 (스왑 없이는 OOM killer가 골라 죽인다).
 #
+# 이미지는 GitHub Actions가 빌드해 GHCR에 올린 것을 받아 쓴다 — 이 VM에서는 빌드하지 않는다.
+# 서버에서 하는 일은 `docker compose pull && docker compose up -d`가 전부다.
+#
 # 외부에 노출되는 포트는 caddy의 80뿐이다. db/backend는 컨테이너 내부 네트워크로만 통신하고
 # 호스트 포트를 열지 않는다 — Caddy가 프론트 정적 파일 서빙과 /api, /ws 라우팅을 전부 맡는다.
 services:
@@ -13,27 +16,45 @@ services:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       # 기본 100MB인 shared_buffers를 낮춰 컨테이너 메모리 제한 안에 여유를 둔다.
+      # initdb에 넘기는 값이라 볼륨이 비어 있는 최초 1회에만 반영된다.
       POSTGRES_INITDB_ARGS: "-c shared_buffers=32MB"
     volumes:
       - pgdata:/var/lib/postgresql/data
+    # 백엔드가 DB보다 먼저 떠서 기동에 실패하는 것을 막는다.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -d taskboard"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging: &logging
+      # 기본값은 무한히 쌓여 부트 볼륨을 채운다.
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
   backend:
-    build: ./backend
+    image: ghcr.io/windn05/diy-taskboard-backend:latest
     restart: unless-stopped
     mem_limit: 450m
     depends_on:
-      - db
+      db:
+        condition: service_healthy
     environment:
       DB_URL: jdbc:postgresql://db:5432/taskboard
       DB_USERNAME: postgres
       DB_PASSWORD: ${DB_PASSWORD}
       JWT_SECRET: ${JWT_SECRET}
-      JPA_DDL_AUTO: update # 최초 배포 확인 후 validate로 낮추는 것을 권장 (프로젝트 기획서 4.3절)
+      JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update} # 최초 배포 확인 후 .env에서 validate로 낮춘다
       JPA_SHOW_SQL: "false"
       PORT: 8080
+      # A1(24GB)으로 옮기면 이 한 줄만 늘리면 된다.
+      JAVA_OPTS: ${JAVA_OPTS:--Xmx320m -Xss256k -XX:MaxMetaspaceSize=96m}
+    logging: *logging
 
   caddy:
-    image: caddy:2-alpine
+    # 프론트 빌드 결과(dist)가 이 이미지 안에 들어 있다.
+    image: ghcr.io/windn05/diy-taskboard-frontend:latest
     restart: unless-stopped
     mem_limit: 80m
     depends_on:
@@ -44,8 +65,8 @@ services:
       # - "443:443"
     volumes:
       - ./Caddyfile:/etc/caddy/Caddyfile:ro
-      - ./frontend-dist:/srv/frontend:ro
       - caddy_data:/data
+    logging: *logging
 
 volumes:
   pgdata:

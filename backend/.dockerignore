@@ -1,0 +1,11 @@
+# 이미지에 필요한 건 build/libs의 jar 하나뿐이다.
+src
+gradle
+.gradle
+build/classes
+build/resources
+build/tmp
+gradlew
+gradlew.bat
+settings.gradle
+build.gradle

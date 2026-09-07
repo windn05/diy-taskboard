@@ -1,0 +1,9 @@
+# 이미지에 필요한 건 빌드 결과(dist)뿐이다.
+node_modules
+src
+public
+*.json
+*.ts
+*.html
+README.md
+!dist

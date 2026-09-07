@@ -45,3 +45,9 @@ dependencies {
 tasks.named('test') {
     useJUnitPlatform()
 }
+
+// Boot 플러그인은 기본적으로 실행 가능한 jar와 -plain.jar를 함께 만든다.
+// build/libs에 jar가 두 개면 Dockerfile의 COPY 와일드카드가 실패하므로 plain jar는 끈다.
+tasks.named('jar') {
+    enabled = false
+}
