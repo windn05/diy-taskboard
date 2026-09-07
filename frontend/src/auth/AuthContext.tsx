@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
-import { decodeAccessToken, guestLogin as guestLoginApi, login as loginApi, signup as signupApi } from '../api/auth'
+import { decodeAccessToken, guestLogin as guestLoginApi, login as loginApi } from '../api/auth'
 import { getToken, setToken } from '../api/client'
 
 type CurrentUser = { userId: number; username: string; role: string }
@@ -9,7 +9,6 @@ type AuthContextValue = {
   isGuest: boolean
   login: (username: string, password: string) => Promise<void>
   loginAsGuest: () => Promise<void>
-  signup: (username: string, password: string, name: string) => Promise<void>
   logout: () => void
 }
 
@@ -33,11 +32,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(decodeAccessToken(tokens.accessToken))
   }
 
-  async function signup(username: string, password: string, name: string) {
-    await signupApi({ username, password, name })
-    await login(username, password)
-  }
-
   function logout() {
     setToken(null)
     setUser(null)
@@ -45,7 +39,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, isGuest: user?.role === 'GUEST', login, loginAsGuest, signup, logout }}
+      value={{ user, isGuest: user?.role === 'GUEST', login, loginAsGuest, logout }}
     >
       {children}
     </AuthContext.Provider>

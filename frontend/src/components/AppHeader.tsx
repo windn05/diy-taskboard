@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { availableApps, type AppKey } from '../apps'
 import { useAuth } from '../auth/AuthContext'
+import { ChangePasswordModal } from './ChangePasswordModal'
 import { NotificationBell } from './NotificationBell'
 import { ChevronDownIcon } from './icons'
 import { PresenceBar } from './PresenceBar'
@@ -19,6 +20,7 @@ export function AppHeader({
   const { user, isGuest, logout } = useAuth()
   const navigate = useNavigate()
   const [open, setOpen] = useState(false)
+  const [changingPassword, setChangingPassword] = useState(false)
   const launcherRef = useRef<HTMLDivElement>(null)
 
   const apps = availableApps(user?.role)
@@ -83,13 +85,23 @@ export function AppHeader({
         )}
         <NotificationBell />
         <span className="text-slate-600">{user?.username}</span>
-        {isGuest && (
+        {isGuest ? (
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">게스트 · 읽기 전용</span>
+        ) : (
+          // 게스트는 저장되는 계정이 아니라 바꿀 비밀번호가 없다.
+          <button
+            onClick={() => setChangingPassword(true)}
+            className="text-xs text-slate-400 hover:text-slate-700"
+          >
+            비밀번호 변경
+          </button>
         )}
         <button onClick={logout} className="text-slate-400 hover:text-slate-700">
           로그아웃
         </button>
       </div>
+
+      {changingPassword && <ChangePasswordModal onClose={() => setChangingPassword(false)} />}
     </header>
   )
 }

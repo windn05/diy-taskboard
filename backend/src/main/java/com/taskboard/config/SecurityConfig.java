@@ -35,7 +35,9 @@ public class SecurityConfig {
                 .authorizeHttpRequests(auth -> auth
                         // /error를 막으면 404·405가 전부 403으로 바뀌어 나간다 (에러율 통계도 왜곡됨)
                         .requestMatchers("/error").permitAll()
-                        .requestMatchers("/auth/**", "/ws/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        // /auth 전체를 열면 비밀번호 변경까지 인증 없이 열린다. 필요한 것만 연다.
+                        .requestMatchers("/auth/login", "/auth/guest", "/auth/refresh").permitAll()
+                        .requestMatchers("/ws/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")
                         .requestMatchers(HttpMethod.GET, "/**").authenticated()
                         // 조회 외의 모든 요청은 실제 사용자만 — 게스트는 읽기 전용

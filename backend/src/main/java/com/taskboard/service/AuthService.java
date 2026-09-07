@@ -21,30 +21,46 @@ public class AuthService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
     private final JwtService jwtService;
+    private final LoginAttemptService loginAttemptService;
 
+    /** 관리자만 호출한다(AdminUserController). 공개 회원가입 경로는 없다. */
     @Transactional
-    public UserResponse signup(SignupRequest request) {
+    public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
-            throw new IllegalArgumentException("이미 가입된 아이디입니다.");
+            throw new IllegalArgumentException("이미 사용 중인 아이디입니다.");
         }
         User user = User.builder()
                 .username(request.username())
                 .password(passwordEncoder.encode(request.password()))
                 .name(request.name())
+                .role(parseRole(request.role()))
                 .build();
         userRepository.save(user);
         return toResponse(user);
     }
 
     public TokenResponse login(LoginRequest request) {
-        User user = userRepository.findByUsername(request.username())
-                .orElseThrow(() -> new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다."));
-        if (!passwordEncoder.matches(request.password(), user.getPassword())) {
+        loginAttemptService.checkNotLocked(request.username());
+
+        User user = userRepository.findByUsername(request.username()).orElse(null);
+        // 아이디가 없을 때와 비밀번호가 틀렸을 때를 구분해서 알려주면 계정 존재 여부가 새어 나간다.
+        if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
+            loginAttemptService.recordFailure(request.username());
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
         }
-        return new TokenResponse(
-                jwtService.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name()),
-                jwtService.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name()));
+
+        loginAttemptService.recordSuccess(request.username());
+        return issueTokens(user);
+    }
+
+    @Transactional
+    public void changePassword(Long userId, ChangePasswordRequest request) {
+        User user = userRepository.findById(userId)
+                .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        if (!passwordEncoder.matches(request.currentPassword(), user.getPassword())) {
+            throw new IllegalArgumentException("현재 비밀번호가 올바르지 않습니다.");
+        }
+        user.setPassword(passwordEncoder.encode(request.newPassword()));
     }
 
     /**
@@ -67,6 +83,24 @@ public class AuthService {
         Long userId = jwtService.extractUserId(refreshToken);
         User user = userRepository.findById(userId)
                 .orElseThrow(() -> new IllegalArgumentException("사용자를 찾을 수 없습니다."));
+        return issueTokens(user);
+    }
+
+    private SystemRole parseRole(String role) {
+        if (role == null || role.isBlank()) return SystemRole.USER;
+        SystemRole parsed;
+        try {
+            parsed = SystemRole.valueOf(role);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("알 수 없는 역할입니다: " + role);
+        }
+        if (parsed == SystemRole.GUEST) {
+            throw new IllegalArgumentException("게스트는 저장하지 않는 신원이라 계정으로 만들 수 없습니다.");
+        }
+        return parsed;
+    }
+
+    private TokenResponse issueTokens(User user) {
         return new TokenResponse(
                 jwtService.generateAccessToken(user.getId(), user.getUsername(), user.getRole().name()),
                 jwtService.generateRefreshToken(user.getId(), user.getUsername(), user.getRole().name()));

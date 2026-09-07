@@ -101,6 +101,12 @@ docker compose pull && docker compose up -d
 
 `http://<공인IP>` 로 접속되면 성공이다.
 
+### 최초 관리자
+
+공개 회원가입이 없으므로 계정은 관리자만 만들 수 있는데, 새 DB에는 그 관리자가 없다. 그래서 **계정이 하나도 없을 때만** `.env`의 `BOOTSTRAP_ADMIN_USERNAME` / `BOOTSTRAP_ADMIN_PASSWORD`로 최초 관리자를 만든다.
+
+로그인한 뒤 헤더에서 비밀번호를 바꾸고, `.env`에서 그 두 줄을 지운다. 이후 계정은 관리자 앱의 **계정 관리** 탭에서 만든다.
+
 > GHCR 패키지가 private이면 서버에서 pull하기 전에 `read:packages` 권한의 PAT로 `docker login ghcr.io`를 해야 한다. GitHub 패키지 설정에서 public으로 바꾸면 로그인 없이 받는다.
 
 ### 최초 확인 후

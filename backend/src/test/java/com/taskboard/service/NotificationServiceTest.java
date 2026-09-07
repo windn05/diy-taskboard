@@ -5,7 +5,7 @@ import com.taskboard.domain.Status;
 import com.taskboard.domain.Workspace;
 import com.taskboard.domain.WorkspaceMember;
 import com.taskboard.domain.WorkspaceMember.WorkspaceRole;
-import com.taskboard.dto.AuthDtos.SignupRequest;
+import com.taskboard.dto.AuthDtos.CreateUserRequest;
 import com.taskboard.dto.CommentDtos.CreateCommentRequest;
 import com.taskboard.repository.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -50,8 +50,8 @@ class NotificationServiceTest {
         statusRepository.deleteAll();
         userRepository.deleteAll();
 
-        assigneeId = authService.signup(new SignupRequest("assignee", "pw12345678", "담당자")).id();
-        actorId = authService.signup(new SignupRequest("actor", "pw12345678", "댓글쓴이")).id();
+        assigneeId = authService.createUser(new CreateUserRequest("assignee", "pw12345678", "담당자", null)).id();
+        actorId = authService.createUser(new CreateUserRequest("actor", "pw12345678", "댓글쓴이", null)).id();
 
         Long workspaceId = workspaceRepository.save(
                 Workspace.builder().name("프로젝트").ownerId(assigneeId).build()).getId();

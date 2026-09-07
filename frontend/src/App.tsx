@@ -5,20 +5,20 @@ import { AppLayout } from './layouts/AppLayout'
 import { AdminLayout } from './layouts/AdminLayout'
 import { ProjectLayout } from './layouts/ProjectLayout'
 import { LoginPage } from './pages/LoginPage'
-import { SignupPage } from './pages/SignupPage'
 import { HomePage } from './pages/HomePage'
 import { ProjectsIndexPage } from './pages/ProjectsIndexPage'
 import { ProjectTasksPage } from './pages/ProjectTasksPage'
 import { ProjectReleasesPage } from './pages/ProjectReleasesPage'
 import { AdminProjectsTab } from './pages/admin/AdminProjectsTab'
+import { AdminUsersTab } from './pages/admin/AdminUsersTab'
 import { AdminSettingsTab } from './pages/admin/AdminSettingsTab'
 import { MonitoringPage } from './pages/MonitoringPage'
 
 export function App() {
   return (
     <Routes>
+      {/* 공개 회원가입 화면은 없다. 계정은 관리자가 /admin/users 에서 만든다. */}
       <Route path="/login" element={<LoginPage />} />
-      <Route path="/signup" element={<SignupPage />} />
 
       {/* TaskBoard 앱 */}
       <Route
@@ -45,6 +45,7 @@ export function App() {
         }
       >
         <Route path="/admin" element={<AdminProjectsTab />} />
+        <Route path="/admin/users" element={<AdminUsersTab />} />
         <Route path="/admin/settings" element={<AdminSettingsTab />} />
         <Route path="/admin/monitoring" element={<MonitoringPage />} />
       </Route>

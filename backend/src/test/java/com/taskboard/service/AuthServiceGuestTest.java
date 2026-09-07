@@ -23,7 +23,7 @@ class AuthServiceGuestTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         jwtService = new JwtService("test-only-secret-key-please-32bytes-minimum", 3600000, 604800000);
-        authService = new AuthService(userRepository, mock(PasswordEncoder.class), jwtService);
+        authService = new AuthService(userRepository, mock(PasswordEncoder.class), jwtService, new LoginAttemptService());
     }
 
     @Test

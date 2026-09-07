@@ -8,7 +8,7 @@ import com.taskboard.domain.Workspace;
 import com.taskboard.domain.WorkspaceMember;
 import com.taskboard.domain.WorkspaceMember.WorkspaceRole;
 import com.taskboard.dto.AuthDtos.LoginRequest;
-import com.taskboard.dto.AuthDtos.SignupRequest;
+import com.taskboard.dto.AuthDtos.CreateUserRequest;
 import com.taskboard.repository.*;
 import com.taskboard.service.AuthService;
 import org.junit.jupiter.api.BeforeEach;
@@ -280,7 +280,7 @@ class PermissionMatrixTest {
     }
 
     private Long signup(String username, String password, String name) {
-        return authService.signup(new SignupRequest(username, password, name)).id();
+        return authService.createUser(new CreateUserRequest(username, password, name, null)).id();
     }
 
     private void promoteToAdmin(Long userId) {

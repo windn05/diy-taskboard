@@ -1,13 +1,15 @@
 import { api } from './client'
-import type { Tokens, User } from './types'
+import type { Tokens } from './types'
 
-export const signup = (data: { username: string; password: string; name: string }) =>
-  api<User>('/auth/signup', { method: 'POST', body: JSON.stringify(data) })
+// 공개 회원가입은 없다. 계정 생성은 관리자 앱에서 한다(api/admin.ts의 adminCreateUser).
 
 export const login = (data: { username: string; password: string }) =>
   api<Tokens>('/auth/login', { method: 'POST', body: JSON.stringify(data) })
 
 export const guestLogin = () => api<Tokens>('/auth/guest', { method: 'POST' })
+
+export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
+  api<void>('/auth/password', { method: 'POST', body: JSON.stringify(data) })
 
 export function decodeAccessToken(token: string): { userId: number; username: string; role: string } | null {
   try {

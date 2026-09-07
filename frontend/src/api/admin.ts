@@ -13,6 +13,9 @@ export const adminDeleteWorkspace = (id: number) => api<void>(`/admin/workspaces
 
 export const adminListUsers = () => api<User[]>('/admin/users')
 
+export const adminCreateUser = (data: { username: string; password: string; name: string; role: string }) =>
+  api<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) })
+
 export const adminListMembers = (workspaceId: number) =>
   api<Member[]>(`/admin/workspaces/${workspaceId}/members`)
 

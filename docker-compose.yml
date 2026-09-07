@@ -47,6 +47,10 @@ services:
       JWT_SECRET: ${JWT_SECRET}
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update} # 최초 배포 확인 후 .env에서 validate로 낮춘다
       JPA_SHOW_SQL: "false"
+      SWAGGER_ENABLED: "false" # 공개 서버에 API 목록을 노출하지 않는다
+      # 계정이 하나도 없을 때만 쓰인다. 최초 로그인 후 .env에서 지우면 된다.
+      BOOTSTRAP_ADMIN_USERNAME: ${BOOTSTRAP_ADMIN_USERNAME:-}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
       PORT: 8080
       # A1(24GB)으로 옮기면 이 한 줄만 늘리면 된다.
       JAVA_OPTS: ${JAVA_OPTS:--Xmx320m -Xss256k -XX:MaxMetaspaceSize=96m}

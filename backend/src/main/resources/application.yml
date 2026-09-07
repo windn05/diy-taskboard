@@ -25,10 +25,19 @@ jwt:
   refresh-token-expiration-ms: 604800000
 
 springdoc:
+  # 운영에서는 SWAGGER_ENABLED=false로 끈다. API 목록을 공개할 이유가 없다.
+  api-docs:
+    enabled: ${SWAGGER_ENABLED:true}
   swagger-ui:
+    enabled: ${SWAGGER_ENABLED:true}
     path: /swagger-ui.html
 
 taskboard:
+  bootstrap:
+    # 계정이 하나도 없을 때만 이 값으로 최초 관리자를 만든다.
+    # 공개 회원가입이 없어서, 새 DB에서 첫 관리자를 만들 유일한 통로다.
+    admin-username: ${BOOTSTRAP_ADMIN_USERNAME:}
+    admin-password: ${BOOTSTRAP_ADMIN_PASSWORD:}
   log:
     # 메모리 링버퍼에 유지할 최근 로그 건수. WARN/ERROR는 이와 별개로 DB에 영속된다.
     buffer-size: 500

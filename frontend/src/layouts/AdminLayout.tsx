@@ -3,6 +3,7 @@ import { AppHeader } from '../components/AppHeader'
 
 const TABS = [
   { to: '/admin', label: '프로젝트 관리', end: true },
+  { to: '/admin/users', label: '계정 관리', end: false },
   { to: '/admin/settings', label: '상태/타입 관리', end: false },
   { to: '/admin/monitoring', label: '모니터링', end: false },
 ]
