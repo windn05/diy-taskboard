@@ -5,6 +5,7 @@ import com.taskboard.domain.Comment;
 import com.taskboard.domain.User;
 import com.taskboard.dto.CommentDtos.*;
 import com.taskboard.dto.RealtimeDtos.CommentEvent;
+import com.taskboard.exception.AccessDeniedException;
 import com.taskboard.exception.EntityNotFoundException;
 import com.taskboard.repository.CardRepository;
 import com.taskboard.repository.CommentRepository;
@@ -51,9 +52,23 @@ public class CommentService {
         Comment comment = Comment.builder().cardId(cardId).userId(userId).content(request.content()).build();
         commentRepository.save(comment);
         CommentResponse response = toResponse(comment, userRepository.findById(userId).map(User::getName).orElse(null));
-        eventPublisher.publishEvent(new CommentEvent(card.getWorkspaceId(), cardId, response));
+        eventPublisher.publishEvent(new CommentEvent("CREATED", card.getWorkspaceId(), cardId, response));
         notificationService.notifyComment(card, userId);
         return response;
+    }
+
+    /** 본인이 쓴 댓글만 지울 수 있다. */
+    @Transactional
+    public void delete(Long userId, Long commentId) {
+        Comment comment = commentRepository.findById(commentId)
+                .orElseThrow(() -> new EntityNotFoundException("댓글을 찾을 수 없습니다."));
+        if (!comment.getUserId().equals(userId)) {
+            throw new AccessDeniedException("본인 댓글만 삭제할 수 있습니다.");
+        }
+        Card card = getCard(comment.getCardId());
+        commentRepository.delete(comment);
+        CommentResponse response = toResponse(comment, null);
+        eventPublisher.publishEvent(new CommentEvent("DELETED", card.getWorkspaceId(), comment.getCardId(), response));
     }
 
     private Card getCard(Long cardId) {

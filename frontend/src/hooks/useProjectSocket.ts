@@ -5,7 +5,7 @@ import { getPresence } from '../api/workspaces'
 import type { Card, Comment, PresenceUser } from '../api/types'
 
 type CardEvent = { type: 'CREATED' | 'UPDATED' | 'MOVED' | 'DELETED'; card: Card }
-type CommentEvent = { workspaceId: number; cardId: number; comment: Comment }
+type CommentEvent = { type: 'CREATED' | 'DELETED'; workspaceId: number; cardId: number; comment: Comment }
 
 function applyCardEvent(queryClient: QueryClient, workspaceId: number, event: CardEvent) {
   queryClient.setQueryData<Card[]>(['cards', workspaceId], (cards) => {
@@ -19,7 +19,9 @@ function applyCardEvent(queryClient: QueryClient, workspaceId: number, event: Ca
 
 function applyCommentEvent(queryClient: QueryClient, event: CommentEvent) {
   queryClient.setQueryData<Comment[]>(['comments', event.cardId], (comments) => {
-    if (!comments || comments.some((c) => c.id === event.comment.id)) return comments
+    if (!comments) return comments
+    if (event.type === 'DELETED') return comments.filter((c) => c.id !== event.comment.id)
+    if (comments.some((c) => c.id === event.comment.id)) return comments
     return [...comments, event.comment]
   })
 }

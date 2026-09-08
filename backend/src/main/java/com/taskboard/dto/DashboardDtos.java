@@ -17,6 +17,17 @@ public class DashboardDtos {
             LocalDate dueDate) {
     }
 
+    /** 홈 화면 달력에 바 형태로 그릴 작업. 시작일/마감일이 하나라도 있어야 후보가 된다. */
+    public record CalendarTask(
+            Long cardId,
+            Long workspaceId,
+            String workspaceName,
+            String title,
+            String priority,
+            LocalDate startDate,
+            LocalDate dueDate) {
+    }
+
     public record StatusCount(Long statusId, String statusName, long count) {
     }
 
@@ -42,6 +53,7 @@ public class DashboardDtos {
             List<MyTask> myTasks,
             List<MyTask> dueSoon,
             List<ProjectSummary> projects,
-            List<RecentRelease> recentReleases) {
+            List<RecentRelease> recentReleases,
+            List<CalendarTask> calendarTasks) {
     }
 }

@@ -80,7 +80,7 @@ export function NewTaskModal({
   )
 
   return (
-    <Modal title={<h2 className="text-lg font-semibold">새 작업</h2>} footer={footer} onClose={onClose}>
+    <Modal title={<h2 className="text-lg font-semibold">새 작업</h2>} footer={footer} onClose={onClose} dismissible={false}>
       <form
         id="new-task-form"
         onSubmit={(e) => {
@@ -89,34 +89,36 @@ export function NewTaskModal({
         }}
         className="space-y-4"
       >
-        <label className="block space-y-1 text-sm">
-          <span className="text-xs text-slate-500">프로젝트</span>
-          <select
-            value={workspaceId}
-            onChange={(e) => {
-              setWorkspaceId(Number(e.target.value))
-              setAssigneeId(null)
-            }}
-            className="w-full rounded border px-3 py-2 text-sm"
-          >
-            {projects.map((p) => (
-              <option key={p.id} value={p.id}>
-                {p.name}
-              </option>
-            ))}
-          </select>
-        </label>
+        <div className="grid grid-cols-[auto_1fr] gap-3 text-sm">
+          <label className="block space-y-1">
+            <span className="block text-xs text-slate-500">프로젝트</span>
+            <select
+              value={workspaceId}
+              onChange={(e) => {
+                setWorkspaceId(Number(e.target.value))
+                setAssigneeId(null)
+              }}
+              className="block w-40 rounded border px-3 py-2 text-sm"
+            >
+              {projects.map((p) => (
+                <option key={p.id} value={p.id}>
+                  {p.name}
+                </option>
+              ))}
+            </select>
+          </label>
 
-        <label className="block space-y-1 text-sm">
-          <span className="text-xs text-slate-500">작업명</span>
-          <input
-            autoFocus
-            value={title}
-            onChange={(e) => setTitle(e.target.value)}
-            placeholder="작업명 입력"
-            className="w-full rounded border px-3 py-2 text-sm"
-          />
-        </label>
+          <label className="block space-y-1">
+            <span className="block text-xs text-slate-500">작업명</span>
+            <input
+              autoFocus
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="작업명 입력"
+              className="w-full rounded border px-3 py-2 text-sm"
+            />
+          </label>
+        </div>
 
         <div className="grid grid-cols-3 gap-3 text-sm">
           <label className="space-y-1">
@@ -162,7 +164,7 @@ export function NewTaskModal({
           <textarea
             value={description}
             onChange={(e) => setDescription(e.target.value)}
-            rows={5}
+            rows={12}
             className="w-full rounded border px-3 py-2 text-sm"
           />
         </label>

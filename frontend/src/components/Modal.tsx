@@ -10,24 +10,31 @@ export function Modal({
   onClose,
   footer,
   width = 'max-w-2xl',
+  /** 입력 중 실수로 바깥을 클릭/Esc 눌러서 날아가면 안 되는 폼(예: 새 작업 추가)은 false로 끈다. */
+  dismissible = true,
   children,
 }: {
   title: ReactNode
   onClose: () => void
   footer?: ReactNode
   width?: string
+  dismissible?: boolean
   children: ReactNode
 }) {
   useEffect(() => {
+    if (!dismissible) return
     function onKeyDown(event: KeyboardEvent) {
       if (event.key === 'Escape') onClose()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose])
+  }, [onClose, dismissible])
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={onClose}>
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={dismissible ? onClose : undefined}
+    >
       <div
         className={`flex max-h-[85vh] w-full ${width} flex-col overflow-hidden rounded-xl bg-white shadow-xl`}
         onClick={(e) => e.stopPropagation()}
@@ -37,7 +44,7 @@ export function Modal({
           <button
             onClick={onClose}
             className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
-            title="닫기 (Esc)"
+            title={dismissible ? '닫기 (Esc)' : '닫기'}
           >
             <CloseIcon size={18} />
           </button>

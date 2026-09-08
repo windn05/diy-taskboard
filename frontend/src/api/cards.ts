@@ -27,3 +27,5 @@ export const listComments = (cardId: number) => api<Comment[]>(`/cards/${cardId}
 
 export const addComment = (cardId: number, content: string) =>
   api<Comment>(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
+
+export const deleteComment = (commentId: number) => api<void>(`/cards/comments/${commentId}`, { method: 'DELETE' })

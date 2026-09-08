@@ -17,8 +17,12 @@ Jira 스타일의 사내 협업 툴. 작업(이슈) 관리, 실시간 협업, �
 
 PostgreSQL이 `localhost:5432`에 있고 `taskboard` DB가 만들어져 있어야 한다. 접속 정보는 `backend/src/main/resources/application.yml`의 기본값(`postgres` / `1234`)을 쓰거나 환경변수로 덮어쓴다.
 
+**JDK 17이 설치돼 있어야 한다.** Gradle 툴체인이 정확히 17을 요구하고 자동 다운로드는 꺼져 있어, 21 등 다른 버전만 있으면 `Cannot find a Java installation` 에러로 빌드가 실패한다.
+
+새 DB라 계정이 하나도 없다면, 최초 관리자를 만들기 위해 `BOOTSTRAP_ADMIN_USERNAME`/`BOOTSTRAP_ADMIN_PASSWORD` 환경변수를 넣고 기동한다(상세는 "배포 > 최초 관리자" 참고).
+
 ```bash
-cd backend && ./gradlew bootRun
+cd backend && BOOTSTRAP_ADMIN_USERNAME=admin BOOTSTRAP_ADMIN_PASSWORD=<원하는 비밀번호> ./gradlew bootRun
 ```
 
 ```bash

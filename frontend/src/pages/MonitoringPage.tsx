@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
-import { getLogHistory, getMetrics, meetsLevel } from '../api/monitoring'
+import { getLogHistory, getMetrics, getSystemStats, meetsLevel } from '../api/monitoring'
 import type { LogEntry, LogLevel } from '../api/types'
 import { RequestChart } from '../components/RequestChart'
 import { useLogStream } from '../hooks/useLogStream'
@@ -30,6 +30,34 @@ function SummaryCard({ label, value, tone }: { label: string; value: string; ton
       <p className={`mt-1 text-xl font-semibold ${tone === 'danger' ? 'text-red-600' : 'text-slate-800'}`}>{value}</p>
     </div>
   )
+}
+
+/** 사용량/전체 + 게이지 바. 85% 넘으면 경고색으로 표시한다. */
+function GaugeCard({ label, used, total, unit, percent }: { label: string; used: number; total: number; unit: string; percent: number }) {
+  const danger = percent >= 85
+  return (
+    <div className="rounded-lg border bg-white px-4 py-3">
+      <p className="text-xs text-slate-500">{label}</p>
+      <p className={`mt-1 text-xl font-semibold ${danger ? 'text-red-600' : 'text-slate-800'}`}>
+        {percent.toFixed(0)}%
+      </p>
+      <p className="text-xs text-slate-400">
+        {used.toLocaleString()} / {total.toLocaleString()} {unit}
+      </p>
+      <div className="mt-2 h-1.5 overflow-hidden rounded-full bg-slate-100">
+        <div
+          className={`h-full rounded-full ${danger ? 'bg-red-500' : 'bg-slate-700'}`}
+          style={{ width: `${Math.min(percent, 100)}%` }}
+        />
+      </div>
+    </div>
+  )
+}
+
+function formatUptime(seconds: number) {
+  const h = Math.floor(seconds / 3600)
+  const m = Math.floor((seconds % 3600) / 60)
+  return `${h}시간 ${m}분`
 }
 
 function LogRow({ entry }: { entry: LogEntry }) {
@@ -68,6 +96,7 @@ export function MonitoringPage() {
   const [source, setSource] = useState<'live' | 'history'>('live')
 
   const { data: metrics } = useQuery({ queryKey: ['metrics'], queryFn: getMetrics, refetchInterval: 5000 })
+  const { data: system } = useQuery({ queryKey: ['system-stats'], queryFn: getSystemStats, refetchInterval: 5000 })
   const { entries, connected } = useLogStream()
   const { data: history } = useQuery({
     queryKey: ['log-history'],
@@ -100,6 +129,25 @@ export function MonitoringPage() {
         />
         <SummaryCard label="평균 응답시간" value={`${metrics?.avgResponseMs ?? 0}ms`} />
         <SummaryCard label="WebSocket 세션" value={`${metrics?.webSocketSessions ?? 0}`} />
+      </div>
+
+      <div className="mb-6">
+        <h2 className="mb-3 text-sm font-semibold text-slate-700">서버 자원</h2>
+        <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
+          <SummaryCard label="CPU 사용률" value={system ? `${system.cpuLoadPercent}%` : '-'} tone={system && system.cpuLoadPercent >= 85 ? 'danger' : undefined} />
+          {system && (
+            <>
+              <GaugeCard label="메모리" used={system.systemMemUsedMb} total={system.systemMemTotalMb} unit="MB" percent={(system.systemMemUsedMb / system.systemMemTotalMb) * 100} />
+              <GaugeCard label="디스크" used={system.diskUsedGb} total={system.diskTotalGb} unit="GB" percent={(system.diskUsedGb / system.diskTotalGb) * 100} />
+              <GaugeCard label="JVM 힙" used={system.heapUsedMb} total={system.heapMaxMb} unit="MB" percent={(system.heapUsedMb / system.heapMaxMb) * 100} />
+            </>
+          )}
+        </div>
+        {system && (
+          <p className="mt-2 text-xs text-slate-400">
+            CPU 코어 {system.availableProcessors}개 · 가동 시간 {formatUptime(system.uptimeSeconds)}
+          </p>
+        )}
       </div>
 
       <div className="mb-6 rounded-lg border bg-white p-4">

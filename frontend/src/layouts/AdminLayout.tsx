@@ -5,7 +5,6 @@ const TABS = [
   { to: '/admin', label: '프로젝트 관리', end: true },
   { to: '/admin/users', label: '계정 관리', end: false },
   { to: '/admin/settings', label: '상태/타입 관리', end: false },
-  { to: '/admin/monitoring', label: '모니터링', end: false },
 ]
 
 /** 관리자 앱의 셸. TaskBoard와 사이드바를 공유하지 않고, 탭은 URL로 직접 진입할 수 있다. */

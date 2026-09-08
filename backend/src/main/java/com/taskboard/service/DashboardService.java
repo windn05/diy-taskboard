@@ -45,7 +45,7 @@ public class DashboardService {
         List<WorkspaceResponse> workspaces = workspaceService.listMine(user);
         long unread = notificationRepository.countByUserIdAndReadFalse(user.getId());
         if (workspaces.isEmpty()) {
-            return new DashboardResponse(0, 0, unread, List.of(), List.of(), List.of(), List.of());
+            return new DashboardResponse(0, 0, unread, List.of(), List.of(), List.of(), List.of(), List.of());
         }
 
         List<Long> workspaceIds = workspaces.stream().map(WorkspaceResponse::id).toList();
@@ -75,7 +75,26 @@ public class DashboardService {
                 toTasks(mine, workspaceNames, statusNames),
                 toTasks(dueSoon, workspaceNames, statusNames),
                 projectSummaries(workspaces, cards, statusNames),
-                recentReleases(workspaceIds, workspaceNames, cards));
+                recentReleases(workspaceIds, workspaceNames, cards),
+                calendarTasks(cards, workspaceNames));
+    }
+
+    /**
+     * 달력 바에는 개수 제한을 두지 않는다 — 한 달 치를 다 봐야 하는 화면이라 8개로 자르면 의미가 없다.
+     * 배포된 작업도 시작일·마감일은 지난 일정이니 그대로 보여준다(openCards로 거르지 않는다).
+     */
+    private List<CalendarTask> calendarTasks(List<Card> cards, Map<Long, String> workspaceNames) {
+        return cards.stream()
+                .filter(card -> card.getStartDate() != null || card.getDueDate() != null)
+                .map(card -> new CalendarTask(
+                        card.getId(),
+                        card.getWorkspaceId(),
+                        workspaceNames.get(card.getWorkspaceId()),
+                        card.getTitle(),
+                        card.getPriority().name(),
+                        card.getStartDate(),
+                        card.getDueDate()))
+                .toList();
     }
 
     private Comparator<Card> byDueDate() {

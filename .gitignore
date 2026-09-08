@@ -1,6 +1,9 @@
 # 비밀값 — 절대 커밋 금지
 .env
 
+# DB 백업 파일
+*.sql
+
 # backend (Gradle)
 backend/.gradle/
 backend/build/

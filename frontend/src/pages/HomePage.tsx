@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Link } from 'react-router-dom'
 import { getDashboard } from '../api/dashboard'
 import { useAuth } from '../auth/AuthContext'
+import { HomeCalendar } from '../components/HomeCalendar'
 import type { MyTask, ProjectSummary, RecentRelease } from '../api/types'
 
 const PRIORITY_COLOR: Record<string, string> = {
@@ -21,34 +22,19 @@ export function HomePage() {
   if (!data) return null
 
   return (
-    <div className="space-y-6 p-8">
+    <div className="space-y-8 p-8">
       <h1 className="text-xl font-semibold">
         {isGuest ? '둘러보기' : `${user?.username}님, 오늘도 반갑습니다`}
       </h1>
 
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-4">
-        <SummaryCard label="내 담당 작업" value={data.myTaskCount} />
-        <SummaryCard label="마감 임박·지남" value={data.dueSoonCount} tone={data.dueSoonCount > 0 ? 'warn' : undefined} />
-        <SummaryCard label="안 읽은 알림" value={data.unreadNotificationCount} />
-        <SummaryCard label="참여 중인 프로젝트" value={data.projects.length} />
-      </div>
+      <div className="grid gap-5 lg:grid-cols-2">
+        <Panel title="마감 임박·지난 작업" empty="마감이 임박한 작업이 없습니다.">
+          {data.dueSoon.map((task) => (
+            <TaskRow key={task.cardId} task={task} showOverdue />
+          ))}
+        </Panel>
 
-      <div className="grid gap-6 lg:grid-cols-2">
-        <div className="space-y-6">
-          <Panel title="내 담당 작업" empty="담당으로 지정된 작업이 없습니다.">
-            {data.myTasks.map((task) => (
-              <TaskRow key={task.cardId} task={task} />
-            ))}
-          </Panel>
-
-          <Panel title="마감 임박·지난 작업" empty="마감이 임박한 작업이 없습니다.">
-            {data.dueSoon.map((task) => (
-              <TaskRow key={task.cardId} task={task} showOverdue />
-            ))}
-          </Panel>
-        </div>
-
-        <div className="space-y-6">
+        <div className="space-y-5">
           <Panel title="프로젝트 현황" empty="참여 중인 프로젝트가 없습니다.">
             {data.projects.map((project) => (
               <ProjectRow key={project.workspaceId} project={project} />
@@ -62,15 +48,8 @@ export function HomePage() {
           </Panel>
         </div>
       </div>
-    </div>
-  )
-}
 
-function SummaryCard({ label, value, tone }: { label: string; value: number; tone?: 'warn' }) {
-  return (
-    <div className="rounded-lg border bg-white px-4 py-3">
-      <p className="text-xs text-slate-500">{label}</p>
-      <p className={`mt-1 text-xl font-semibold ${tone === 'warn' ? 'text-orange-600' : 'text-slate-800'}`}>{value}</p>
+      <HomeCalendar tasks={data.calendarTasks} />
     </div>
   )
 }
@@ -80,9 +59,13 @@ function Panel({ title, empty, children }: { title: string; empty: string; child
   const isEmpty = items.flat().filter(Boolean).length === 0
 
   return (
-    <section className="rounded-lg border bg-white">
-      <h2 className="border-b px-4 py-2.5 text-sm font-semibold text-slate-700">{title}</h2>
-      {isEmpty ? <p className="px-4 py-8 text-center text-sm text-slate-400">{empty}</p> : <div>{children}</div>}
+    <section className="overflow-hidden rounded-lg border">
+      <h2 className="border-b bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-600">{title}</h2>
+      {isEmpty ? (
+        <p className="bg-white px-4 py-8 text-center text-sm text-slate-400">{empty}</p>
+      ) : (
+        <div className="divide-y divide-slate-100 bg-white">{children}</div>
+      )}
     </section>
   )
 }
@@ -91,10 +74,7 @@ function TaskRow({ task, showOverdue }: { task: MyTask; showOverdue?: boolean })
   const overdue = showOverdue && task.dueDate !== null && task.dueDate < today()
 
   return (
-    <Link
-      to={`/projects/${task.workspaceId}?card=${task.cardId}`}
-      className="flex items-center gap-2 border-b px-4 py-2 text-sm last:border-0 hover:bg-slate-50"
-    >
+    <Link to={`/projects/${task.workspaceId}?card=${task.cardId}`} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50">
       <span className="min-w-0 flex-1 truncate">{task.title}</span>
       <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${PRIORITY_COLOR[task.priority]}`}>
         {task.priority}
@@ -109,17 +89,14 @@ function TaskRow({ task, showOverdue }: { task: MyTask; showOverdue?: boolean })
 
 function ProjectRow({ project }: { project: ProjectSummary }) {
   return (
-    <Link
-      to={`/projects/${project.workspaceId}`}
-      className="block border-b px-4 py-2.5 last:border-0 hover:bg-slate-50"
-    >
-      <div className="mb-1 flex items-baseline gap-2">
+    <Link to={`/projects/${project.workspaceId}`} className="block px-4 py-3 hover:bg-slate-50">
+      <div className="mb-1.5 flex items-baseline gap-2">
         <span className="text-sm font-medium text-slate-800">{project.name}</span>
         <span className="text-xs text-slate-400">작업 {project.totalCards}건</span>
       </div>
       <div className="flex flex-wrap gap-1">
         {project.statusCounts.map((status) => (
-          <span key={status.statusId} className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">
+          <span key={status.statusId} className="rounded border border-slate-200 px-1.5 py-0.5 text-[11px] text-slate-500">
             {status.statusName} {status.count}
           </span>
         ))}
@@ -131,10 +108,7 @@ function ProjectRow({ project }: { project: ProjectSummary }) {
 
 function ReleaseRow({ release }: { release: RecentRelease }) {
   return (
-    <Link
-      to={`/projects/${release.workspaceId}/releases`}
-      className="flex items-center gap-2 border-b px-4 py-2 text-sm last:border-0 hover:bg-slate-50"
-    >
+    <Link to={`/projects/${release.workspaceId}/releases`} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50">
       <span className="font-semibold text-slate-800">{release.version}</span>
       <span className="text-xs text-slate-400">{release.workspaceName}</span>
       <span className="ml-auto text-xs text-slate-400">

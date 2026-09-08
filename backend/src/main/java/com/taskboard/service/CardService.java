@@ -108,6 +108,6 @@ public class CardService {
         // labels는 LAZY 컬렉션이라 세션 밖(트랜잭션 커밋 후 브로드캐스트 등)에서 직렬화하면 깨진다. 여기서 복사해 분리한다.
         return new CardResponse(card.getId(), card.getWorkspaceId(), card.getStatusId(), card.getTitle(), card.getDescription(),
                 card.getType(), card.getPriority().name(), card.getAssigneeId(), List.copyOf(card.getLabels()),
-                card.getStartDate(), card.getDueDate(), card.getCreatedAt(), card.getUpdatedAt());
+                card.getStartDate(), card.getDueDate(), card.getReleaseId(), card.getCreatedAt(), card.getUpdatedAt());
     }
 }

@@ -13,6 +13,7 @@ public class RealtimeDtos {
     public record CardEvent(String type, CardResponse card) {
     }
 
-    public record CommentEvent(Long workspaceId, Long cardId, CommentResponse comment) {
+    /** type: CREATED | DELETED. */
+    public record CommentEvent(String type, Long workspaceId, Long cardId, CommentResponse comment) {
     }
 }

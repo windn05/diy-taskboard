@@ -26,6 +26,7 @@ export type Card = {
   labels: string[]
   startDate: string | null
   dueDate: string | null
+  releaseId: number | null
   createdAt: string
   updatedAt: string
 }
@@ -70,6 +71,16 @@ export type RecentRelease = {
   cardCount: number
 }
 
+export type CalendarTask = {
+  cardId: number
+  workspaceId: number
+  workspaceName: string
+  title: string
+  priority: CardPriority
+  startDate: string | null
+  dueDate: string | null
+}
+
 export type Dashboard = {
   myTaskCount: number
   dueSoonCount: number
@@ -78,6 +89,14 @@ export type Dashboard = {
   dueSoon: MyTask[]
   projects: ProjectSummary[]
   recentReleases: RecentRelease[]
+  calendarTasks: CalendarTask[]
+}
+
+export type Schedule = {
+  id: number
+  title: string
+  startDate: string
+  dueDate: string
 }
 
 export type ReleasedCard = { id: number; title: string; type: string; priority: CardPriority }
@@ -123,4 +142,16 @@ export type MetricsResponse = {
   totalErrors: number
   avgResponseMs: number
   webSocketSessions: number
+}
+
+export type SystemStats = {
+  cpuLoadPercent: number
+  availableProcessors: number
+  heapUsedMb: number
+  heapMaxMb: number
+  systemMemUsedMb: number
+  systemMemTotalMb: number
+  diskUsedGb: number
+  diskTotalGb: number
+  uptimeSeconds: number
 }

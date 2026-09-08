@@ -100,6 +100,15 @@ export function PlusIcon(props: IconProps) {
   )
 }
 
+/** 모니터링 — 파형 */
+export function MonitorIcon(props: IconProps) {
+  return (
+    <Icon {...props}>
+      <path d="M3 12h4l2-8 4 16 2-8h6" />
+    </Icon>
+  )
+}
+
 /** 배포 목록의 항목 표시 */
 export function CheckIcon(props: IconProps) {
   return (

@@ -3,6 +3,7 @@ import { ProtectedRoute } from './auth/ProtectedRoute'
 import { AdminRoute } from './auth/AdminRoute'
 import { AppLayout } from './layouts/AppLayout'
 import { AdminLayout } from './layouts/AdminLayout'
+import { MonitoringLayout } from './layouts/MonitoringLayout'
 import { ProjectLayout } from './layouts/ProjectLayout'
 import { LoginPage } from './pages/LoginPage'
 import { HomePage } from './pages/HomePage'
@@ -47,7 +48,17 @@ export function App() {
         <Route path="/admin" element={<AdminProjectsTab />} />
         <Route path="/admin/users" element={<AdminUsersTab />} />
         <Route path="/admin/settings" element={<AdminSettingsTab />} />
-        <Route path="/admin/monitoring" element={<MonitoringPage />} />
+      </Route>
+
+      {/* 모니터링 앱 — 관리자와 셸을 공유하지 않는 별도 메뉴 */}
+      <Route
+        element={
+          <AdminRoute>
+            <MonitoringLayout />
+          </AdminRoute>
+        }
+      >
+        <Route path="/monitoring" element={<MonitoringPage />} />
       </Route>
 
       <Route path="*" element={<Navigate to="/home" replace />} />

@@ -55,4 +55,10 @@ public class CardController {
                                        @Valid @RequestBody CreateCommentRequest request) {
         return commentService.create(user.getId(), cardId, request);
     }
+
+    @DeleteMapping("/cards/comments/{commentId}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteComment(@AuthenticationPrincipal CurrentUser user, @PathVariable Long commentId) {
+        commentService.delete(user.getId(), commentId);
+    }
 }
