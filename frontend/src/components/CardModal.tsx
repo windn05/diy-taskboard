@@ -114,7 +114,7 @@ export function CardModal({
   )
 
   return (
-    <Modal title={header} footer={footer} onClose={onClose}>
+    <Modal title={header} footer={footer} onClose={onClose} dismissible={false}>
       <div className="mb-5 grid grid-cols-3 gap-3 text-sm">
         <LabeledField label="상태">
           <select

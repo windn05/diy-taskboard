@@ -23,8 +23,12 @@ import java.util.stream.Collectors;
 /**
  * 첫 화면에서 쓸 요약. 프로젝트마다 따로 조회하면 요청이 N개가 되므로 한 번에 모아서 내려준다.
  *
- * <p>"끝난 일"은 상태 이름이 아니라 <b>배포 여부</b>로 판단한다. 상태 이름은 관리자가 언제든
+ * <p>"끝난 일"은 기본적으로 상태 이름이 아니라 <b>배포 여부</b>로 판단한다. 상태 이름은 관리자가 언제든
  * 바꿀 수 있어서 코드가 의존하면 조용히 깨지지만, 배포된 작업은 정의상 마무리된 일이다.
+ *
+ * <p>다만 "마감 임박·지난 작업"만은 예외로 <b>"개발완료" 상태(그 이후 순서 포함)도 제외</b>한다 —
+ * 개발은 끝나고 배포만 기다리는 작업까지 "마감이 급하다"고 띄우는 건 실제로 유용하지 않다는 요청 때문.
+ * 이름 매칭이라 "개발완료"라는 상태가 없으면 이 예외는 적용되지 않는다(기존 배포 여부 기준만 남음).
  */
 @Service
 @RequiredArgsConstructor
@@ -51,8 +55,16 @@ public class DashboardService {
         List<Long> workspaceIds = workspaces.stream().map(WorkspaceResponse::id).toList();
         Map<Long, String> workspaceNames = workspaces.stream()
                 .collect(Collectors.toMap(WorkspaceResponse::id, WorkspaceResponse::name));
-        Map<Long, String> statusNames = statusRepository.findAll().stream()
+        List<Status> statuses = statusRepository.findAll();
+        Map<Long, String> statusNames = statuses.stream()
                 .collect(Collectors.toMap(Status::getId, Status::getName));
+        Map<Long, Integer> statusOrders = statuses.stream()
+                .collect(Collectors.toMap(Status::getId, Status::getOrder));
+        Integer developedOrder = statuses.stream()
+                .filter(s -> "개발완료".equals(s.getName().trim()))
+                .map(Status::getOrder)
+                .min(Integer::compareTo)
+                .orElse(null);
 
         List<Card> cards = cardRepository.findByWorkspaceIdIn(workspaceIds);
         List<Card> openCards = cards.stream().filter(card -> card.getReleaseId() == null).toList();
@@ -65,6 +77,7 @@ public class DashboardService {
         LocalDate threshold = LocalDate.now().plusDays(DUE_SOON_DAYS);
         List<Card> dueSoon = openCards.stream()
                 .filter(card -> card.getDueDate() != null && !card.getDueDate().isAfter(threshold))
+                .filter(card -> developedOrder == null || statusOrders.getOrDefault(card.getStatusId(), 0) < developedOrder)
                 .sorted(byDueDate())
                 .toList();
 

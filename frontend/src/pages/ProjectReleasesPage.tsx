@@ -1,11 +1,18 @@
-import { useState } from 'react'
+import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useParams } from 'react-router-dom'
 import { createRelease, deleteRelease, listReleaseCandidates, listReleases, updateRelease } from '../api/releases'
 import { listStatuses } from '../api/statuses'
 import { useAuth } from '../auth/AuthContext'
-import type { Release, Status } from '../api/types'
+import type { Card, Release, Status } from '../api/types'
 import { CheckIcon } from '../components/icons'
+
+// 시작일 최신순. 시작일이 없는 작업은 뒤로 보낸다 (작업 목록과 동일한 규칙).
+function byStartDateDesc(a: Card, b: Card) {
+  if (!a.startDate) return 1
+  if (!b.startDate) return -1
+  return b.startDate.localeCompare(a.startDate)
+}
 
 /**
  * 배포 흐름: 아직 배포되지 않은 작업 중에서 고르고, 버전·패치노트를 적어 확정한다.
@@ -56,10 +63,11 @@ function NewReleaseForm({
   const [completedStatusId, setCompletedStatusId] = useState<number | ''>(() => guessCompletedStatusId(statuses))
   const [selected, setSelected] = useState<number[]>([])
 
-  const { data: candidates } = useQuery({
+  const { data: candidatesRaw } = useQuery({
     queryKey: ['release-candidates', workspaceId, filterStatusId],
     queryFn: () => listReleaseCandidates(workspaceId, filterStatusId || undefined),
   })
+  const candidates = useMemo(() => candidatesRaw && [...candidatesRaw].sort(byStartDateDesc), [candidatesRaw])
 
   const createMutation = useMutation({
     mutationFn: () =>
