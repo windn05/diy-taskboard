@@ -14,6 +14,9 @@ function byStartDateDesc(a: Card, b: Card) {
   return b.startDate.localeCompare(a.startDate)
 }
 
+/** 이 타입은 배포로 묶을 작업이 아니라서 후보 목록에서 뺀다. */
+const EXCLUDED_TYPE = '문서 및 기타작업'
+
 /**
  * 배포 흐름: 아직 배포되지 않은 작업 중에서 고르고, 버전·패치노트를 적어 확정한다.
  * 확정하면 고른 작업들이 지정한 상태(보통 "배포 완료")로 넘어간다.
@@ -67,7 +70,10 @@ function NewReleaseForm({
     queryKey: ['release-candidates', workspaceId, filterStatusId],
     queryFn: () => listReleaseCandidates(workspaceId, filterStatusId || undefined),
   })
-  const candidates = useMemo(() => candidatesRaw && [...candidatesRaw].sort(byStartDateDesc), [candidatesRaw])
+  const candidates = useMemo(
+    () => candidatesRaw && candidatesRaw.filter((c) => c.type !== EXCLUDED_TYPE).sort(byStartDateDesc),
+    [candidatesRaw],
+  )
 
   const createMutation = useMutation({
     mutationFn: () =>

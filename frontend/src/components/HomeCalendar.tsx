@@ -12,24 +12,24 @@ import { Modal } from './Modal'
 import { PlusIcon } from './icons'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-/** 하루 칸에 기본으로 보여줄 항목(바+점 합산) 개수. 넘치면 "+N건 더보기"로 접는다. */
+/** 하루 칸에 기본으로 보여줄 바 개수. 넘치면 "+N건 더보기"로 그 주를 펼친다. */
 const MAX_VISIBLE_PER_DAY = 5
 const LANE_HEIGHT = 20
 
-type ColorSet = { bg: string; text: string; border: string; dot: string }
+type ColorSet = { bg: string; text: string; border: string }
 
 /** 프로젝트마다 고정된 색을 준다 — workspaceId로 나눠서 매번 같은 색이 나오게.
  * 진한 배경에 흰 글씨는 여러 줄 쌓이면 눈에 부담스러워서, 옅은 배경 + 진한 글자 + 왼쪽 색띠로 바꿨다.
  * 배경이 -50이면 흰 페이지와 거의 구분이 안 돼서 -100으로, 글자는 -900으로 더 진하게 잡았다. */
 const PROJECT_COLORS: ColorSet[] = [
-  { bg: 'bg-blue-100', text: 'text-blue-900', border: 'border-blue-600', dot: 'bg-blue-600' },
-  { bg: 'bg-emerald-100', text: 'text-emerald-900', border: 'border-emerald-600', dot: 'bg-emerald-600' },
-  { bg: 'bg-orange-100', text: 'text-orange-900', border: 'border-orange-600', dot: 'bg-orange-600' },
-  { bg: 'bg-cyan-100', text: 'text-cyan-900', border: 'border-cyan-600', dot: 'bg-cyan-600' },
-  { bg: 'bg-amber-100', text: 'text-amber-900', border: 'border-amber-600', dot: 'bg-amber-600' },
-  { bg: 'bg-violet-100', text: 'text-violet-900', border: 'border-violet-600', dot: 'bg-violet-600' },
+  { bg: 'bg-blue-100', text: 'text-blue-900', border: 'border-blue-600' },
+  { bg: 'bg-emerald-100', text: 'text-emerald-900', border: 'border-emerald-600' },
+  { bg: 'bg-orange-100', text: 'text-orange-900', border: 'border-orange-600' },
+  { bg: 'bg-cyan-100', text: 'text-cyan-900', border: 'border-cyan-600' },
+  { bg: 'bg-amber-100', text: 'text-amber-900', border: 'border-amber-600' },
+  { bg: 'bg-violet-100', text: 'text-violet-900', border: 'border-violet-600' },
 ]
-const SCHEDULE_COLOR: ColorSet = { bg: 'bg-fuchsia-100', text: 'text-fuchsia-900', border: 'border-fuchsia-600', dot: 'bg-fuchsia-600' }
+const SCHEDULE_COLOR: ColorSet = { bg: 'bg-fuchsia-100', text: 'text-fuchsia-900', border: 'border-fuchsia-600' }
 
 type Bar = {
   key: string
@@ -74,12 +74,12 @@ function buildWeeks(year: number, month: number): string[][] {
   return weeks
 }
 
-/** 하루짜리가 아닌(여러 날에 걸친) 바들을, 겹치지 않게 한 주 안에서 lane에 배치한다. */
-function placeMultiDayBars(week: string[], bars: Bar[]) {
+/** 하루짜리든 여러 날짜짜리든, 겹치지 않게 한 주 안에서 lane에 배치한다. 전부 바 형태로 꽉 차게 그린다. */
+function placeBars(week: string[], bars: Bar[]) {
   const weekStart = week[0]
   const weekEnd = week[6]
   const overlapping = bars
-    .filter((bar) => bar.start !== bar.end && bar.start <= weekEnd && bar.end >= weekStart)
+    .filter((bar) => bar.start <= weekEnd && bar.end >= weekStart)
     .map((bar) => ({
       bar,
       startIdx: Math.min(Math.max(dayDiff(bar.start, weekStart), 0), 6),
@@ -193,24 +193,12 @@ function WeekRow({
   todayIso: string
 }) {
   const [expanded, setExpanded] = useState(false)
-  const placed = useMemo(() => placeMultiDayBars(week, bars), [week, bars])
+  const placed = useMemo(() => placeBars(week, bars), [week, bars])
   const laneLimit = expanded ? Infinity : MAX_VISIBLE_PER_DAY
   const visible = placed.filter((p) => p.lane < laneLimit)
   const hiddenBars = placed.filter((p) => p.lane >= laneLimit)
   const laneCount = Math.max(MAX_VISIBLE_PER_DAY, ...placed.map((p) => p.lane + 1))
-
-  /** 바 lane이 그 날을 지나가는 개수 — 점(하루짜리 일정)이 쓸 수 있는 남은 자리를 계산하는 데 쓴다. */
-  const barLanesUsed = (dayIdx: number) => visible.filter((p) => p.startIdx <= dayIdx && p.endIdx >= dayIdx).length
   const hiddenBarsAt = (dayIdx: number) => hiddenBars.filter((p) => p.startIdx <= dayIdx && p.endIdx >= dayIdx).length
-
-  const singleDayByDate = useMemo(() => {
-    const map = new Map<string, Bar[]>()
-    for (const dateIso of week) map.set(dateIso, [])
-    for (const bar of bars) {
-      if (bar.start === bar.end && map.has(bar.start)) map.get(bar.start)!.push(bar)
-    }
-    return map
-  }, [week, bars])
 
   return (
     <div className="relative border-b last:border-0">
@@ -247,7 +235,7 @@ function WeekRow({
         })}
       </div>
 
-      <div className="relative px-0.5" style={{ height: (expanded ? laneCount : MAX_VISIBLE_PER_DAY) * LANE_HEIGHT + 2 }}>
+      <div className="relative mb-1 px-0.5" style={{ height: (expanded ? laneCount : MAX_VISIBLE_PER_DAY) * LANE_HEIGHT + 2 }}>
         {expanded && (
           <button
             type="button"
@@ -288,48 +276,26 @@ function WeekRow({
         ))}
       </div>
 
-      <div className="grid grid-cols-7 pb-1">
-        {week.map((dateIso, i) => {
-          const allDots = singleDayByDate.get(dateIso) ?? []
-          const remaining = expanded ? allDots.length : Math.max(0, MAX_VISIBLE_PER_DAY - barLanesUsed(i))
-          const dots = allDots.slice(0, remaining)
-          const overflow = expanded ? 0 : hiddenBarsAt(i) + Math.max(0, allDots.length - remaining)
-          return (
-            <div key={dateIso} className="min-w-0 space-y-0.5 px-1.5">
-              {dots.map((bar) => (
-                <div
-                  key={bar.key}
-                  onClick={bar.onClick}
-                  className={`group flex items-center gap-1 truncate text-xs ${bar.onClick ? 'cursor-pointer hover:underline' : ''}`}
-                >
-                  <span className={`h-1.5 w-1.5 shrink-0 rounded-full ${bar.color.dot}`} />
-                  <span className="min-w-0 flex-1 truncate font-medium text-slate-800">{bar.title}</span>
-                  {bar.onDelete && (
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation()
-                        bar.onDelete!()
-                      }}
-                      className="shrink-0 text-slate-400 opacity-0 group-hover:opacity-100"
-                    >
-                      ×
-                    </button>
-                  )}
-                </div>
-              ))}
-              {overflow > 0 && (
-                <button
-                  type="button"
-                  onClick={() => setExpanded(true)}
-                  className="block truncate text-[10px] font-medium text-slate-500 hover:text-slate-800 hover:underline"
-                >
-                  +{overflow}건 더보기
-                </button>
-              )}
-            </div>
-          )
-        })}
-      </div>
+      {!expanded && hiddenBars.length > 0 && (
+        <div className="grid grid-cols-7 pb-1">
+          {week.map((dateIso, i) => {
+            const overflow = hiddenBarsAt(i)
+            return (
+              <div key={dateIso} className="min-w-0 px-1.5">
+                {overflow > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setExpanded(true)}
+                    className="block truncate text-[10px] font-medium text-slate-500 hover:text-slate-800 hover:underline"
+                  >
+                    +{overflow}건 더보기
+                  </button>
+                )}
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

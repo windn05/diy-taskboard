@@ -101,6 +101,25 @@ public class ReleaseService {
         }
         if (request.notes() != null) release.setNotes(request.notes());
 
+        if (request.addCardIds() != null && !request.addCardIds().isEmpty()) {
+            List<Card> toAdd = cardRepository.findAllById(request.addCardIds());
+            if (toAdd.size() != request.addCardIds().size()) {
+                throw new EntityNotFoundException("존재하지 않는 작업이 포함되어 있습니다.");
+            }
+            for (Card card : toAdd) {
+                if (!release.getWorkspaceId().equals(card.getWorkspaceId())) {
+                    throw new IllegalArgumentException("다른 프로젝트의 작업은 포함할 수 없습니다.");
+                }
+                if (card.getReleaseId() != null) {
+                    throw new IllegalArgumentException("이미 배포된 작업이 포함되어 있습니다.");
+                }
+            }
+            toAdd.forEach(card -> {
+                card.setReleaseId(release.getId());
+                if (request.completedStatusId() != null) card.setStatusId(request.completedStatusId());
+            });
+        }
+
         List<ReleasedCard> cards = cardRepository
                 .findByReleaseIdInOrderByCreatedAtAsc(List.of(releaseId)).stream()
                 .map(this::toReleasedCard)

@@ -2,11 +2,13 @@ package com.taskboard.service;
 
 import com.taskboard.domain.ActivityLog;
 import com.taskboard.domain.Card;
+import com.taskboard.domain.Comment;
 import com.taskboard.dto.CardDtos.*;
 import com.taskboard.dto.RealtimeDtos.CardEvent;
 import com.taskboard.exception.EntityNotFoundException;
 import com.taskboard.repository.ActivityLogRepository;
 import com.taskboard.repository.CardRepository;
+import com.taskboard.repository.CommentRepository;
 import com.taskboard.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -14,7 +16,9 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -23,6 +27,7 @@ public class CardService {
     private final CardRepository cardRepository;
     private final StatusService statusService;
     private final ActivityLogRepository activityLogRepository;
+    private final CommentRepository commentRepository;
     private final WorkspaceService workspaceService;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
@@ -31,7 +36,13 @@ public class CardService {
     @Transactional(readOnly = true)
     public List<CardResponse> list(CurrentUser user, Long workspaceId) {
         workspaceService.requireReadAccess(user, workspaceId);
-        return cardRepository.findByWorkspaceIdOrderByCreatedAtAsc(workspaceId).stream().map(this::toResponse).toList();
+        List<Card> cards = cardRepository.findByWorkspaceIdOrderByCreatedAtAsc(workspaceId);
+
+        // 댓글 수는 카드마다 따로 세면 N+1이 되니, 한 번에 모아서 카드별로 묶는다.
+        Map<Long, Long> commentCounts = commentRepository.findByCardIdIn(cards.stream().map(Card::getId).toList())
+                .stream().collect(Collectors.groupingBy(Comment::getCardId, Collectors.counting()));
+
+        return cards.stream().map(card -> toResponse(card, commentCounts.getOrDefault(card.getId(), 0L))).toList();
     }
 
     @Transactional
@@ -103,11 +114,16 @@ public class CardService {
         return cardRepository.findById(cardId).orElseThrow(() -> new EntityNotFoundException("카드를 찾을 수 없습니다."));
     }
 
-    /** 같은 패키지의 ReleaseService도 쓴다. */
+    /** 같은 패키지의 ReleaseService도 쓴다. 단건이라 댓글 수를 그때그때 센다(N+1 걱정이 없는 범위). */
     CardResponse toResponse(Card card) {
+        return toResponse(card, commentRepository.countByCardId(card.getId()));
+    }
+
+    private CardResponse toResponse(Card card, long commentCount) {
         // labels는 LAZY 컬렉션이라 세션 밖(트랜잭션 커밋 후 브로드캐스트 등)에서 직렬화하면 깨진다. 여기서 복사해 분리한다.
         return new CardResponse(card.getId(), card.getWorkspaceId(), card.getStatusId(), card.getTitle(), card.getDescription(),
                 card.getType(), card.getPriority().name(), card.getAssigneeId(), List.copyOf(card.getLabels()),
-                card.getStartDate(), card.getDueDate(), card.getReleaseId(), card.getCreatedAt(), card.getUpdatedAt());
+                card.getStartDate(), card.getDueDate(), card.getReleaseId(), commentCount,
+                card.getCreatedAt(), card.getUpdatedAt());
     }
 }

@@ -32,6 +32,7 @@ public class ReleaseDtos {
             Long completedStatusId) {
     }
 
-    public record UpdateReleaseRequest(String version, String notes) {
+    /** addCardIds/completedStatusId는 이미 확정된 배포에 나중에 작업을 더 끼워 넣을 때 쓴다. */
+    public record UpdateReleaseRequest(String version, String notes, List<Long> addCardIds, Long completedStatusId) {
     }
 }

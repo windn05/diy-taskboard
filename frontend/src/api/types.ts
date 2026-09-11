@@ -27,6 +27,7 @@ export type Card = {
   startDate: string | null
   dueDate: string | null
   releaseId: number | null
+  commentCount: number
   createdAt: string
   updatedAt: string
 }

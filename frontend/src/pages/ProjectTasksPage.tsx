@@ -114,7 +114,14 @@ export function ProjectTasksPage() {
                     </span>
                   )}
                 </td>
-                <td className="px-4 py-2.5 font-medium">{card.title}</td>
+                <td className="px-4 py-2.5 font-medium">
+                  {card.title}
+                  {card.commentCount > 0 && (
+                    <span className="ml-1.5 inline-flex items-center rounded-full bg-slate-700 px-1.5 py-0.5 text-[11px] font-semibold text-white">
+                      {card.commentCount}
+                    </span>
+                  )}
+                </td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-slate-500">{card.type}</td>
                 <td className="whitespace-nowrap px-4 py-2.5">
                   <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${PRIORITY_COLOR[card.priority]}`}>

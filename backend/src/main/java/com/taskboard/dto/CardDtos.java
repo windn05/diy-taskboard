@@ -68,6 +68,6 @@ public class CardDtos {
     public record CardResponse(
             Long id, Long workspaceId, Long statusId, String title, String description, String type, String priority,
             Long assigneeId, List<String> labels, LocalDate startDate, LocalDate dueDate, Long releaseId,
-            LocalDateTime createdAt, LocalDateTime updatedAt) {
+            long commentCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
     }
 }
