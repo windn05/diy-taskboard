@@ -149,10 +149,32 @@ class ReleaseServiceTest {
     void 패치노트를_수정할_수_있다() {
         var release = releaseService.create(USER_ID, workspaceId, request("v1.0.0", List.of(cardA), releasedStatusId));
 
-        var updated = releaseService.update(USER_ID, release.id(), new UpdateReleaseRequest(null, "수정된 패치노트"));
+        var updated = releaseService.update(USER_ID, release.id(),
+                new UpdateReleaseRequest(null, "수정된 패치노트", null, null));
 
         assertThat(updated.notes()).isEqualTo("수정된 패치노트");
         assertThat(updated.version()).isEqualTo("v1.0.0");
+    }
+
+    @Test
+    void 배포한_뒤에도_작업을_추가할_수_있다() {
+        var release = releaseService.create(USER_ID, workspaceId, request("v1.0.0", List.of(cardA), releasedStatusId));
+
+        var updated = releaseService.update(USER_ID, release.id(),
+                new UpdateReleaseRequest(null, null, List.of(cardB), releasedStatusId));
+
+        assertThat(updated.cards()).extracting(c -> c.id()).containsExactlyInAnyOrder(cardA, cardB);
+        assertThat(cardRepository.findById(cardB).orElseThrow().getStatusId()).isEqualTo(releasedStatusId);
+    }
+
+    @Test
+    void 이미_배포된_작업은_다른_배포에_추가할_수_없다() {
+        releaseService.create(USER_ID, workspaceId, request("v1.0.0", List.of(cardA), releasedStatusId));
+        var second = releaseService.create(USER_ID, workspaceId, request("v1.0.1", List.of(cardB), releasedStatusId));
+
+        assertThatThrownBy(() -> releaseService.update(USER_ID, second.id(),
+                new UpdateReleaseRequest(null, null, List.of(cardA), releasedStatusId)))
+                .isInstanceOf(IllegalArgumentException.class);
     }
 
     @Test
