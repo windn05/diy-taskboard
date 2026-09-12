@@ -129,11 +129,56 @@ git pull && docker compose pull && docker compose up -d
 
 ---
 
+## HTTPS 켜기
+
+Let's Encrypt는 **IP 주소로는 인증서를 발급하지 않는다.** 호스트 이름이 하나 필요하다.
+
+- 가입 없이 바로: `sslip.io` / `nip.io` — `129-225-171-106.sslip.io` 처럼 IP를 그대로 이름으로 쓴다
+- 무료 서브도메인: DuckDNS — `이름.duckdns.org`
+- 소유한 도메인: A 레코드를 서버 공인 IP로 지정
+
+**1. 443 포트를 연다** — 80과 마찬가지로 콘솔과 호스트 양쪽이다.
+
+콘솔에서 수신 규칙(0.0.0.0/0, TCP, 대상 포트 443)을 추가한 뒤:
+
+```bash
+sudo iptables -I INPUT 6 -m state --state NEW -p tcp --dport 443 -j ACCEPT && sudo netfilter-persistent save
+```
+
+**80은 닫지 않는다.** 인증서 발급 검증이 80으로 오고, HTTP→HTTPS 전환도 80에서 받아 넘긴다.
+
+**2. `.env`에 도메인을 넣는다**
+
+```bash
+echo 'SITE_ADDRESS=taskboard.example.com' >> .env
+```
+
+**3. 다시 올린다**
+
+```bash
+docker compose up -d && docker compose logs -f caddy
+```
+
+로그에 `certificate obtained successfully`가 보이면 끝이다. 발급은 보통 수십 초 걸린다.
+
+```bash
+curl -I https://taskboard.example.com
+```
+
+인증서는 `caddy_data` 볼륨에 남아 재기동해도 다시 받지 않는다. 갱신도 Caddy가 알아서 한다.
+
+> 프론트는 `window.location.protocol`을 보고 `ws`/`wss`를 고르므로(`api/stomp.ts`), HTTPS로 바뀌면 WebSocket도 자동으로 `wss`가 된다. 고칠 것이 없다.
+>
+> 도메인을 넣은 뒤에는 `http://<공인IP>` 로는 사이트가 뜨지 않는다. Caddy가 그 이름으로만 사이트를 열기 때문이다.
+
+---
+
 ## 환경변수
 
 | 변수 | 필수 | 설명 |
 |---|---|---|
 | `DB_PASSWORD` | ✅ | Postgres 비밀번호 |
+| `SITE_ADDRESS` | | 도메인. 넣으면 HTTPS 자동 전환, 비우면 `:80` 평문 |
 | `JWT_SECRET` | ✅ | 32바이트 이상. **기본값을 그대로 쓰면 안 된다** |
 | `BOOTSTRAP_ADMIN_USERNAME` | | 계정이 0건일 때만 쓰인다 |
 | `BOOTSTRAP_ADMIN_PASSWORD` | | 위와 같음. 8자 이상 |
@@ -201,4 +246,4 @@ JAVA_OPTS=-Xmx2g
 
 - 컨테이너 로그는 10MB × 3개로 회전한다. 기본값은 무한히 쌓여 부트 볼륨을 채운다
 - `system_logs` 테이블에는 WARN/ERROR만 쌓인다. 오래된 행을 정리하는 배치는 아직 없다
-- **현재 `:80` 평문이라 JWT가 그대로 흐른다.** 도메인이 생기면 `Caddyfile`의 `:80`을 도메인으로 바꾸고 `docker-compose.yml`의 443 포트 주석을 풀면 Caddy가 인증서를 자동 발급한다 — 남은 과제 중 보안상 가장 크다
+- `SITE_ADDRESS`를 비워두면 `:80` 평문이라 JWT가 그대로 흐른다. 위 "HTTPS 켜기"를 적용하면 해소된다
