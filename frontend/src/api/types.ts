@@ -145,14 +145,24 @@ export type MetricsResponse = {
   webSocketSessions: number
 }
 
-export type SystemStats = {
-  cpuLoadPercent: number
-  availableProcessors: number
-  heapUsedMb: number
-  heapMaxMb: number
-  systemMemUsedMb: number
-  systemMemTotalMb: number
+/** 서버(VM) 전체 — 백엔드·DB·프록시가 함께 쓰는 자원 */
+export type HostStats = {
+  cpuPercent: number
+  cpuCores: number
+  memUsedMb: number
+  memTotalMb: number
   diskUsedGb: number
   diskTotalGb: number
+}
+
+/** 백엔드 프로세스. 컨테이너 밖(로컬 등)에서 돌면 컨테이너 메모리는 null */
+export type BackendStats = {
+  processCpuPercent: number
+  containerMemUsedMb: number | null
+  containerMemLimitMb: number | null
+  heapUsedMb: number
+  heapMaxMb: number
   uptimeSeconds: number
 }
+
+export type SystemStats = { host: HostStats; backend: BackendStats }
