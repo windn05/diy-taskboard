@@ -33,7 +33,7 @@ export function HomePage() {
         좁은 화면에서는 위아래로 쌓고 이 영역만 스크롤한다.
       */}
       <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto lg:grid-cols-[minmax(320px,1fr)_1.7fr] lg:overflow-hidden">
-        <div className="min-h-0 space-y-4 lg:overflow-y-auto lg:pr-1">
+        <div className="flex min-h-0 flex-col gap-4 lg:overflow-y-auto lg:pr-1">
           {/* 담당자를 지정해 쓰기 시작하면 그때부터 나타난다. 비어 있는 패널이 자리만 차지하지 않게. */}
           {data.myTasks.length > 0 && (
             <Panel title="내 작업" count={data.myTasks.length}>
@@ -49,7 +49,8 @@ export function HomePage() {
             ))}
           </Panel>
 
-          <Panel title="최근 등록한 작업" empty="등록된 작업이 없습니다.">
+          {/* 마지막 패널이 남는 높이를 가져간다 — 왼쪽 열 아래가 비어 오른쪽과 어긋나 보이지 않게. */}
+          <Panel title="최근 등록한 작업" empty="등록된 작업이 없습니다." grow>
             {data.recentCards.map((card) => (
               <RecentCardRow key={card.cardId} card={card} />
             ))}
@@ -81,26 +82,31 @@ function Panel({
   title,
   count,
   empty,
+  grow,
   children,
 }: {
   title: string
   count?: number
   empty?: string
+  /** 열에 남는 높이를 이 패널이 가져간다. 열의 마지막 패널에만 쓴다. */
+  grow?: boolean
   children: React.ReactNode
 }) {
   const items = Array.isArray(children) ? children : [children]
   const isEmpty = items.flat().filter(Boolean).length === 0
 
   return (
-    <section className="overflow-hidden rounded-lg border">
-      <h2 className="flex items-baseline gap-2 border-b bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-600">
+    <section className={`flex flex-col overflow-hidden rounded-lg border ${grow ? 'min-h-0 flex-1' : 'shrink-0'}`}>
+      <h2 className="flex shrink-0 items-baseline gap-2 border-b bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-600">
         {title}
         {count !== undefined && count > 0 && <span className="text-xs font-normal text-slate-400">{count}</span>}
       </h2>
       {isEmpty ? (
         <p className="bg-white px-4 py-6 text-center text-sm text-slate-400">{empty}</p>
       ) : (
-        <div className="divide-y divide-slate-100 bg-white">{children}</div>
+        <div className={`divide-y divide-slate-100 bg-white ${grow ? 'min-h-0 flex-1 overflow-y-auto' : ''}`}>
+          {children}
+        </div>
       )}
     </section>
   )
