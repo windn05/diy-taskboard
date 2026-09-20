@@ -25,6 +25,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.List;
 import java.util.Map;
 import java.util.Objects;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -55,13 +56,16 @@ public class WorkspaceService {
 
     /**
      * 프로젝트 접근은 멤버십으로 정한다. 관리자도 예외가 아니며, 전체 목록은 관리자 앱에서만 본다.
-     * 게스트는 멤버가 될 수 없으므로 관리자가 "게스트 공개"로 지정한 프로젝트({@code visible})만 볼 수 있다.
+     * 게스트는 멤버가 될 수 없으므로 {@link #openToGuest} 조건을 만족하는 프로젝트만 볼 수 있다.
      */
     @Transactional(readOnly = true)
     public List<WorkspaceResponse> listMine(CurrentUser user) {
         if (user.isGuest()) {
+            Set<Long> hasRealMember = Set.copyOf(
+                    memberRepository.findWorkspaceIdsWithMemberRoleOtherThan(SystemRole.ADMIN));
             return workspaceRepository.findAll().stream()
                     .filter(Workspace::isVisible)
+                    .filter(w -> hasRealMember.contains(w.getId()))
                     .map(w -> new WorkspaceResponse(w.getId(), w.getName(), w.getOwnerId(), SystemRole.GUEST.name()))
                     .toList();
         }
@@ -186,16 +190,30 @@ public class WorkspaceService {
         }
     }
 
-    /** 조회 권한. 멤버는 멤버십으로, 게스트는 "게스트 공개" 지정으로 판단한다. */
+    /** 조회 권한. 멤버는 멤버십으로, 게스트는 {@link #openToGuest} 조건으로 판단한다. */
     public void requireReadAccess(CurrentUser user, Long workspaceId) {
         if (!user.isGuest()) {
             requireMember(user.getId(), workspaceId);
             return;
         }
+        openToGuest(workspaceId);
+    }
+
+    /**
+     * 게스트가 볼 수 있는 프로젝트의 조건. 둘 다 만족해야 한다.
+     * <ol>
+     *   <li>관리자가 "게스트 공개"로 지정했을 것({@code visible})</li>
+     *   <li>관리자 외의 멤버가 한 명이라도 있을 것 — 관리자 혼자 쓰는 프로젝트는 아직 남에게 보일 단계가 아니다</li>
+     * </ol>
+     */
+    private void openToGuest(Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new EntityNotFoundException("워크스페이스를 찾을 수 없습니다."));
         if (!workspace.isVisible()) {
             throw new AccessDeniedException("게스트에게 공개되지 않은 프로젝트입니다.");
+        }
+        if (!memberRepository.existsMemberRoleOtherThan(workspaceId, SystemRole.ADMIN)) {
+            throw new AccessDeniedException("관리자만 참여 중인 프로젝트입니다.");
         }
     }
 

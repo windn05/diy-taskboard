@@ -55,6 +55,7 @@ class PermissionMatrixTest {
 
     private Long visibleWorkspaceId;
     private Long hiddenWorkspaceId;
+    private Long adminOnlyWorkspaceId;
     private Long cardId;
 
     @BeforeEach
@@ -83,6 +84,11 @@ class PermissionMatrixTest {
         memberRepository.save(WorkspaceMember.builder()
                 .workspaceId(visibleWorkspaceId).userId(memberId).role(WorkspaceRole.OWNER).build());
 
+        // 게스트 공개로 지정했지만 멤버가 관리자뿐인 프로젝트 — 아직 남에게 보일 단계가 아니다.
+        adminOnlyWorkspaceId = createWorkspace("관리자만 있는 프로젝트", adminId, true);
+        memberRepository.save(WorkspaceMember.builder()
+                .workspaceId(adminOnlyWorkspaceId).userId(adminId).role(WorkspaceRole.OWNER).build());
+
         cardId = cardRepository.save(Card.builder()
                 .workspaceId(visibleWorkspaceId).statusId(status.getId()).title("작업").type("Task")
                 .labels(List.of("label-1"))
@@ -97,6 +103,40 @@ class PermissionMatrixTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
                 .andExpect(jsonPath("$[0].name").value("공개 프로젝트"));
+    }
+
+    @Test
+    void 게스트_목록에_관리자만_있는_프로젝트는_빠진다() throws Exception {
+        // 공개로 지정돼 있어도 관리자 혼자면 보이지 않는다.
+        mockMvc.perform(auth(get("/workspaces"), guestToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name == '관리자만 있는 프로젝트')]").isEmpty());
+    }
+
+    @Test
+    void 게스트는_관리자만_있는_프로젝트에_직접_들어갈_수_없다() throws Exception {
+        // 목록에서 감추는 것만으로는 부족하다 — 주소를 알면 들어가지므로 서버에서 막아야 한다.
+        mockMvc.perform(auth(get("/workspaces/" + adminOnlyWorkspaceId + "/cards"), guestToken))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 관리자_본인은_자기_단독_프로젝트를_그대로_본다() throws Exception {
+        mockMvc.perform(auth(get("/workspaces/" + adminOnlyWorkspaceId + "/cards"), adminToken))
+                .andExpect(status().isOk());
+    }
+
+    @Test
+    void 일반_멤버가_합류하면_게스트에게도_보이기_시작한다() throws Exception {
+        memberRepository.save(WorkspaceMember.builder()
+                .workspaceId(adminOnlyWorkspaceId)
+                .userId(userRepository.findByUsername("member").orElseThrow().getId())
+                .role(WorkspaceRole.MEMBER)
+                .build());
+
+        mockMvc.perform(auth(get("/workspaces"), guestToken))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$[?(@.name == '관리자만 있는 프로젝트')]").isNotEmpty());
     }
 
     @Test
@@ -184,9 +224,10 @@ class PermissionMatrixTest {
 
     @Test
     void 관리자는_숨김_프로젝트를_포함해_전체를_조회한다() throws Exception {
+        // 공개 / 숨김 / 관리자만 있는 프로젝트 — 관리자 앱에서는 전부 보인다.
         mockMvc.perform(auth(get("/admin/workspaces"), adminToken))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.length()").value(2));
+                .andExpect(jsonPath("$.length()").value(3));
     }
 
     @Test

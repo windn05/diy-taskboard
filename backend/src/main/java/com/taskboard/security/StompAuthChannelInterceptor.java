@@ -1,6 +1,7 @@
 package com.taskboard.security;
 
 import com.taskboard.domain.User.SystemRole;
+import com.taskboard.service.WorkspaceService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.Message;
 import org.springframework.messaging.MessageChannel;
@@ -25,12 +26,16 @@ import java.util.regex.Pattern;
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
     private final TokenAuthenticator tokenAuthenticator;
+    private final WorkspaceService workspaceService;
 
     /** 관리자 전용 토픽 접두어. REST의 /admin/** 과 같은 기준을 WebSocket에도 적용한다. */
     private static final String ADMIN_TOPIC_PREFIX = "/topic/admin/";
 
     /** 개인 채널. /topic/users/{userId}/... 는 본인만 구독할 수 있다. */
     private static final Pattern USER_TOPIC = Pattern.compile("^/topic/users/(-?\\d+)/.+$");
+
+    /** 프로젝트 채널. /topic/workspaces/{id}/... 는 그 프로젝트를 볼 수 있는 사람만 구독한다. */
+    private static final Pattern WORKSPACE_TOPIC = Pattern.compile("^/topic/workspaces/(\\d+)/.+$");
 
     @Override
     public Message<?> preSend(Message<?> message, MessageChannel channel) {
@@ -59,6 +64,28 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         Matcher userTopic = USER_TOPIC.matcher(destination);
         if (userTopic.matches() && !isSelf(principal, Long.valueOf(userTopic.group(1)))) {
             throw new MessagingException("본인만 구독할 수 있는 채널입니다.");
+        }
+
+        Matcher workspaceTopic = WORKSPACE_TOPIC.matcher(destination);
+        if (workspaceTopic.matches()) {
+            requireWorkspaceReadAccess(principal, Long.valueOf(workspaceTopic.group(1)));
+        }
+    }
+
+    /**
+     * REST와 같은 조회 권한을 구독에도 적용한다. 이게 없으면 목록에서 감춘 프로젝트라도
+     * 주소만 알면 실시간 이벤트(작업·댓글·접속자)를 그대로 받아볼 수 있다.
+     */
+    private void requireWorkspaceReadAccess(Principal principal, Long workspaceId) {
+        CurrentUser user = currentUser(principal);
+        if (user == null) {
+            throw new MessagingException("인증되지 않은 구독입니다.");
+        }
+        try {
+            workspaceService.requireReadAccess(user, workspaceId);
+        } catch (RuntimeException e) {
+            // 존재하지 않는 프로젝트인지 권한이 없는 것인지 굳이 구분해 알려주지 않는다.
+            throw new MessagingException("구독할 수 없는 프로젝트입니다.");
         }
     }
 
