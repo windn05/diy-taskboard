@@ -6,7 +6,6 @@ import com.taskboard.domain.Status;
 import com.taskboard.dto.DashboardDtos.*;
 import com.taskboard.dto.WorkspaceDtos.WorkspaceResponse;
 import com.taskboard.repository.CardRepository;
-import com.taskboard.repository.NotificationRepository;
 import com.taskboard.repository.ReleaseRepository;
 import com.taskboard.repository.StatusRepository;
 import com.taskboard.security.CurrentUser;
@@ -42,14 +41,12 @@ public class DashboardService {
     private final CardRepository cardRepository;
     private final StatusRepository statusRepository;
     private final ReleaseRepository releaseRepository;
-    private final NotificationRepository notificationRepository;
 
     @Transactional(readOnly = true)
     public DashboardResponse load(CurrentUser user) {
         List<WorkspaceResponse> workspaces = workspaceService.listMine(user);
-        long unread = notificationRepository.countByUserIdAndReadFalse(user.getId());
         if (workspaces.isEmpty()) {
-            return new DashboardResponse(0, 0, unread, List.of(), List.of(), List.of(), List.of(), List.of());
+            return new DashboardResponse(List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
         }
 
         List<Long> workspaceIds = workspaces.stream().map(WorkspaceResponse::id).toList();
@@ -82,11 +79,9 @@ public class DashboardService {
                 .toList();
 
         return new DashboardResponse(
-                mine.size(),
-                dueSoon.size(),
-                unread,
                 toTasks(mine, workspaceNames, statusNames),
                 toTasks(dueSoon, workspaceNames, statusNames),
+                recentCards(cards, workspaceNames, statusNames),
                 projectSummaries(workspaces, cards, statusNames),
                 recentReleases(workspaceIds, workspaceNames, cards),
                 calendarTasks(cards, workspaceNames));
@@ -128,21 +123,51 @@ public class DashboardService {
                 .toList();
     }
 
+    /**
+     * 최근 등록된 작업. 마감이 임박한 일이 없는 시기에도 홈이 비어 보이지 않게 채우는 자리다.
+     * 배포된 작업도 뺀다면 오래된 프로젝트에서는 또 비어버리므로 거르지 않는다.
+     */
+    private List<RecentCard> recentCards(List<Card> cards, Map<Long, String> workspaceNames,
+                                          Map<Long, String> statusNames) {
+        return cards.stream()
+                .sorted(Comparator.comparing(Card::getCreatedAt, Comparator.nullsLast(Comparator.reverseOrder())))
+                .limit(LIST_LIMIT)
+                .map(card -> new RecentCard(
+                        card.getId(),
+                        card.getWorkspaceId(),
+                        workspaceNames.get(card.getWorkspaceId()),
+                        card.getTitle(),
+                        statusNames.getOrDefault(card.getStatusId(), "-"),
+                        card.getPriority().name(),
+                        card.getCreatedAt() == null ? null : card.getCreatedAt().toLocalDate()))
+                .toList();
+    }
+
+    /** 프로젝트가 늘어날수록 화면이 길어지므로, 화면에서 위쪽 몇 개만 보여줄 수 있게 미결 작업이 많은 순으로 정렬해 둔다. */
     private List<ProjectSummary> projectSummaries(List<WorkspaceResponse> workspaces, List<Card> cards,
                                                    Map<Long, String> statusNames) {
         Map<Long, List<Card>> byWorkspace = cards.stream().collect(Collectors.groupingBy(Card::getWorkspaceId));
+        Map<Long, Long> openCountByWorkspace = cards.stream()
+                .filter(card -> card.getReleaseId() == null)
+                .collect(Collectors.groupingBy(Card::getWorkspaceId, Collectors.counting()));
 
-        return workspaces.stream().map(workspace -> {
-            List<Card> workspaceCards = byWorkspace.getOrDefault(workspace.id(), List.of());
-            List<StatusCount> counts = workspaceCards.stream()
-                    .collect(Collectors.groupingBy(Card::getStatusId, Collectors.counting()))
-                    .entrySet().stream()
-                    .map(entry -> new StatusCount(entry.getKey(),
-                            statusNames.getOrDefault(entry.getKey(), "-"), entry.getValue()))
-                    .sorted(Comparator.comparing(StatusCount::statusName))
-                    .toList();
-            return new ProjectSummary(workspace.id(), workspace.name(), workspaceCards.size(), counts);
-        }).toList();
+        return workspaces.stream()
+                .sorted(Comparator.comparing((WorkspaceResponse w) -> openCountByWorkspace.getOrDefault(w.id(), 0L))
+                        .reversed()
+                        .thenComparing(WorkspaceResponse::name))
+                .map(workspace -> {
+                    List<Card> workspaceCards = byWorkspace.getOrDefault(workspace.id(), List.of());
+                    List<StatusCount> counts = workspaceCards.stream()
+                            .collect(Collectors.groupingBy(Card::getStatusId, Collectors.counting()))
+                            .entrySet().stream()
+                            .map(entry -> new StatusCount(entry.getKey(),
+                                    statusNames.getOrDefault(entry.getKey(), "-"), entry.getValue()))
+                            // 이름순이 아니라 상태 id순 — 막대를 업무 흐름 순서대로 쌓기 위함이다.
+                            .sorted(Comparator.comparing(StatusCount::statusId))
+                            .toList();
+                    return new ProjectSummary(workspace.id(), workspace.name(), workspaceCards.size(), counts);
+                })
+                .toList();
     }
 
     private List<RecentRelease> recentReleases(List<Long> workspaceIds, Map<Long, String> workspaceNames,

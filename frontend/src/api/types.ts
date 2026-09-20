@@ -82,12 +82,22 @@ export type CalendarTask = {
   dueDate: string | null
 }
 
+/** 최근 등록된 작업. 마감이 임박한 일이 없을 때도 홈이 비어 보이지 않게 하는 자리다. */
+export type RecentCard = {
+  cardId: number
+  workspaceId: number
+  workspaceName: string
+  title: string
+  statusName: string
+  priority: CardPriority
+  createdDate: string | null
+}
+
 export type Dashboard = {
-  myTaskCount: number
-  dueSoonCount: number
-  unreadNotificationCount: number
+  /** 담당자로 지정된 작업. 담당자를 쓰지 않는 동안에는 비어 있고, 그때는 화면에서 패널째 숨긴다. */
   myTasks: MyTask[]
   dueSoon: MyTask[]
+  recentCards: RecentCard[]
   projects: ProjectSummary[]
   recentReleases: RecentRelease[]
   calendarTasks: CalendarTask[]
