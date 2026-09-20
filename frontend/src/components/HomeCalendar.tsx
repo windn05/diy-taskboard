@@ -199,11 +199,14 @@ function WeekRow({
   const laneLimit = expanded ? Infinity : MAX_VISIBLE_PER_DAY
   const visible = placed.filter((p) => p.lane < laneLimit)
   const hiddenBars = placed.filter((p) => p.lane >= laneLimit)
-  const laneCount = Math.max(MAX_VISIBLE_PER_DAY, ...placed.map((p) => p.lane + 1))
+  // 실제로 쓰인 줄 수. 일정이 적은 주까지 최대 높이로 잡으면 달력 아래가 빈 띠처럼 남는다.
+  const usedLanes = Math.max(0, ...placed.map((p) => p.lane + 1))
+  const laneCount = expanded ? usedLanes : Math.min(usedLanes, MAX_VISIBLE_PER_DAY)
   const hiddenBarsAt = (dayIdx: number) => hiddenBars.filter((p) => p.startIdx <= dayIdx && p.endIdx >= dayIdx).length
 
   return (
-    <div className="relative border-b last:border-0">
+    // 남는 높이는 주들이 나눠 갖는다(달력 아래에 빈 공간이 남지 않게). 모자랄 때는 줄어들지 않고 스크롤한다.
+    <div className="relative flex-1 shrink-0 border-b last:border-0">
       {/* 요일 칸 배경·세로 구분선. 위 세 개의 그리드(날짜/바/점) 뒤에 깔려서 한 주 높이 전체를 관통한다. */}
       <div className="pointer-events-none absolute inset-0 grid grid-cols-7">
         {week.map((dateIso, i) => (
@@ -237,7 +240,7 @@ function WeekRow({
         })}
       </div>
 
-      <div className="relative mb-1 px-0.5" style={{ height: (expanded ? laneCount : MAX_VISIBLE_PER_DAY) * LANE_HEIGHT + 2 }}>
+      <div className="relative mb-1 px-0.5" style={{ height: laneCount * LANE_HEIGHT + 2 }}>
         {expanded && (
           <button
             type="button"
@@ -415,7 +418,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         ))}
       </div>
 
-      <div className="min-h-0 flex-1 overflow-y-auto">
+      <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
         {weeks.map((week) => (
           <WeekRow key={week[0]} week={week} bars={bars} monthIndex={cursor.month} todayIso={todayIso} />
         ))}
