@@ -13,8 +13,10 @@ import { PlusIcon } from './icons'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
 /** 하루 칸에 기본으로 보여줄 바 개수. 넘치면 "+N건 더보기"로 그 주를 펼친다. */
-const MAX_VISIBLE_PER_DAY = 5
-const LANE_HEIGHT = 20
+// 홈을 한 화면에 담기 위한 밀도. 한 주가 높을수록 6주짜리 달이 화면 밖으로 밀린다.
+// 넘치는 일정은 "+N"으로 접고, 그 주를 누르면 펼쳐진다.
+const MAX_VISIBLE_PER_DAY = 4
+const LANE_HEIGHT = 18
 
 type ColorSet = { bg: string; text: string; border: string }
 
@@ -371,8 +373,9 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
   }
 
   return (
-    <section className="rounded-lg border bg-white">
-      <div className="flex items-center justify-between border-b px-4 py-2.5">
+    // 부모가 준 높이를 채우고, 달이 길어 넘칠 때만 달력 안에서 스크롤한다(페이지는 스크롤되지 않게).
+    <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border bg-white">
+      <div className="flex shrink-0 items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
           <button
             onClick={() => setCursor((c) => (c.month === 0 ? { year: c.year - 1, month: 11 } : { year: c.year, month: c.month - 1 }))}
@@ -401,7 +404,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         )}
       </div>
 
-      <div className="grid grid-cols-7 border-b text-center text-xs">
+      <div className="grid shrink-0 grid-cols-7 border-b text-center text-xs">
         {WEEKDAYS.map((d, i) => (
           <div
             key={d}
@@ -412,7 +415,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         ))}
       </div>
 
-      <div>
+      <div className="min-h-0 flex-1 overflow-y-auto">
         {weeks.map((week) => (
           <WeekRow key={week[0]} week={week} bars={bars} monthIndex={cursor.month} todayIso={todayIso} />
         ))}
