@@ -28,16 +28,6 @@ public class DashboardDtos {
             LocalDate dueDate) {
     }
 
-    public record StatusCount(Long statusId, String statusName, long count) {
-    }
-
-    public record ProjectSummary(
-            Long workspaceId,
-            String name,
-            long totalCards,
-            List<StatusCount> statusCounts) {
-    }
-
     /** 최근에 등록된 작업. 마감이 임박한 일이 없을 때도 홈이 비어 보이지 않게 하는 용도다. */
     public record RecentCard(
             Long cardId,
@@ -65,7 +55,6 @@ public class DashboardDtos {
             List<MyTask> myTasks,
             List<MyTask> dueSoon,
             List<RecentCard> recentCards,
-            List<ProjectSummary> projects,
             List<RecentRelease> recentReleases,
             List<CalendarTask> calendarTasks) {
     }

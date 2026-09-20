@@ -55,15 +55,6 @@ export type MyTask = {
   dueDate: string | null
 }
 
-export type StatusCount = { statusId: number; statusName: string; count: number }
-
-export type ProjectSummary = {
-  workspaceId: number
-  name: string
-  totalCards: number
-  statusCounts: StatusCount[]
-}
-
 export type RecentRelease = {
   workspaceId: number
   workspaceName: string
@@ -98,7 +89,6 @@ export type Dashboard = {
   myTasks: MyTask[]
   dueSoon: MyTask[]
   recentCards: RecentCard[]
-  projects: ProjectSummary[]
   recentReleases: RecentRelease[]
   calendarTasks: CalendarTask[]
 }

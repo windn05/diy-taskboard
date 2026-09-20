@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getDashboard } from '../api/dashboard'
 import { useAuth } from '../auth/AuthContext'
 import { HomeCalendar } from '../components/HomeCalendar'
-import type { MyTask, ProjectSummary, RecentCard, RecentRelease } from '../api/types'
+import type { MyTask, RecentCard, RecentRelease } from '../api/types'
 
 const PRIORITY_COLOR: Record<string, string> = {
   LOW: 'bg-slate-200 text-slate-700',
@@ -11,12 +11,6 @@ const PRIORITY_COLOR: Record<string, string> = {
   HIGH: 'bg-orange-100 text-orange-700',
   URGENT: 'bg-red-100 text-red-700',
 }
-
-/** 프로젝트 현황 막대. 상태 순서대로 색을 돌려 쓴다. */
-const BAR_COLOR = ['bg-slate-400', 'bg-sky-400', 'bg-indigo-400', 'bg-emerald-400', 'bg-slate-600']
-
-/** 프로젝트가 늘어나도 화면이 계속 길어지지 않게 여기까지만 보여주고 나머지는 목록으로 넘긴다. */
-const PROJECT_LIMIT = 5
 
 const today = () => new Date().toISOString().slice(0, 10)
 
@@ -26,17 +20,6 @@ export function HomePage() {
 
   if (isLoading) return <div className="p-8 text-sm text-slate-400">불러오는 중...</div>
   if (!data) return null
-
-  const shownProjects = data.projects.slice(0, PROJECT_LIMIT)
-  const restCount = data.projects.length - shownProjects.length
-
-  // 색은 상태에 고정한다. 행마다 배열 순서로 칠하면 어떤 상태가 없는 프로젝트에서 색이 밀려
-  // 같은 색이 다른 상태를 가리키게 된다.
-  const colorByStatus = new Map(
-    [...new Set(data.projects.flatMap((p) => p.statusCounts.map((s) => s.statusId)))]
-      .sort((a, b) => a - b)
-      .map((statusId, index) => [statusId, BAR_COLOR[index % BAR_COLOR.length]]),
-  )
 
   return (
     // 홈은 한 화면에 담는다 — 페이지 자체는 스크롤하지 않고, 넘치는 쪽(패널 열·달력)만 안에서 스크롤한다.
@@ -66,38 +49,24 @@ export function HomePage() {
             ))}
           </Panel>
 
-          <Panel
-            title="프로젝트 현황"
-            count={data.projects.length}
-            empty="참여 중인 프로젝트가 없습니다."
-            footer={
-              restCount > 0 ? (
-                <Link to="/projects" className="block px-4 py-2 text-center text-xs text-slate-500 hover:bg-slate-50">
-                  {restCount}개 더 보기
-                </Link>
-              ) : undefined
-            }
-          >
-            {shownProjects.map((project) => (
-              <ProjectRow key={project.workspaceId} project={project} colorByStatus={colorByStatus} />
-            ))}
-          </Panel>
-
           <Panel title="최근 등록한 작업" empty="등록된 작업이 없습니다.">
             {data.recentCards.map((card) => (
               <RecentCardRow key={card.cardId} card={card} />
             ))}
           </Panel>
+        </div>
+
+        {/* 달력이 남은 높이를 차지하고, 최근 배포는 그 아래에 자기 높이만큼만 붙는다. */}
+        <div className="flex min-h-0 flex-col gap-4">
+          <div className="min-h-[420px] flex-1 lg:min-h-0">
+            <HomeCalendar tasks={data.calendarTasks} />
+          </div>
 
           <Panel title="최근 배포" empty="배포 기록이 없습니다.">
             {data.recentReleases.map((release) => (
               <ReleaseRow key={`${release.workspaceId}-${release.version}`} release={release} />
             ))}
           </Panel>
-        </div>
-
-        <div className="min-h-[420px] lg:min-h-0">
-          <HomeCalendar tasks={data.calendarTasks} />
         </div>
       </div>
     </div>
@@ -112,13 +81,11 @@ function Panel({
   title,
   count,
   empty,
-  footer,
   children,
 }: {
   title: string
   count?: number
   empty?: string
-  footer?: React.ReactNode
   children: React.ReactNode
 }) {
   const items = Array.isArray(children) ? children : [children]
@@ -135,7 +102,6 @@ function Panel({
       ) : (
         <div className="divide-y divide-slate-100 bg-white">{children}</div>
       )}
-      {footer && <div className="border-t bg-white">{footer}</div>}
     </section>
   )
 }
@@ -166,36 +132,6 @@ function RecentCardRow({ card }: { card: RecentCard }) {
       </span>
       <span className="w-20 shrink-0 truncate text-right text-xs text-slate-400">{card.workspaceName}</span>
       <span className="w-20 shrink-0 text-right text-xs text-slate-400">{card.createdDate ?? '-'}</span>
-    </Link>
-  )
-}
-
-/**
- * 한 줄로 압축한 프로젝트 요약. 예전에는 상태마다 칩을 달았는데, 상태가 5개인 지금
- * 프로젝트가 늘어날수록 칩이 화면을 채워서 한눈에 비교가 안 됐다. 비율 막대로 바꿨다.
- */
-function ProjectRow({ project, colorByStatus }: { project: ProjectSummary; colorByStatus: Map<number, string> }) {
-  return (
-    <Link to={`/projects/${project.workspaceId}`} className="block px-4 py-2.5 hover:bg-slate-50">
-      <div className="flex items-baseline gap-2">
-        <span className="min-w-0 flex-1 truncate text-sm font-medium text-slate-800">{project.name}</span>
-        <span className="shrink-0 text-xs text-slate-400">{project.totalCards}건</span>
-      </div>
-
-      {project.totalCards > 0 ? (
-        <div className="mt-1.5 flex h-1.5 overflow-hidden rounded-full bg-slate-100">
-          {project.statusCounts.map((status) => (
-            <div
-              key={status.statusId}
-              className={colorByStatus.get(status.statusId) ?? BAR_COLOR[0]}
-              style={{ width: `${(status.count / project.totalCards) * 100}%` }}
-              title={`${status.statusName} ${status.count}건`}
-            />
-          ))}
-        </div>
-      ) : (
-        <p className="mt-1.5 text-[11px] text-slate-400">작업 없음</p>
-      )}
     </Link>
   )
 }

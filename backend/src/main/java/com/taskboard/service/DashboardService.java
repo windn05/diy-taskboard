@@ -46,7 +46,7 @@ public class DashboardService {
     public DashboardResponse load(CurrentUser user) {
         List<WorkspaceResponse> workspaces = workspaceService.listMine(user);
         if (workspaces.isEmpty()) {
-            return new DashboardResponse(List.of(), List.of(), List.of(), List.of(), List.of(), List.of());
+            return new DashboardResponse(List.of(), List.of(), List.of(), List.of(), List.of());
         }
 
         List<Long> workspaceIds = workspaces.stream().map(WorkspaceResponse::id).toList();
@@ -82,7 +82,6 @@ public class DashboardService {
                 toTasks(mine, workspaceNames, statusNames),
                 toTasks(dueSoon, workspaceNames, statusNames),
                 recentCards(cards, workspaceNames, statusNames),
-                projectSummaries(workspaces, cards, statusNames),
                 recentReleases(workspaceIds, workspaceNames, cards),
                 calendarTasks(cards, workspaceNames));
     }
@@ -140,33 +139,6 @@ public class DashboardService {
                         statusNames.getOrDefault(card.getStatusId(), "-"),
                         card.getPriority().name(),
                         card.getCreatedAt() == null ? null : card.getCreatedAt().toLocalDate()))
-                .toList();
-    }
-
-    /** 프로젝트가 늘어날수록 화면이 길어지므로, 화면에서 위쪽 몇 개만 보여줄 수 있게 미결 작업이 많은 순으로 정렬해 둔다. */
-    private List<ProjectSummary> projectSummaries(List<WorkspaceResponse> workspaces, List<Card> cards,
-                                                   Map<Long, String> statusNames) {
-        Map<Long, List<Card>> byWorkspace = cards.stream().collect(Collectors.groupingBy(Card::getWorkspaceId));
-        Map<Long, Long> openCountByWorkspace = cards.stream()
-                .filter(card -> card.getReleaseId() == null)
-                .collect(Collectors.groupingBy(Card::getWorkspaceId, Collectors.counting()));
-
-        return workspaces.stream()
-                .sorted(Comparator.comparing((WorkspaceResponse w) -> openCountByWorkspace.getOrDefault(w.id(), 0L))
-                        .reversed()
-                        .thenComparing(WorkspaceResponse::name))
-                .map(workspace -> {
-                    List<Card> workspaceCards = byWorkspace.getOrDefault(workspace.id(), List.of());
-                    List<StatusCount> counts = workspaceCards.stream()
-                            .collect(Collectors.groupingBy(Card::getStatusId, Collectors.counting()))
-                            .entrySet().stream()
-                            .map(entry -> new StatusCount(entry.getKey(),
-                                    statusNames.getOrDefault(entry.getKey(), "-"), entry.getValue()))
-                            // 이름순이 아니라 상태 id순 — 막대를 업무 흐름 순서대로 쌓기 위함이다.
-                            .sorted(Comparator.comparing(StatusCount::statusId))
-                            .toList();
-                    return new ProjectSummary(workspace.id(), workspace.name(), workspaceCards.size(), counts);
-                })
                 .toList();
     }
 
