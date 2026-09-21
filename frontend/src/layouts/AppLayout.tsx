@@ -8,14 +8,14 @@ import { NewTaskModal } from '../components/NewTaskModal'
 import { HomeIcon, PlusIcon } from '../components/icons'
 import { useProjectSocket } from '../hooks/useProjectSocket'
 
-/** TaskBoard 앱의 셸. 관리자 기능은 별도 앱이므로 여기서 진입하지 않는다. */
+/** TaskBoard 앱의 셸. 관리자 기능은 별도 앱이므로 여기서 진입하지 않음 */
 export function AppLayout() {
   const { isGuest } = useAuth()
   const { data: projects } = useQuery({ queryKey: ['workspaces'], queryFn: listWorkspaces })
   const [addingTask, setAddingTask] = useState(false)
 
-  // 접속자 표시는 헤더에 있으므로 연결도 여기서 관리한다.
-  // 덕분에 프로젝트 안에서 탭을 오갈 때 소켓이 끊겼다 붙지 않는다.
+  // 접속자 표시가 헤더에 있으므로 연결도 여기서 관리.
+  // 덕분에 프로젝트 안에서 탭을 오갈 때 소켓이 끊겼다 붙지 않음
   const projectMatch = useMatch({ path: '/projects/:workspaceId', end: false })
   const openWorkspaceId = projectMatch?.params.workspaceId ? Number(projectMatch.params.workspaceId) : null
   const presentUsers = useProjectSocket(openWorkspaceId)

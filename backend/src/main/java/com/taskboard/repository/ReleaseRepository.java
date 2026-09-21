@@ -12,6 +12,7 @@ public interface ReleaseRepository extends JpaRepository<Release, Long> {
 
     List<Release> findByWorkspaceIdInOrderByIdDesc(List<Long> workspaceIds);
 
+    /** 버전 중복 확인용. 버전은 프로젝트 안에서만 유일 */
     Optional<Release> findByWorkspaceIdAndVersion(Long workspaceId, String version);
 
     void deleteByWorkspaceId(Long workspaceId);

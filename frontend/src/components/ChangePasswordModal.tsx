@@ -3,6 +3,7 @@ import { changePassword } from '../api/auth'
 import { ApiError } from '../api/client'
 import { Modal } from './Modal'
 
+/** 본인 비밀번호 변경. 게스트에게는 메뉴 자체가 미노출 */
 export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [currentPassword, setCurrentPassword] = useState('')
   const [newPassword, setNewPassword] = useState('')
@@ -11,6 +12,7 @@ export function ChangePasswordModal({ onClose }: { onClose: () => void }) {
   const [saving, setSaving] = useState(false)
   const [done, setDone] = useState(false)
 
+  // 길이 규칙(8자)은 서버 검증과 동일. 화면 검증은 편의용
   const canSubmit = currentPassword && newPassword.length >= 8 && newPassword === confirmPassword
 
   async function handleSubmit(e: React.FormEvent) {

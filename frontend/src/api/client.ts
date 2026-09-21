@@ -1,3 +1,4 @@
+// 모든 REST 호출의 공통 진입점. 토큰 저장과 에러 처리를 한곳에서 담당
 const TOKEN_KEY = 'taskboard_access_token'
 
 export function getToken() {
@@ -9,6 +10,7 @@ export function setToken(token: string | null) {
   else localStorage.removeItem(TOKEN_KEY)
 }
 
+/** 서버가 준 message를 그대로 보관. 화면은 status로 분기하고 message를 표시 */
 export class ApiError extends Error {
   status: number
   constructor(status: number, message: string) {
@@ -19,6 +21,7 @@ export class ApiError extends Error {
 
 export async function api<T>(path: string, options: RequestInit = {}): Promise<T> {
   const token = getToken()
+  // /api 접두어는 프록시(개발: Vite, 운영: Caddy)가 떼고 백엔드로 전달
   const res = await fetch(`/api${path}`, {
     ...options,
     headers: {
@@ -28,6 +31,7 @@ export async function api<T>(path: string, options: RequestInit = {}): Promise<T
     },
   })
 
+  // 토큰 만료·무효. 저장된 토큰을 지우고 로그인 화면으로 이동
   if (res.status === 401) {
     setToken(null)
     window.location.href = '/login'

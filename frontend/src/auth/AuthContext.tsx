@@ -14,6 +14,10 @@ type AuthContextValue = {
 
 const AuthContext = createContext<AuthContextValue | null>(null)
 
+/**
+ * 로그인 상태. 액세스 토큰만 localStorage에 두고, 사용자 정보는 토큰에서 추출.
+ * 새로고침해도 토큰이 남아 있으면 로그인 상태 유지
+ */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<CurrentUser | null>(() => {
     const token = getToken()

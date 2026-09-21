@@ -97,7 +97,7 @@ class LogServiceTest {
 
     @Test
     void 로그_처리_도중_발생한_로그는_재귀하지_않는다() {
-        // 저장 시점에 다시 로그가 들어오는 상황(예: DB 실패 → 에러 로그)을 흉내낸다.
+        // 저장 시점에 다시 로그가 들어오는 상황(예: DB 실패 → 에러 로그) 재현
         when(repository.save(any(SystemLog.class))).thenAnswer(invocation -> {
             logService.record(entry("ERROR", "저장 중 발생한 로그"));
             return invocation.getArgument(0);
@@ -105,7 +105,7 @@ class LogServiceTest {
 
         logService.record(entry("ERROR", "최초 로그"));
 
-        // 재진입이 차단되므로 버퍼에는 최초 로그만 남고 save도 한 번만 호출된다.
+        // 재진입이 차단되므로 버퍼에는 최초 로그만 남고 save도 한 번만 호출
         assertThat(logService.recent("TRACE", 10))
                 .extracting(LogEntry::message)
                 .containsExactly("최초 로그");
@@ -122,8 +122,8 @@ class LogServiceTest {
 
     @Test
     void 정리는_보존기간만큼_지난_시각을_기준으로_삭제한다() {
-        // 호출 전후로 기준선을 잡아, 그 사이의 값이 나오는지 본다. 단위를 일이 아닌 것으로
-        // 바꾸거나 minusDays를 빠뜨리면 범위를 벗어나 실패한다.
+        // 호출 전후로 기준선을 잡아, 그 사이의 값이 나오는지 확인. 단위를 일이 아닌 것으로
+        // 바꾸거나 minusDays를 빠뜨리면 범위를 벗어나 실패
         LocalDateTime notOlderThan = LocalDateTime.now().minusDays(RETENTION_DAYS);
         logService.purgeOldLogs();
         LocalDateTime notNewerThan = LocalDateTime.now().minusDays(RETENTION_DAYS);

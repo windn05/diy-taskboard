@@ -17,9 +17,9 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
 
     /**
      * 지정한 역할이 <b>아닌</b> 멤버가 한 명이라도 있는 프로젝트 id.
-     * 게스트에게 보여줄 범위를 정할 때 {@code ADMIN}을 빼고 부른다 — 관리자만 있는 프로젝트는 감춘다.
+     * 게스트에게 보여줄 범위를 정할 때 {@code ADMIN}을 빼고 호출 — 관리자만 있는 프로젝트는 숨김
      *
-     * <p>{@code WorkspaceMember.userId}가 연관관계가 아닌 값이라 User와는 조건으로 이어 붙인다.
+     * <p>{@code WorkspaceMember.userId}가 연관관계가 아닌 값이라 User와는 조건으로 조인
      */
     @Query("""
             select distinct m.workspaceId
@@ -28,7 +28,7 @@ public interface WorkspaceMemberRepository extends JpaRepository<WorkspaceMember
             """)
     List<Long> findWorkspaceIdsWithMemberRoleOtherThan(@Param("excluded") SystemRole excluded);
 
-    /** 한 프로젝트에 대해 위와 같은 판단. 목록이 아니라 단건 접근을 막을 때 쓴다. */
+    /** 한 프로젝트에 대한 같은 판단. 목록이 아니라 단건 접근을 막을 때 사용 */
     @Query("""
             select count(m) > 0
             from WorkspaceMember m, User u

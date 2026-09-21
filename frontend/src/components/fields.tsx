@@ -3,7 +3,7 @@ import type { CardPriority, Member } from '../api/types'
 
 /**
  * 작업 상세 팝업과 새 작업 팝업이 공유하는 입력 요소.
- * 두 화면의 필드 구성·순서를 맞추기로 했으므로, 한쪽만 바뀌는 일이 없도록 여기에 모은다.
+ * 두 화면의 필드 구성·순서를 맞추기 위해, 한쪽만 바뀌지 않도록 여기에 모음
  */
 
 const PRIORITIES: { value: CardPriority; label: string }[] = [

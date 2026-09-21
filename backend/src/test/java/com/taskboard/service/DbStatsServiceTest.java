@@ -16,8 +16,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * 이 서비스의 위험한 부분은 예외를 삼키는 경로다. 모니터링 지표 하나가 실패해도 화면 전체가
- * 죽지 않아야 하고, 그렇다고 실패를 매 폴링마다 반복해서도 안 된다.
+ * 이 서비스의 위험한 부분은 예외를 삼키는 경로. 모니터링 지표 하나가 실패해도 화면 전체가
+ * 죽지 않아야 하고, 그렇다고 실패를 매 폴링마다 반복해서도 안 됨
  */
 class DbStatsServiceTest {
 
@@ -35,14 +35,14 @@ class DbStatsServiceTest {
         assertThat(stats.poolActive()).isNull();
         assertThat(stats.poolMax()).isNull();
         assertThat(stats.poolWaiting()).isNull();
-        // 풀을 못 읽는 것과 용량을 못 읽는 것은 별개다. 하나가 죽어도 다른 하나는 나와야 한다.
+        // 풀 조회 실패와 용량 조회 실패는 별개. 하나가 실패해도 다른 하나는 나와야 함
         assertThat(stats.sizeMb()).isEqualTo(42);
     }
 
     @Test
     void 용량_조회가_실패해도_스냅샷은_만들어진다() {
         JdbcTemplate jdbc = mock(JdbcTemplate.class);
-        // Postgres가 아니면 pg_database_size 함수가 없어 예외가 난다 (테스트의 H2가 이 경우다).
+        // Postgres가 아니면 pg_database_size 함수가 없어 예외 발생 (테스트의 H2가 이 경우)
         when(jdbc.queryForObject(anyString(), eq(Long.class))).thenThrow(new RuntimeException("no such function"));
 
         DbStats stats = snapshotWith(mock(DataSource.class), jdbc);

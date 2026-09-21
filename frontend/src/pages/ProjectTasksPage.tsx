@@ -19,18 +19,20 @@ const PRIORITY_COLOR: Record<Card['priority'], string> = {
   URGENT: 'bg-red-100 text-red-700',
 }
 
+// 상태는 관리자가 정하므로 이름이 아닌 순서로 색을 순환 사용
 const STATUS_COLOR = ['bg-slate-100 text-slate-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700']
 
+/** 프로젝트의 작업 목록(표). 행을 누르면 작업 상세 팝업 열림 */
 export function ProjectTasksPage() {
   const { workspaceId } = useParams()
   const wsId = Number(workspaceId)
   const { isGuest } = useAuth()
   const [addingTask, setAddingTask] = useState(false)
-  // 알림에서 넘어올 때 ?card=123 으로 특정 작업을 바로 연다.
+  // 알림에서 넘어올 때 ?card=123 으로 특정 작업을 바로 열기
   const [searchParams, setSearchParams] = useSearchParams()
   const cardParam = searchParams.get('card')
-  // 열려 있는 작업은 URL이 유일한 기준이다. 알림에서 들어오든 행을 누르든 같은 경로를 타고,
-  // 덤으로 특정 작업 화면을 그대로 공유·북마크할 수 있다.
+  // 열려 있는 작업은 URL이 유일한 기준. 알림에서 들어오든 행을 누르든 같은 경로를 타고,
+  // 덤으로 특정 작업 화면을 그대로 공유·북마크 가능
   const activeCardId = cardParam ? Number(cardParam) : null
 
   function setCardParam(cardId: number | null) {
@@ -46,9 +48,10 @@ export function ProjectTasksPage() {
   const { data: cards } = useQuery({ queryKey: ['cards', wsId], queryFn: () => listCards(wsId) })
   const { data: projects } = useQuery({ queryKey: ['workspaces'], queryFn: listWorkspaces })
   const { data: releases } = useQuery({ queryKey: ['releases', wsId], queryFn: () => listReleases(wsId) })
+  // 배포된 작업은 상태 옆에 버전 표시
   const releaseVersion = new Map(releases?.map((r) => [r.id, r.version]))
 
-  // 시작일 최신순. 시작일이 없는 작업은 뒤로 보낸다.
+  // 시작일 최신순. 시작일이 없는 작업은 뒤로
   const tasks = useMemo(() => {
     if (!cards) return []
     return [...cards].sort((a, b) => {

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** 계정 목록과 계정 생성. 프로젝트 멤버로 추가할 사용자를 여기서 만든다. */
+/** 계정 목록과 계정 생성. 공개 회원가입이 없어 계정은 여기서만 생성 */
 @RestController
 @RequestMapping("/admin/users")
 @RequiredArgsConstructor

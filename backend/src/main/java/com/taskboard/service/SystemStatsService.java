@@ -17,20 +17,15 @@ import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * 모니터링 화면의 자원 지표를 "서버(VM) 전체"와 "백엔드(컨테이너·JVM)"로 나눠 조회한다.
+ * 모니터링 화면의 자원 지표. "서버(VM) 전체"와 "백엔드(컨테이너·JVM)"를 나눠 조회.
  *
- * <p>둘을 따로 읽는 이유: 백엔드는 컨테이너 안에서 돌고 JVM은 컨테이너를 인식하므로,
- * MXBean이 주는 메모리·CPU는 <b>컨테이너 기준</b>이다. 운영에서 "서버 메모리"가 VM의 954MB가 아니라
- * 컨테이너 한도 450MB로 보였다. 그래서
+ * <p>컨테이너 안의 MXBean은 컨테이너 한도 기준 값을 주므로 출처를 구분.
  * <ul>
- *   <li>서버 전체 — 컨테이너 안에서도 호스트 값을 그대로 보여주는 {@code /proc/meminfo}, {@code /proc/stat}</li>
- *   <li>컨테이너 사용량 — cgroup v2의 {@code memory.current}, {@code memory.max}</li>
+ *   <li>서버 전체 — {@code /proc/meminfo}, {@code /proc/stat} (컨테이너 안에서도 호스트 값)</li>
+ *   <li>컨테이너 — cgroup v2 {@code memory.current}, {@code memory.max}</li>
  *   <li>JVM — MXBean</li>
  * </ul>
- * 에서 각각 읽는다.
- *
- * <p>{@code /proc}가 없는 환경(로컬 윈도우 개발)에서는 MXBean 값으로 대체한다 — 컨테이너 밖이면 그게 곧 호스트 값이다.
- * JDK 내장 기능만 쓰고 별도 라이브러리는 추가하지 않는다.
+ * {@code /proc}가 없는 환경(로컬 윈도우)에서는 MXBean 값으로 대체
  */
 @Service
 public class SystemStatsService {
@@ -44,25 +39,21 @@ public class SystemStatsService {
     private static final Path CGROUP_MEM_CURRENT = Path.of("/sys/fs/cgroup/memory.current");
     private static final Path CGROUP_MEM_MAX = Path.of("/sys/fs/cgroup/memory.max");
 
-    /** 첫 조회처럼 비교할 직전 샘플이 없을 때, 두 번 읽는 사이에 둘 간격. */
+    /** 첫 조회처럼 비교할 직전 샘플이 없을 때, 두 번 읽는 사이의 간격 */
     private static final long FIRST_SAMPLE_GAP_MS = 200;
 
-    /** {@code /proc/stat}의 CPU 사용률은 두 시점의 차이로만 구할 수 있어 직전 샘플을 들고 있는다. */
+    /** {@code /proc/stat}의 CPU 사용률은 두 시점의 차이로만 구할 수 있어 직전 샘플을 보관 */
     private final AtomicReference<CpuTimes> previousCpu = new AtomicReference<>();
 
-    /** DB 지표는 DataSource가 필요해 이 클래스가 다루지 않는다 — 컨트롤러가 DbStatsService의 값을 채워 넣는다. */
+    /** DB 지표는 DataSource가 필요해 여기서 다루지 않음 — 컨트롤러가 DbStatsService 값을 채움 */
     public SystemStatsResponse snapshot() {
         var os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         return new SystemStatsResponse(hostStats(os), backendStats(os), null);
     }
 
     /**
-     * MXBean의 CPU 사용률은 직전 호출과의 차이로 계산해서, 한 번도 읽은 적이 없으면 0이 나온다.
-     * 기동할 때 미리 한 번 읽어 기준을 만들어 둔다.
-     *
-     * <p>요청 안에서 두 번 읽는 방식은 쓰지 않았다. 윈도우의 시스템 CPU 카운터는 약 1초 단위로 갱신돼
-     * 짧은 간격으로는 계속 0이 나왔고("서버 CPU 0%, 프로세스 CPU 8%"처럼 전체가 부분보다 작게 보였다),
-     * 그렇다고 요청마다 1초를 기다리게 할 수는 없다.
+     * MXBean CPU 사용률은 직전 호출과의 차이라 첫 호출은 0. 기동 시 한 번 읽어 기준 생성
+     * (윈도우는 카운터가 약 1초 단위로 갱신돼, 요청 안에서 두 번 읽는 방식으로는 0만 나옴)
      */
     @PostConstruct
     void primeMxbeanCpu() {
@@ -100,7 +91,7 @@ public class SystemStatsService {
         CpuTimes previous = previousCpu.getAndSet(current);
         if (previous != null) return cpuPercent(previous, current);
 
-        // 첫 조회는 비교 대상이 없어 잠깐 기다렸다가 한 번 더 읽는다.
+        // 첫 조회는 비교 대상이 없어 잠깐 기다렸다가 한 번 더 조회
         if (!sleepQuietly(FIRST_SAMPLE_GAP_MS)) return 0;
         List<String> again = readLines(PROC_STAT);
         if (again == null) return 0;
@@ -115,7 +106,7 @@ public class SystemStatsService {
         MemoryUsage heap = ManagementFactory.getMemoryMXBean().getHeapMemoryUsage();
         Long containerUsed = readLong(CGROUP_MEM_CURRENT);
         Long containerLimit = parseCgroupLimit(readFirstLine(CGROUP_MEM_MAX));
-        // 한도가 없으면 "컨테이너 메모리"라는 개념 자체가 성립하지 않으므로 둘 다 비운다.
+        // 한도가 없으면 "컨테이너 메모리"라는 개념이 성립하지 않으므로 둘 다 비움
         boolean limited = containerUsed != null && containerLimit != null;
 
         return new BackendStats(
@@ -136,8 +127,8 @@ public class SystemStatsService {
     }
 
     /**
-     * {@code cpu  user nice system idle iowait irq softirq steal ...} 한 줄을 읽는다.
-     * iowait도 CPU가 일을 하지 않은 시간이라 idle에 넣는다. guest 계열은 user에 이미 포함돼 있어 합산하지 않는다.
+     * {@code cpu  user nice system idle iowait irq softirq steal ...} 한 줄 파싱.
+     * iowait도 CPU가 일하지 않은 시간이라 idle에 포함. guest 계열은 user에 이미 포함돼 있어 합산하지 않음
      */
     static CpuTimes parseCpuLine(String line) {
         String[] f = line.trim().split("\\s+");
@@ -160,7 +151,7 @@ public class SystemStatsService {
         return Math.max(0, Math.min(100, percent));
     }
 
-    /** {@code cpu0}, {@code cpu1}… 줄 수. 맨 앞의 합계 줄 {@code cpu}는 세지 않는다. */
+    /** {@code cpu0}, {@code cpu1}… 줄 수. 맨 앞의 합계 줄 {@code cpu}는 제외 */
     static int countCores(List<String> procStat) {
         return (int) procStat.stream().filter(line -> line.matches("^cpu\\d+\\s.*")).count();
     }
@@ -176,7 +167,7 @@ public class SystemStatsService {
         return total != null && available != null ? new MemInfo(total, available) : null;
     }
 
-    /** cgroup v2의 {@code memory.max}. 한도가 없으면 {@code max}라고 적혀 있다. */
+    /** cgroup v2의 {@code memory.max}. 한도가 없으면 {@code max}로 기록됨 */
     static Long parseCgroupLimit(String raw) {
         if (raw == null || raw.isBlank() || raw.trim().equals("max")) return null;
         try {

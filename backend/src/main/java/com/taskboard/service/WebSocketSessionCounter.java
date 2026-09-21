@@ -7,6 +7,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
+/** 현재 WebSocket 연결 수. 모니터링 지표용 */
 @Service
 public class WebSocketSessionCounter {
 
@@ -19,6 +20,7 @@ public class WebSocketSessionCounter {
 
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
+        // CONNECT 전에 끊긴 세션도 DISCONNECT는 오므로 음수가 되지 않게 방지
         active.updateAndGet(count -> Math.max(0, count - 1));
     }
 

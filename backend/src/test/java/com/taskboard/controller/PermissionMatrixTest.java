@@ -29,8 +29,8 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 /**
- * 게스트 읽기 전용, 워크스페이스 멤버십, 관리자 전용 규칙이 실제 요청에서 지켜지는지 검증한다.
- * 권한은 화면이 아니라 서버에서 막혀야 하므로 REST 레벨에서 확인한다.
+ * 게스트 읽기 전용, 워크스페이스 멤버십, 관리자 전용 규칙이 실제 요청에서 지켜지는지 검증.
+ * 권한은 화면이 아니라 서버에서 막혀야 하므로 REST 레벨에서 확인
  */
 @SpringBootTest
 @AutoConfigureMockMvc
@@ -84,7 +84,7 @@ class PermissionMatrixTest {
         memberRepository.save(WorkspaceMember.builder()
                 .workspaceId(visibleWorkspaceId).userId(memberId).role(WorkspaceRole.OWNER).build());
 
-        // 게스트 공개로 지정했지만 멤버가 관리자뿐인 프로젝트 — 아직 남에게 보일 단계가 아니다.
+        // 게스트 공개로 지정했지만 멤버가 관리자뿐인 프로젝트 — 아직 공개할 단계가 아님
         adminOnlyWorkspaceId = createWorkspace("관리자만 있는 프로젝트", adminId, true);
         memberRepository.save(WorkspaceMember.builder()
                 .workspaceId(adminOnlyWorkspaceId).userId(adminId).role(WorkspaceRole.OWNER).build());
@@ -107,7 +107,7 @@ class PermissionMatrixTest {
 
     @Test
     void 게스트_목록에_관리자만_있는_프로젝트는_빠진다() throws Exception {
-        // 공개로 지정돼 있어도 관리자 혼자면 보이지 않는다.
+        // 공개로 지정돼 있어도 관리자 혼자면 비노출
         mockMvc.perform(auth(get("/workspaces"), guestToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$[?(@.name == '관리자만 있는 프로젝트')]").isEmpty());
@@ -115,7 +115,7 @@ class PermissionMatrixTest {
 
     @Test
     void 게스트는_관리자만_있는_프로젝트에_직접_들어갈_수_없다() throws Exception {
-        // 목록에서 감추는 것만으로는 부족하다 — 주소를 알면 들어가지므로 서버에서 막아야 한다.
+        // 목록에서 숨기는 것만으로는 부족 — 주소를 알면 들어가지므로 서버에서 차단 필요
         mockMvc.perform(auth(get("/workspaces/" + adminOnlyWorkspaceId + "/cards"), guestToken))
                 .andExpect(status().isForbidden());
     }
@@ -147,7 +147,7 @@ class PermissionMatrixTest {
 
     @Test
     void 멤버는_게스트_비공개_프로젝트도_자기_목록에서_본다() throws Exception {
-        // visible은 게스트 공개 여부일 뿐이라, 멤버에게는 영향을 주지 않아야 한다.
+        // visible은 게스트 공개 여부일 뿐이라, 멤버에게는 영향 없어야 함
         Long memberId = userRepository.findByUsername("member").orElseThrow().getId();
         memberRepository.save(WorkspaceMember.builder()
                 .workspaceId(hiddenWorkspaceId).userId(memberId).role(WorkspaceRole.MEMBER).build());
@@ -224,7 +224,7 @@ class PermissionMatrixTest {
 
     @Test
     void 관리자는_숨김_프로젝트를_포함해_전체를_조회한다() throws Exception {
-        // 공개 / 숨김 / 관리자만 있는 프로젝트 — 관리자 앱에서는 전부 보인다.
+        // 공개 / 숨김 / 관리자만 있는 프로젝트 — 관리자 앱에서는 전부 노출
         mockMvc.perform(auth(get("/admin/workspaces"), adminToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(3));
@@ -242,7 +242,7 @@ class PermissionMatrixTest {
 
     @Test
     void 토큰이_없으면_401을_돌려준다() throws Exception {
-        // 403이면 프론트가 "권한 없음"과 "토큰 만료"를 구분하지 못해 로그인 화면으로 보낼 수 없다.
+        // 403이면 프론트가 "권한 없음"과 "토큰 만료"를 구분하지 못해 로그인 화면으로 보낼 수 없음
         mockMvc.perform(get("/workspaces")).andExpect(status().isUnauthorized());
     }
 
@@ -258,7 +258,7 @@ class PermissionMatrixTest {
 
     @Test
     void 일반_사용자는_프로젝트를_만들_수_없다() throws Exception {
-        // 프로젝트 생성은 관리자 전용(POST /admin/workspaces)이다.
+        // 프로젝트 생성은 관리자 전용(POST /admin/workspaces)
         mockMvc.perform(auth(post("/workspaces"), memberToken)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"몰래 만든 프로젝트\"}"))
                 .andExpect(status().is4xxClientError());
@@ -266,13 +266,13 @@ class PermissionMatrixTest {
 
     @Test
     void 관리자는_자신이_만들지_않은_프로젝트의_멤버도_관리한다() throws Exception {
-        // 워크스페이스 역할이 아니라 시스템 ADMIN 기준이라, 멤버가 아닌 프로젝트도 관리할 수 있어야 한다.
+        // 워크스페이스 역할이 아니라 시스템 ADMIN 기준이라, 멤버가 아닌 프로젝트도 관리 가능해야 함
         mockMvc.perform(auth(post("/admin/workspaces/" + visibleWorkspaceId + "/members"), adminToken)
                         .contentType(MediaType.APPLICATION_JSON)
                         .content("{\"username\":\"outsider\",\"role\":\"MEMBER\"}"))
                 .andExpect(status().isCreated());
 
-        // 멤버로 추가되면 그 사용자의 프로젝트 목록에 나타난다.
+        // 멤버로 추가되면 그 사용자의 프로젝트 목록에 노출
         mockMvc.perform(auth(get("/workspaces"), outsiderToken))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.length()").value(1))
@@ -304,7 +304,7 @@ class PermissionMatrixTest {
 
     @Test
     void 게스트의_조회는_데이터를_만들지_않는다() throws Exception {
-        // 전역 상태/타입 초기화가 조회 안에 있으면 게스트의 GET이 INSERT를 유발한다.
+        // 전역 상태/타입 초기화가 조회 안에 있으면 게스트의 GET이 INSERT를 유발
         statusRepository.deleteAll();
 
         mockMvc.perform(auth(get("/statuses"), guestToken))

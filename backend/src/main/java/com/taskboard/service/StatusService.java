@@ -11,6 +11,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** 작업 상태(칸반 컬럼) 관리. 전역 설정이라 모든 프로젝트에 공통 적용 */
 @Service
 @RequiredArgsConstructor
 public class StatusService {
@@ -25,6 +26,7 @@ public class StatusService {
 
     @Transactional
     public StatusResponse create(StatusRequest request) {
+        // 새 상태는 맨 오른쪽 컬럼으로 추가
         int order = statusRepository.findAllByOrderByOrderAsc().size();
         Status status = Status.builder().name(request.name()).order(order).build();
         statusRepository.save(status);
@@ -38,6 +40,7 @@ public class StatusService {
         return toResponse(status);
     }
 
+    /** 작업이 남아 있으면 삭제 불가 — 작업이 갈 곳 없는 상태가 됨 */
     @Transactional
     public void delete(Long statusId) {
         getStatus(statusId);

@@ -9,13 +9,14 @@ import type { Card, Workspace } from '../api/types'
 import { AssigneeSelect, DateField, LabeledField, PrioritySelect } from './fields'
 import { Modal } from './Modal'
 
+/** 새 작업 만들기. 사이드바의 + 버튼에서 열고, 생성 후 해당 프로젝트로 이동 */
 export function NewTaskModal({
   projects,
   defaultWorkspaceId,
   onClose,
 }: {
   projects: Workspace[]
-  /** 프로젝트 안에서 열었다면 그 프로젝트를 미리 골라둔다. */
+  /** 프로젝트 안에서 열었다면 그 프로젝트를 미리 선택 */
   defaultWorkspaceId?: number
   onClose: () => void
 }) {
@@ -39,6 +40,7 @@ export function NewTaskModal({
     enabled: !!workspaceId,
   })
 
+  // 고르지 않았으면 첫 번째 상태·유형을 기본값으로 사용
   const selectedStatusId = statusId || statuses?.[0]?.id || ''
   const selectedType = type || cardTypes?.[0]?.name || ''
 
@@ -96,7 +98,7 @@ export function NewTaskModal({
               value={workspaceId}
               onChange={(e) => {
                 setWorkspaceId(Number(e.target.value))
-                setAssigneeId(null)
+                setAssigneeId(null) // 담당자는 프로젝트 멤버 중에서만 선택 가능
               }}
               className="block w-40 rounded border px-3 py-2 text-sm"
             >

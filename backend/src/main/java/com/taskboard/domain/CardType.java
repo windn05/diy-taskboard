@@ -3,6 +3,7 @@ package com.taskboard.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+/** 작업 유형(Task/Bug/Story 등). 관리자가 편집하는 전역 설정 */
 @Entity
 @Table(name = "card_types")
 @Getter

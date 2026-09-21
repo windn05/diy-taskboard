@@ -19,8 +19,8 @@ import java.time.LocalDate;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 회귀 테스트: 부분 수정에서 "값을 전달하지 않음"과 "null로 지움"은 다르게 동작해야 한다.
- * 예전에는 둘 다 무시해서, 한 번 지정한 담당자와 날짜를 화면에서 되돌릴 수 없었다.
+ * 회귀 테스트: 부분 수정에서 "값을 전달하지 않음"과 "null로 지움"은 다르게 동작해야 함.
+ * 예전에는 둘 다 무시해서, 한 번 지정한 담당자와 날짜를 화면에서 되돌릴 수 없었음
  */
 @SpringBootTest
 @ActiveProfiles("test")

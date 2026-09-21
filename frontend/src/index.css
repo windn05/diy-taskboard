@@ -1,10 +1,10 @@
 @import "tailwindcss";
 
 /*
- * Tailwind v4는 색을 적지 않은 border를 currentColor로 그린다 (v3은 gray-200이었다).
+ * Tailwind v4는 색을 적지 않은 border를 currentColor로 그림 (v3은 gray-200).
  * 그대로 두면 `border` 한 단어가 놓인 곳의 글자색을 따라가, 패널은 검정·헤더는 회색으로
- * 제각각 나온다. 기본값을 되돌려 색을 적지 않은 테두리는 어디서나 같은 연회색이 되게 한다.
- * 색을 명시한 border-* 유틸리티는 그대로 이긴다.
+ * 제각각 표시됨. 기본값을 되돌려 색을 적지 않은 테두리는 어디서나 같은 연회색으로 통일.
+ * 색을 명시한 border-* 유틸리티가 우선
  */
 @layer base {
   *,

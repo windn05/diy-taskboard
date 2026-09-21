@@ -13,6 +13,10 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import java.security.Principal;
 
+/**
+ * STOMP 구독/해제/연결 종료 이벤트를 접속자 현황(PresenceService)에 반영.
+ * 프로젝트 토픽 구독은 입장, 해제·끊김은 퇴장으로 처리
+ */
 @Component
 @RequiredArgsConstructor
 public class PresenceEventListener {
@@ -34,6 +38,7 @@ public class PresenceEventListener {
         presenceService.leave(accessor.getSessionId(), accessor.getSubscriptionId());
     }
 
+    /** 탭을 닫는 등 UNSUBSCRIBE 없이 끊긴 경우. 세션에 딸린 구독을 한꺼번에 정리 */
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
         presenceService.disconnect(event.getSessionId());

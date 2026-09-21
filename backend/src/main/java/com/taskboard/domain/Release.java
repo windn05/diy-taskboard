@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/** 프로젝트별 배포(릴리즈). 버전은 프로젝트 안에서만 유일하다. */
+/** 프로젝트별 배포(릴리즈). 버전은 프로젝트 안에서만 유일 */
 @Entity
 @Table(name = "releases",
         uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "version"}),

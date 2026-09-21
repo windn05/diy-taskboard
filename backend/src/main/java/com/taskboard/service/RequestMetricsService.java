@@ -14,7 +14,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
-/** 최근 WINDOW_MINUTES 분의 요청 지표를 분 단위 버킷으로 메모리에 집계한다. 단일 서버 전제. */
+/** 최근 WINDOW_MINUTES 분의 요청 지표를 분 단위 버킷으로 메모리에 집계. 단일 서버 전제 */
 @Service
 public class RequestMetricsService {
 
@@ -40,6 +40,7 @@ public class RequestMetricsService {
         bucket.requests.increment();
         bucket.totalDurationMs.add(durationMs);
         if (status >= 400) bucket.errors.increment();
+        // 별도 스케줄러 없이 기록할 때마다 오래된 버킷 정리
         buckets.keySet().removeIf(key -> key < minute - WINDOW_MINUTES);
     }
 
@@ -50,6 +51,7 @@ public class RequestMetricsService {
         long totalErrors = 0;
         long totalDuration = 0;
 
+        // 요청이 없던 분도 0으로 채워 차트의 x축이 끊기지 않게 함
         for (long minute = now - WINDOW_MINUTES + 1; minute <= now; minute++) {
             Bucket bucket = buckets.get(minute);
             long requests = bucket != null ? bucket.requests.sum() : 0;
@@ -69,6 +71,7 @@ public class RequestMetricsService {
         return count == 0 ? 0 : Math.round((double) total / count * 10) / 10.0;
     }
 
+    /** epoch 기준 분 번호. 버킷 키로 사용 */
     private long currentMinute() {
         return Instant.now().getEpochSecond() / 60;
     }

@@ -3,6 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminCreateWorkspace, adminDeleteWorkspace, adminListWorkspaces, adminUpdateWorkspace } from '../../api/admin'
 import { WorkspaceMembersPanel } from './WorkspaceMembersPanel'
 
+/** 전체 프로젝트 관리: 생성·이름 변경·게스트 공개·멤버 관리·삭제 */
 export function AdminProjectsTab() {
   const queryClient = useQueryClient()
   const [newProjectName, setNewProjectName] = useState('')
@@ -10,6 +11,7 @@ export function AdminProjectsTab() {
 
   const { data: projects } = useQuery({ queryKey: ['admin-workspaces'], queryFn: adminListWorkspaces })
 
+  // 관리자 목록과 사이드바의 프로젝트 목록을 함께 갱신
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['admin-workspaces'] })
     queryClient.invalidateQueries({ queryKey: ['workspaces'] })

@@ -141,7 +141,7 @@ class ReleaseServiceTest {
         releaseService.delete(USER_ID, release.id());
 
         assertThat(releaseService.candidates(USER, workspaceId, null)).hasSize(2);
-        // 상태까지 되돌리지는 않는다.
+        // 상태까지 되돌리지는 않음
         assertThat(cardRepository.findById(cardA).orElseThrow().getStatusId()).isEqualTo(releasedStatusId);
     }
 

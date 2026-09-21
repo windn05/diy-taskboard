@@ -10,24 +10,20 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
- * 로그인 실패를 아이디별로 세어 일정 횟수를 넘으면 잠시 막는다.
+ * 아이디별 로그인 실패 횟수를 세어, 한도를 넘으면 잠시 잠금 (무차별 대입 방지).
  *
- * <p>IP가 아니라 아이디를 기준으로 삼은 이유: 요청이 Caddy를 거쳐 오므로 실제 클라이언트 IP를
- * 알려면 X-Forwarded-For를 신뢰하도록 설정해야 하는데, 그 신뢰 자체가 새로운 가정이 된다.
- * 막으려는 공격이 "특정 계정의 비밀번호 맞히기"라 아이디 기준으로도 목적을 달성한다.
- *
- * <p>대신 남의 아이디를 일부러 잠글 수 있다는 트레이드오프가 있어, 잠금은 짧게만 건다.
- *
- * <p>상태를 메모리에만 두므로 재기동하면 초기화된다. 인스턴스가 하나인 현재 구성에서는 충분하다.
+ * <p>IP 기준은 프록시(Caddy) 뒤라 X-Forwarded-For 신뢰 설정이 필요해 미사용.
+ * 아이디 기준은 남의 계정을 일부러 잠글 수 있으므로 잠금 시간을 짧게 설정.
+ * 메모리에만 저장하므로 재기동하면 초기화(단일 인스턴스 전제)
  */
 @Service
 public class LoginAttemptService {
 
     private static final int MAX_FAILURES = 5;
     private static final Duration LOCK_DURATION = Duration.ofMinutes(15);
-    /** 실패가 이 시간 동안 없으면 카운트를 처음부터 다시 센다. */
+    /** 이 시간 동안 실패가 없으면 카운트 초기화 */
     private static final Duration FAILURE_WINDOW = Duration.ofMinutes(15);
-    /** 존재하지 않는 아이디로 무한히 시도해 맵을 부풀리는 것을 막는 상한. */
+    /** 존재하지 않는 아이디로 무한히 시도해 맵을 부풀리는 것을 막는 상한 */
     private static final int MAX_TRACKED = 10_000;
 
     private final Map<String, Failures> failuresByUsername = new ConcurrentHashMap<>();
@@ -54,7 +50,7 @@ public class LoginAttemptService {
         failuresByUsername.remove(key(username));
     }
 
-    /** Admin과 admin을 따로 세면 잠금을 우회할 수 있다. */
+    /** Admin과 admin을 따로 세면 잠금 우회 가능 */
     private String key(String username) {
         return username == null ? "" : username.toLowerCase(Locale.ROOT);
     }

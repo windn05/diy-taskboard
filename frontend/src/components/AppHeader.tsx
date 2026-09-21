@@ -8,13 +8,13 @@ import { ChevronDownIcon } from './icons'
 import { PresenceBar } from './PresenceBar'
 import type { PresenceUser } from '../api/types'
 
-/** 모든 앱이 공유하는 상단 헤더. 앱 전환은 오직 여기 런처로만 한다. */
+/** 모든 앱이 공유하는 상단 헤더. 앱 전환은 이 런처로만 가능 */
 export function AppHeader({
   currentApp,
   presentUsers,
 }: {
   currentApp: AppKey
-  /** 프로젝트 화면에서만 넘어온다. 관리자 앱에는 접속자 개념이 없다. */
+  /** 프로젝트 화면에서만 전달. 관리자 앱에는 접속자 개념 없음 */
   presentUsers?: PresenceUser[]
 }) {
   const { user, isGuest, logout } = useAuth()
@@ -86,10 +86,10 @@ export function AppHeader({
         <NotificationBell />
         <span className="text-slate-600">{user?.username}</span>
         {isGuest ? (
-          // 흰 배경이 아니라 slate-100 칩 위에 얹히므로 한 단계 더 진하게 가야 4.5:1을 넘는다.
+          // 흰 배경이 아니라 slate-100 칩 위에 얹히므로 한 단계 더 진해야 4.5:1 대비 충족
           <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">게스트 · 읽기 전용</span>
         ) : (
-          // 게스트는 저장되는 계정이 아니라 바꿀 비밀번호가 없다.
+          // 게스트는 저장되는 계정이 아니라 바꿀 비밀번호 없음
           <button
             onClick={() => setChangingPassword(true)}
             className="text-xs text-slate-500 hover:text-slate-700"

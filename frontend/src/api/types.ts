@@ -1,7 +1,9 @@
+// 백엔드 DTO와 1:1로 맞춘 응답 타입. 날짜는 ISO 문자열(yyyy-MM-dd / yyyy-MM-ddTHH:mm:ss)
 export type User = { id: number; username: string; name: string; role: string }
 
 export type Tokens = { accessToken: string; refreshToken: string }
 
+/** myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트는 GUEST */
 export type Workspace = { id: number; name: string; ownerId: number; myRole: string }
 
 export type AdminWorkspace = { id: number; name: string; ownerId: number; visible: boolean }
@@ -26,6 +28,7 @@ export type Card = {
   labels: string[]
   startDate: string | null
   dueDate: string | null
+  /** 값이 있으면 배포된(완료된) 작업 */
   releaseId: number | null
   commentCount: number
   createdAt: string
@@ -63,6 +66,7 @@ export type RecentRelease = {
   cardCount: number
 }
 
+/** 홈 달력의 막대. 시작일·마감일 중 하나만 있으면 하루짜리로 표시 */
 export type CalendarTask = {
   cardId: number
   workspaceId: number
@@ -73,7 +77,7 @@ export type CalendarTask = {
   dueDate: string | null
 }
 
-/** 최근 등록된 작업. 마감이 임박한 일이 없을 때도 홈이 비어 보이지 않게 하는 자리다. */
+/** 최근 등록된 작업. 마감 임박 작업이 없을 때도 홈이 비어 보이지 않게 하는 자리 */
 export type RecentCard = {
   cardId: number
   workspaceId: number
@@ -81,11 +85,11 @@ export type RecentCard = {
   title: string
   statusName: string
   priority: CardPriority
-  createdDate: string | null
+  createdAt: string | null
 }
 
 export type Dashboard = {
-  /** 담당자로 지정된 작업. 담당자를 쓰지 않는 동안에는 비어 있고, 그때는 화면에서 패널째 숨긴다. */
+  /** 담당자로 지정된 작업. 담당자를 쓰지 않는 동안에는 비어 있고, 그때는 화면에서 패널째 숨김 */
   myTasks: MyTask[]
   dueSoon: MyTask[]
   recentCards: RecentCard[]
@@ -166,8 +170,8 @@ export type BackendStats = {
 }
 
 /**
- * DB. 풀이 HikariCP가 아니거나 Postgres가 아닌 환경에서는 해당 항목이 null로 온다.
- * poolWaiting이 0보다 크면 커넥션을 못 얻어 대기 중인 요청이 있다는 뜻이다.
+ * DB. 풀이 HikariCP가 아니거나 Postgres가 아닌 환경에서는 해당 항목이 null.
+ * poolWaiting이 0보다 크면 커넥션을 못 얻어 대기 중인 요청이 있다는 의미
  */
 export type DbStats = {
   poolActive: number | null

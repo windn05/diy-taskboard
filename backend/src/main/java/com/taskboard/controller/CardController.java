@@ -13,6 +13,10 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/**
+ * 작업(카드)과 댓글. 프로젝트 멤버 여부 등 권한 검사는 서비스에서 처리.
+ * 변경 사항은 커밋 후 WebSocket으로 같은 프로젝트 접속자에게 전파
+ */
 @RestController
 @RequiredArgsConstructor
 public class CardController {
@@ -32,6 +36,7 @@ public class CardController {
         return cardService.create(user.getId(), workspaceId, request);
     }
 
+    /** 부분 수정. 보내지 않은 필드는 유지 (담당자·날짜는 null로 비우기 가능) */
     @PatchMapping("/cards/{cardId}")
     public CardResponse update(@AuthenticationPrincipal CurrentUser user, @PathVariable Long cardId,
                                 @RequestBody UpdateCardRequest request) {

@@ -1,3 +1,4 @@
+// 관리자 전용 API (/admin/**). 프로젝트·멤버·계정 관리
 import { api } from './client'
 import type { AdminWorkspace, Member, User, Workspace } from './types'
 

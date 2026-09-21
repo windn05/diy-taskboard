@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** 개인 일정. 조회·삭제 모두 본인 것만 대상 */
 @Service
 @RequiredArgsConstructor
 public class PersonalScheduleService {

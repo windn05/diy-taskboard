@@ -9,6 +9,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.util.List;
 
+/** 인증된 요청의 사용자. 컨트롤러에서 {@code @AuthenticationPrincipal}로 주입 */
 @Getter
 @AllArgsConstructor
 public class CurrentUser {

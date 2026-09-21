@@ -2,15 +2,15 @@ import { useEffect, type ReactNode } from 'react'
 import { CloseIcon } from './icons'
 
 /**
- * 팝업 껍데기. 머리·본문·바닥을 나눠 **본문만 스크롤**되게 한다.
- * 예전에는 전체가 한 덩어리로 스크롤돼서 댓글이 쌓이면 입력 필드가 위로 사라졌다.
+ * 팝업 껍데기. 머리·본문·바닥을 나눠 **본문만 스크롤**.
+ * 전체가 한 덩어리로 스크롤되면 댓글이 쌓일 때 입력 필드가 위로 사라짐
  */
 export function Modal({
   title,
   onClose,
   footer,
   width = 'max-w-2xl',
-  /** 입력 중 실수로 바깥을 클릭/Esc 눌러서 날아가면 안 되는 폼(예: 새 작업 추가)은 false로 끈다. */
+  /** 입력 중 실수로 바깥 클릭/Esc로 닫히면 안 되는 폼(예: 새 작업 추가)은 false */
   dismissible = true,
   children,
 }: {
@@ -58,7 +58,7 @@ export function Modal({
   )
 }
 
-/** 즉시 저장되는 화면에서 "지금 저장됐는지"를 알려준다. */
+/** 즉시 저장되는 화면에서 "지금 저장됐는지" 표시 */
 export function SaveIndicator({ saving, saved }: { saving: boolean; saved: boolean }) {
   if (saving) return <span className="text-xs text-slate-500">저장 중…</span>
   if (saved) return <span className="text-xs text-emerald-600">저장됨</span>

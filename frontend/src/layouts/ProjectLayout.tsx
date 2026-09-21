@@ -2,7 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { NavLink, Outlet, useParams } from 'react-router-dom'
 import { listWorkspaces } from '../api/workspaces'
 
-/** 프로젝트 안에서 작업 목록과 배포를 오가는 탭. */
+/** 프로젝트 안에서 작업 목록과 배포를 오가는 탭 */
 export function ProjectLayout() {
   const { workspaceId } = useParams()
   const { data: projects } = useQuery({ queryKey: ['workspaces'], queryFn: listWorkspaces })

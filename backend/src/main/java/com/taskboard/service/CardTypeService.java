@@ -10,6 +10,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/**
+ * 작업 유형 관리. 작업은 유형을 이름으로 저장하므로(Card.type)
+ * 유형 이름을 바꾸거나 지워도 기존 작업의 값은 그대로 유지
+ */
 @Service
 @RequiredArgsConstructor
 public class CardTypeService {

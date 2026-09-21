@@ -3,6 +3,7 @@ package com.taskboard.domain;
 import jakarta.persistence.*;
 import lombok.*;
 
+/** 프로젝트 멤버십. 사용자는 멤버인 프로젝트만 조회·편집 가능 */
 @Entity
 @Table(name = "workspace_members", uniqueConstraints = @UniqueConstraint(columnNames = {"workspace_id", "user_id"}))
 @Getter

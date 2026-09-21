@@ -12,17 +12,17 @@ import { Modal } from './Modal'
 import { PlusIcon } from './icons'
 
 const WEEKDAYS = ['일', '월', '화', '수', '목', '금', '토']
-/** 하루 칸에 기본으로 보여줄 바 개수. 넘치면 "+N건 더보기"로 그 주를 펼친다. */
-// 홈을 한 화면에 담기 위한 밀도. 한 주가 높을수록 6주짜리 달이 화면 밖으로 밀린다.
-// 넘치는 일정은 "+N"으로 접고, 그 주를 누르면 펼쳐진다.
+/** 하루 칸에 기본으로 보여줄 막대 개수. 넘치면 "+N"으로 접고, 누르면 그 주를 펼침 */
 const MAX_VISIBLE_PER_DAY = 4
+/** 막대 한 줄 높이(px) */
 const LANE_HEIGHT = 18
 
 type ColorSet = { bg: string; text: string; border: string }
 
-/** 프로젝트마다 고정된 색을 준다 — workspaceId로 나눠서 매번 같은 색이 나오게.
- * 진한 배경에 흰 글씨는 여러 줄 쌓이면 눈에 부담스러워서, 옅은 배경 + 진한 글자 + 왼쪽 색띠로 바꿨다.
- * 배경이 -50이면 흰 페이지와 거의 구분이 안 돼서 -100으로, 글자는 -900으로 더 진하게 잡았다. */
+/**
+ * 프로젝트별 고정 색 (workspaceId로 순환). 옅은 배경 + 진한 글자 + 왼쪽 색띠 조합 —
+ * 진한 배경에 흰 글씨는 여러 줄 쌓이면 눈이 피로함
+ */
 const PROJECT_COLORS: ColorSet[] = [
   { bg: 'bg-blue-100', text: 'text-blue-900', border: 'border-blue-600' },
   { bg: 'bg-emerald-100', text: 'text-emerald-900', border: 'border-emerald-600' },
@@ -31,8 +31,10 @@ const PROJECT_COLORS: ColorSet[] = [
   { bg: 'bg-amber-100', text: 'text-amber-900', border: 'border-amber-600' },
   { bg: 'bg-violet-100', text: 'text-violet-900', border: 'border-violet-600' },
 ]
+/** 개인 일정은 프로젝트와 구분되는 단일 색 */
 const SCHEDULE_COLOR: ColorSet = { bg: 'bg-fuchsia-100', text: 'text-fuchsia-900', border: 'border-fuchsia-600' }
 
+/** 달력에 그릴 막대 하나. 작업과 개인 일정을 같은 모양으로 처리 */
 type Bar = {
   key: string
   title: string
@@ -60,6 +62,7 @@ function dayDiff(a: string, b: string) {
   return Math.round((parseISO(a).getTime() - parseISO(b).getTime()) / 86400000)
 }
 
+/** 해당 월의 달력 격자. 항상 6주(일~토)이고, 빈칸은 앞뒤 달 날짜로 채움 */
 function buildWeeks(year: number, month: number): string[][] {
   const first = new Date(year, month, 1)
   const gridStart = new Date(year, month, 1 - first.getDay())
@@ -76,7 +79,7 @@ function buildWeeks(year: number, month: number): string[][] {
   return weeks
 }
 
-/** 하루짜리든 여러 날짜짜리든, 겹치지 않게 한 주 안에서 lane에 배치한다. 전부 바 형태로 꽉 차게 그린다. */
+/** 하루짜리든 여러 날짜짜리든, 겹치지 않게 한 주 안에서 lane에 배치. 전부 막대 형태로 꽉 차게 표시 */
 function placeBars(week: string[], bars: Bar[]) {
   const weekStart = week[0]
   const weekEnd = week[6]
@@ -104,6 +107,7 @@ function placeBars(week: string[], bars: Bar[]) {
   })
 }
 
+/** 개인 일정 추가 폼 */
 function NewScheduleForm({ onClose }: { onClose: () => void }) {
   const queryClient = useQueryClient()
   const today = toISO(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
@@ -183,6 +187,7 @@ function NewScheduleForm({ onClose }: { onClose: () => void }) {
   )
 }
 
+/** 달력의 한 주. 날짜 칸 위에 막대를 lane 단위로 겹치지 않게 배치 */
 function WeekRow({
   week,
   bars,
@@ -199,15 +204,15 @@ function WeekRow({
   const laneLimit = expanded ? Infinity : MAX_VISIBLE_PER_DAY
   const visible = placed.filter((p) => p.lane < laneLimit)
   const hiddenBars = placed.filter((p) => p.lane >= laneLimit)
-  // 실제로 쓰인 줄 수. 일정이 적은 주까지 최대 높이로 잡으면 달력 아래가 빈 띠처럼 남는다.
+  // 실제로 쓰인 줄 수. 일정이 적은 주까지 최대 높이로 잡으면 달력 아래가 빈 띠처럼 남음
   const usedLanes = Math.max(0, ...placed.map((p) => p.lane + 1))
   const laneCount = expanded ? usedLanes : Math.min(usedLanes, MAX_VISIBLE_PER_DAY)
   const hiddenBarsAt = (dayIdx: number) => hiddenBars.filter((p) => p.startIdx <= dayIdx && p.endIdx >= dayIdx).length
 
   return (
-    // 남는 높이는 주들이 나눠 갖는다(달력 아래에 빈 공간이 남지 않게). 모자랄 때는 줄어들지 않고 스크롤한다.
+    // 남는 높이는 주들이 나눠 가짐(달력 아래 빈 공간 방지). 모자랄 때는 줄어들지 않고 스크롤
     <div className="relative flex-1 shrink-0 border-b last:border-0">
-      {/* 요일 칸 배경·세로 구분선. 위 세 개의 그리드(날짜/바/점) 뒤에 깔려서 한 주 높이 전체를 관통한다. */}
+      {/* 요일 칸 배경·세로 구분선. 위 세 개의 그리드(날짜/막대/점) 뒤에 깔려 한 주 높이 전체를 관통 */}
       <div className="pointer-events-none absolute inset-0 grid grid-cols-7">
         {week.map((dateIso, i) => (
           <div key={dateIso} className={`${i < 6 ? 'border-r' : ''} ${parseISO(dateIso).getMonth() !== monthIndex ? 'bg-slate-50' : ''}`} />
@@ -305,7 +310,7 @@ function WeekRow({
   )
 }
 
-/** 달력에서 작업 바를 클릭했을 때 그 자리에서 읽기 전용으로 미리보기만 띄운다 — 프로젝트 화면으로 이동시키지 않는다. */
+/** 달력에서 작업 막대를 클릭하면 그 자리에서 읽기 전용 미리보기만 표시 — 프로젝트 화면으로 이동하지 않음 */
 function CardPreviewModal({ workspaceId, cardId, onClose }: { workspaceId: number; cardId: number; onClose: () => void }) {
   const { data: cards } = useQuery({ queryKey: ['cards', workspaceId], queryFn: () => listCards(workspaceId) })
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
@@ -325,6 +330,7 @@ function CardPreviewModal({ workspaceId, cardId, onClose }: { workspaceId: numbe
   return <CardModal card={card} members={members ?? []} statuses={statuses} cardTypes={cardTypes ?? []} onClose={onClose} readOnly />
 }
 
+/** 홈 화면 월간 달력. 내가 볼 수 있는 프로젝트의 작업과 내 개인 일정을 함께 표시 */
 export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
   const queryClient = useQueryClient()
   const { isGuest } = useAuth()
@@ -376,7 +382,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
   }
 
   return (
-    // 부모가 준 높이를 채우고, 달이 길어 넘칠 때만 달력 안에서 스크롤한다(페이지는 스크롤되지 않게).
+    // 부모가 준 높이를 채우고, 달이 길어 넘칠 때만 달력 안에서 스크롤(페이지 스크롤 방지)
     <section className="flex h-full min-h-0 flex-col overflow-hidden rounded-lg border bg-white">
       <div className="flex shrink-0 items-center justify-between border-b px-4 py-2.5">
         <div className="flex items-center gap-2">
@@ -411,7 +417,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         {WEEKDAYS.map((d, i) => (
           <div
             key={d}
-            // 평일이 slate-500이라 주말도 같은 무게로 맞춘다. 400단계는 흰 배경에서 대비가 3:1도 안 된다.
+            // 평일이 slate-500이라 주말도 같은 무게로 통일. 400단계는 흰 배경에서 대비가 3:1 미만
             className={`py-1.5 ${i < 6 ? 'border-r' : ''} ${i === 0 ? 'text-red-600' : i === 6 ? 'text-blue-600' : 'text-slate-500'}`}
           >
             {d}

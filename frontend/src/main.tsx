@@ -6,6 +6,7 @@ import './index.css'
 import { App } from './App.tsx'
 import { AuthProvider } from './auth/AuthContext.tsx'
 
+// 서버 상태는 React Query, 로그인 상태는 AuthContext가 관리
 const queryClient = new QueryClient()
 
 createRoot(document.getElementById('root')!).render(

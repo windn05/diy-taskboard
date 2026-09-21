@@ -15,6 +15,7 @@ type PanelProps = {
   remove: (id: number) => Promise<unknown>
 }
 
+/** 전역 설정: 작업 상태(칸반 컬럼)와 작업 타입. 두 목록 모두 이름만 있어 같은 패널 사용 */
 export function AdminSettingsTab() {
   return (
     <div className="grid max-w-3xl grid-cols-2 gap-8 p-8">
@@ -40,7 +41,7 @@ export function AdminSettingsTab() {
   )
 }
 
-/** 이름만 가진 전역 목록(상태·타입)의 추가/이름변경/삭제 패널. */
+/** 이름만 가진 전역 목록(상태·타입)의 추가/이름변경/삭제 패널 */
 function NamedListPanel({ title, placeholder, queryKey, list, create, rename, remove }: PanelProps) {
   const queryClient = useQueryClient()
   const [newName, setNewName] = useState('')
@@ -51,7 +52,7 @@ function NamedListPanel({ title, placeholder, queryKey, list, create, rename, re
     queryClient.invalidateQueries({ queryKey: [queryKey] })
   }
 
-  // 삭제는 서버가 거절할 수 있다(예: 작업이 남아있는 상태). 조용히 실패하면 사용자가 이유를 알 수 없다.
+  // 삭제는 서버가 거절할 수 있음(예: 작업이 남아 있는 상태). 조용히 실패하면 사용자가 이유를 알 수 없음
   const showError = (error: Error) => alert(error.message)
 
   const createMutation = useMutation({

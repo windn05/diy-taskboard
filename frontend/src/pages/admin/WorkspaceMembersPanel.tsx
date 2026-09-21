@@ -12,7 +12,7 @@ const ROLE_LABEL: Record<string, string> = { OWNER: '소유자', ADMIN: '관리�
 
 /**
  * 프로젝트 멤버 추가/제거. 프로젝트 목록은 멤버십 기준으로 보이므로,
- * 여기서 추가해야 해당 사용자의 TaskBoard에 그 프로젝트가 나타난다.
+ * 여기서 추가해야 해당 사용자의 TaskBoard에 그 프로젝트가 노출
  */
 export function WorkspaceMembersPanel({ workspaceId }: { workspaceId: number }) {
   const queryClient = useQueryClient()
@@ -27,7 +27,7 @@ export function WorkspaceMembersPanel({ workspaceId }: { workspaceId: number }) 
 
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['admin-members', workspaceId] })
-    // 멤버십이 바뀌면 해당 사용자에게 보이는 프로젝트 목록도 달라진다.
+    // 멤버십이 바뀌면 해당 사용자에게 보이는 프로젝트 목록도 변경
     queryClient.invalidateQueries({ queryKey: ['workspaces'] })
   }
 

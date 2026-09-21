@@ -12,6 +12,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.security.SecureRandom;
 
+/** 로그인·토큰 발급과 계정 생성·비밀번호 변경 */
 @Service
 @RequiredArgsConstructor
 public class AuthService {
@@ -23,7 +24,7 @@ public class AuthService {
     private final JwtService jwtService;
     private final LoginAttemptService loginAttemptService;
 
-    /** 관리자만 호출한다(AdminUserController). 공개 회원가입 경로는 없다. */
+    /** 관리자만 호출(AdminUserController). 공개 회원가입 경로 없음 */
     @Transactional
     public UserResponse createUser(CreateUserRequest request) {
         if (userRepository.existsByUsername(request.username())) {
@@ -43,7 +44,7 @@ public class AuthService {
         loginAttemptService.checkNotLocked(request.username());
 
         User user = userRepository.findByUsername(request.username()).orElse(null);
-        // 아이디가 없을 때와 비밀번호가 틀렸을 때를 구분해서 알려주면 계정 존재 여부가 새어 나간다.
+        // 아이디 없음과 비밀번호 틀림을 구분해서 알려주면 계정 존재 여부가 노출됨
         if (user == null || !passwordEncoder.matches(request.password(), user.getPassword())) {
             loginAttemptService.recordFailure(request.username());
             throw new IllegalArgumentException("아이디 또는 비밀번호가 올바르지 않습니다.");
@@ -64,8 +65,8 @@ public class AuthService {
     }
 
     /**
-     * 게스트는 User 테이블에 저장하지 않고 매 요청마다 새 신원을 발급한다.
-     * id는 음수로 발급해 실제 사용자(AUTO_INCREMENT 양수)와 절대 겹치지 않게 한다.
+     * 게스트는 User 테이블에 저장하지 않고 요청마다 새 신원 발급.
+     * id는 음수로 발급해 실제 사용자(AUTO_INCREMENT 양수)와 겹치지 않게 함
      */
     public TokenResponse guestLogin() {
         long guestId = -(RANDOM.nextLong(1, Long.MAX_VALUE));
@@ -76,8 +77,9 @@ public class AuthService {
                 jwtService.generateRefreshToken(guestId, username, role));
     }
 
+    /** 게스트는 저장된 사용자가 없어 재발급 불가 — 만료되면 다시 둘러보기로 진입 */
     public TokenResponse refresh(String refreshToken) {
-        if (!jwtService.isValid(refreshToken)) {
+        if (!jwtService.isValid(refreshToken, JwtService.TokenType.REFRESH)) {
             throw new IllegalArgumentException("유효하지 않은 refresh token 입니다.");
         }
         Long userId = jwtService.extractUserId(refreshToken);
@@ -86,6 +88,7 @@ public class AuthService {
         return issueTokens(user);
     }
 
+    /** 비어 있으면 USER. GUEST는 거부 */
     private SystemRole parseRole(String role) {
         if (role == null || role.isBlank()) return SystemRole.USER;
         SystemRole parsed;

@@ -7,6 +7,7 @@ import { useNotifications } from '../hooks/useNotifications'
 import type { Notification } from '../api/types'
 import { BellIcon } from './icons'
 
+/** '3분 전' 같은 상대 시간 */
 function timeAgo(iso: string) {
   const diffMinutes = Math.floor((Date.now() - new Date(iso).getTime()) / 60000)
   if (diffMinutes < 1) return '방금'
@@ -15,6 +16,7 @@ function timeAgo(iso: string) {
   return `${Math.floor(diffMinutes / 1440)}일 전`
 }
 
+/** 헤더의 알림 종 아이콘과 드롭다운. 항목을 누르면 읽음 처리 후 해당 작업 열기 */
 export function NotificationBell() {
   const { user, isGuest } = useAuth()
   const queryClient = useQueryClient()
@@ -22,7 +24,7 @@ export function NotificationBell() {
   const [open, setOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
 
-  // 게스트는 담당자가 될 수 없어 받을 알림이 없다.
+  // 게스트는 담당자가 될 수 없어 받을 알림 없음
   const enabled = !!user && !isGuest
   const { notifications, unreadCount } = useNotifications(user?.userId, enabled)
 
@@ -45,7 +47,7 @@ export function NotificationBell() {
   function handleClick(notification: Notification) {
     setOpen(false)
     if (!notification.read) readMutation.mutate(notification.id)
-    // 알림이 가리키는 작업을 바로 열어준다.
+    // 알림이 가리키는 작업을 바로 열기
     navigate(`/projects/${notification.workspaceId}?card=${notification.cardId}`)
   }
 

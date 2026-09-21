@@ -44,7 +44,7 @@ class SystemStatsServiceTest {
         assertThat(SystemStatsService.countCores(procStat)).isEqualTo(2);
     }
 
-    /** 운영 서버 컨테이너 안에서 실제로 읽힌 값 — VM 전체(954MB)여야 하고 컨테이너 한도(450MB)가 아니어야 한다. */
+    /** 운영 서버 컨테이너 안에서 실제로 읽힌 값 — 컨테이너 한도(450MB)가 아닌 VM 전체(954MB)여야 함 */
     @Test
     void meminfo는_kB를_바이트로_읽는다() {
         var memInfo = SystemStatsService.parseMeminfo(List.of(
@@ -70,7 +70,7 @@ class SystemStatsServiceTest {
         assertThat(SystemStatsService.parseCgroupLimit(null)).isNull();
     }
 
-    /** 실행 환경에 /proc가 없든(윈도우) 있든(CI 리눅스) 조회 자체는 실패하지 않아야 한다. */
+    /** 실행 환경에 /proc가 없든(윈도우) 있든(CI 리눅스) 조회 자체는 실패하지 않아야 함 */
     @Test
     void 어느_환경에서든_스냅샷을_만든다() {
         var stats = new SystemStatsService().snapshot();

@@ -7,6 +7,7 @@ import java.util.List;
 
 public interface CardRepository extends JpaRepository<Card, Long> {
     List<Card> findByWorkspaceIdOrderByCreatedAtAsc(Long workspaceId);
+    /** 상태 삭제 전 사용 중인지 확인할 때 */
     List<Card> findByStatusId(Long statusId);
 
     /** 아직 어떤 배포에도 포함되지 않은 작업 — 다음 배포 후보 */

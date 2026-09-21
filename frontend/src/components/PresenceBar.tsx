@@ -9,6 +9,7 @@ const AVATAR_COLOR = [
   'bg-cyan-500',
 ]
 
+// 같은 사람은 항상 같은 색. 게스트 id는 음수라 abs 사용
 function colorFor(userId: number) {
   return AVATAR_COLOR[Math.abs(userId) % AVATAR_COLOR.length]
 }
@@ -17,6 +18,7 @@ function initial(username: string) {
   return username.startsWith('guest-') ? 'G' : username[0]?.toUpperCase() ?? '?'
 }
 
+/** 헤더의 접속자 아바타 목록. 게스트는 회색으로 구분 */
 export function PresenceBar({ users, meId }: { users: PresenceUser[]; meId?: number }) {
   if (users.length === 0) {
     return <span className="text-xs text-slate-500">접속자 없음</span>

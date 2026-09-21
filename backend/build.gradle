@@ -44,6 +44,8 @@ dependencies {
 
 tasks.named('test') {
     useJUnitPlatform()
+    // 운영과 같은 UTC 기준으로 테스트 (TaskboardApplication.main은 테스트에서 실행되지 않음)
+    systemProperty 'user.timezone', 'UTC'
 }
 
 // Boot 플러그인은 기본적으로 실행 가능한 jar와 -plain.jar를 함께 만든다.

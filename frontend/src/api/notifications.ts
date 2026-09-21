@@ -1,3 +1,4 @@
+// 본인 알림
 import { api } from './client'
 import type { NotificationList } from './types'
 

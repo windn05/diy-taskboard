@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.*;
 
+/** 작업 유형(Task/Bug 등) 관리. 전역 설정이라 관리자 전용. 조회는 CardTypeController */
 @RestController
 @RequestMapping("/admin/card-types")
 @RequiredArgsConstructor

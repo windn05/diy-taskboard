@@ -29,7 +29,7 @@ public class LogService {
     private static final Set<String> PERSISTED_LEVELS = Set.of("WARN", "ERROR");
 
     /**
-     * 로그를 저장·전송하는 과정에서 다시 로그가 발생하면 무한 재귀가 된다.
+     * 로그를 저장·전송하는 과정에서 다시 로그가 발생하면 무한 재귀.
      * (예: DB 저장 실패 → 에러 로그 → 다시 저장 시도)
      */
     private static final ThreadLocal<Boolean> HANDLING = new ThreadLocal<>();
@@ -53,18 +53,14 @@ public class LogService {
     }
 
     /**
-     * 보존 기간이 지난 영속 로그를 지운다. 메모리 버퍼는 {@link #addToBuffer}에서 이미 상한이 걸려 있지만
-     * DB 쪽은 상한이 없어, 두지 않으면 무한히 늘어난다. 조회는 어차피 최신 N건만 하므로 오래된 행은
-     * 보이지도 않으면서 디스크만 차지한다.
-     *
-     * <p>장애가 나면 요청마다 ERROR가 쌓여 유입이 급증하는데(스택트레이스 포함), 그때 디스크가 차면
-     * 원래 장애가 복구된 뒤에도 DB가 못 쓰게 되는 2차 장애가 된다. 트래픽이 적은 새벽에 하루 한 번 돈다.
+     * 보존 기간이 지난 DB 로그 삭제. 매일 새벽 4시 실행.
+     * 장애 때 ERROR가 폭증해 디스크를 채우면 DB까지 멈추는 2차 장애가 되므로 상한 필요
      */
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     @Transactional
     public void purgeOldLogs() {
         int deleted = repository.deleteLoggedBefore(LocalDateTime.now().minusDays(retentionDays));
-        // INFO는 DB에 영속되지 않으므로(PERSISTED_LEVELS) 이 로그가 다시 행을 만들지는 않는다.
+        // INFO는 DB에 영속되지 않으므로(PERSISTED_LEVELS) 이 로그가 다시 행을 만들지 않음
         if (deleted > 0) log.info("보존 기간({}일)이 지난 시스템 로그 {}건을 삭제했다.", retentionDays, deleted);
     }
 
@@ -78,13 +74,13 @@ public class LogService {
             }
             messagingTemplate.convertAndSend(LOG_TOPIC, entry);
         } catch (Exception e) {
-            // 로깅 실패가 애플리케이션을 멈추게 해선 안 된다. 여기서 다시 로그를 남기면 재귀가 된다.
+            // 로깅 실패로 애플리케이션이 멈추면 안 됨. 여기서 다시 로그를 남기면 재귀
         } finally {
             HANDLING.remove();
         }
     }
 
-    /** 메모리 버퍼의 최근 로그 (최신순). */
+    /** 메모리 버퍼의 최근 로그 (최신순) */
     public List<LogEntry> recent(String minLevel, int limit) {
         List<LogEntry> snapshot;
         synchronized (buffer) {
@@ -97,7 +93,7 @@ public class LogService {
                 .toList();
     }
 
-    /** DB에 영속된 로그 (WARN/ERROR만 저장되므로 그 범위 안에서 조회된다). */
+    /** DB에 영속된 로그 (WARN/ERROR만 저장되므로 그 범위 안에서 조회) */
     public List<LogEntry> history(String minLevel, int limit) {
         List<String> levels = PERSISTED_LEVELS.stream().filter(level -> meetsLevel(level, minLevel)).toList();
         if (levels.isEmpty()) return List.of();

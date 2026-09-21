@@ -16,6 +16,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/**
+ * 배포(버전) 관리. 작업을 배포에 묶으면 releaseId가 채워지고, 이후로는 완료된 작업으로 취급.
+ * 한 작업은 한 배포에만 속할 수 있음
+ */
 @Service
 @RequiredArgsConstructor
 public class ReleaseService {
@@ -31,7 +35,7 @@ public class ReleaseService {
         List<Release> releases = releaseRepository.findByWorkspaceIdOrderByIdDesc(workspaceId);
         if (releases.isEmpty()) return List.of();
 
-        // 배포별 작업을 한 번에 모아 온다 (배포마다 조회하면 N+1).
+        // 배포별 작업을 한 번에 조회 (배포마다 조회하면 N+1)
         Map<Long, List<ReleasedCard>> cardsByRelease = cardRepository
                 .findByReleaseIdInOrderByCreatedAtAsc(releases.stream().map(Release::getId).toList()).stream()
                 .collect(Collectors.groupingBy(Card::getReleaseId,
@@ -42,7 +46,7 @@ public class ReleaseService {
                 .toList();
     }
 
-    /** 아직 배포되지 않은 작업. 상태 필터는 화면에서 넘겨준다. */
+    /** 아직 배포되지 않은 작업. 상태 필터는 화면에서 전달 */
     @Transactional(readOnly = true)
     public List<CardResponse> candidates(CurrentUser user, Long workspaceId, Long statusId) {
         workspaceService.requireReadAccess(user, workspaceId);
@@ -52,6 +56,7 @@ public class ReleaseService {
                 .toList();
     }
 
+    /** 지정한 작업을 새 배포에 연결. completedStatusId가 있으면 작업 상태도 함께 변경 */
     @Transactional
     public ReleaseResponse create(Long userId, Long workspaceId, CreateReleaseRequest request) {
         workspaceService.requireMember(userId, workspaceId);
@@ -59,6 +64,7 @@ public class ReleaseService {
             throw new IllegalArgumentException("이미 존재하는 버전입니다.");
         });
 
+        // 전부 이 프로젝트의 미배포 작업이어야 함
         List<Card> cards = cardRepository.findAllById(request.cardIds());
         if (cards.size() != request.cardIds().size()) {
             throw new EntityNotFoundException("존재하지 않는 작업이 포함되어 있습니다.");
@@ -86,6 +92,7 @@ public class ReleaseService {
         return toResponse(release, cards.stream().map(this::toReleasedCard).toList());
     }
 
+    /** 버전·패치노트 수정과 작업 추가. 이미 묶인 작업을 빼는 기능은 없음 */
     @Transactional
     public ReleaseResponse update(Long userId, Long releaseId, UpdateReleaseRequest request) {
         Release release = getRelease(releaseId);
@@ -127,7 +134,7 @@ public class ReleaseService {
         return toResponse(release, cards);
     }
 
-    /** 배포를 취소하면 포함됐던 작업은 다시 미배포 상태가 된다. 작업 상태까지 되돌리지는 않는다. */
+    /** 배포를 취소하면 포함됐던 작업은 미배포 상태로 복귀. 작업 상태는 되돌리지 않음 */
     @Transactional
     public void delete(Long userId, Long releaseId) {
         Release release = getRelease(releaseId);

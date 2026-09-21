@@ -8,6 +8,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+/** 본인 알림 조회·읽음 처리. 새 알림은 개인 WebSocket 채널로도 푸시 */
 @RestController
 @RequestMapping("/notifications")
 @RequiredArgsConstructor

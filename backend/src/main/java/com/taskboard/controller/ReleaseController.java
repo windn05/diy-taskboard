@@ -12,6 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** 배포(버전) 기록. 배포에 묶인 작업은 완료로 간주 */
 @RestController
 @RequiredArgsConstructor
 public class ReleaseController {
@@ -23,7 +24,7 @@ public class ReleaseController {
         return releaseService.list(user, workspaceId);
     }
 
-    /** 아직 배포되지 않은 작업 목록. statusId를 주면 그 상태만 추린다. */
+    /** 아직 배포되지 않은 작업 목록. statusId를 주면 해당 상태만 조회 */
     @GetMapping("/workspaces/{workspaceId}/releases/candidates")
     public List<CardResponse> candidates(@AuthenticationPrincipal CurrentUser user,
                                           @PathVariable Long workspaceId,
@@ -44,6 +45,7 @@ public class ReleaseController {
         return releaseService.update(user.getId(), releaseId, request);
     }
 
+    /** 묶여 있던 작업은 삭제되지 않고 미배포 상태로 복귀 */
     @DeleteMapping("/releases/{releaseId}")
     @ResponseStatus(HttpStatus.NO_CONTENT)
     public void delete(@AuthenticationPrincipal CurrentUser user, @PathVariable Long releaseId) {

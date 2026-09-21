@@ -2,6 +2,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Navigate } from 'react-router-dom'
 import { listWorkspaces } from '../api/workspaces'
 
+/** /projects 진입 시 첫 번째 프로젝트로 이동 */
 export function ProjectsIndexPage() {
   const { data: projects, isLoading } = useQuery({ queryKey: ['workspaces'], queryFn: listWorkspaces })
 

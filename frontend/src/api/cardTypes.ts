@@ -1,3 +1,4 @@
+// 작업 유형. 조회는 누구나, 변경은 관리자만
 import { api } from './client'
 import type { CardTypeDef } from './types'
 

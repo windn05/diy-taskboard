@@ -139,7 +139,7 @@ class NotificationServiceTest {
         comment(actorId, "확인 부탁드립니다");
         Long notificationId = notificationService.list(assigneeId).notifications().get(0).id();
 
-        // 수신자가 아닌 사람이 요청하면 찾지 못해야 한다.
+        // 수신자가 아닌 사람이 요청하면 조회되지 않아야 함
         org.junit.jupiter.api.Assertions.assertThrows(RuntimeException.class,
                 () -> notificationService.markRead(actorId, notificationId));
         assertThat(notificationService.list(assigneeId).unreadCount()).isEqualTo(1);

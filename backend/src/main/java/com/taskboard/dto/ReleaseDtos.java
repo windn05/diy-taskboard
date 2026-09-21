@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotEmpty;
 import java.time.LocalDateTime;
 import java.util.List;
 
+/** 배포 요청/응답 */
 public class ReleaseDtos {
 
     /** 배포에 포함된 작업의 요약 (패치노트 화면에 쓸 최소 정보) */
@@ -22,8 +23,8 @@ public class ReleaseDtos {
     }
 
     /**
-     * completedStatusId는 배포 후 작업을 옮길 상태. 화면에서 고른 값을 그대로 받는다 —
-     * 상태 이름("배포 완료")은 관리자가 바꿀 수 있으므로 서버가 이름으로 추측하지 않는다.
+     * completedStatusId는 배포 후 작업을 옮길 상태. 화면에서 고른 값을 그대로 사용 —
+     * 상태 이름("배포 완료")은 관리자가 바꿀 수 있어 서버가 이름으로 추측하지 않음
      */
     public record CreateReleaseRequest(
             @NotBlank String version,
@@ -32,7 +33,7 @@ public class ReleaseDtos {
             Long completedStatusId) {
     }
 
-    /** addCardIds/completedStatusId는 이미 확정된 배포에 나중에 작업을 더 끼워 넣을 때 쓴다. */
+    /** addCardIds/completedStatusId는 이미 확정된 배포에 작업을 추가할 때 사용 */
     public record UpdateReleaseRequest(String version, String notes, List<Long> addCardIds, Long completedStatusId) {
     }
 }

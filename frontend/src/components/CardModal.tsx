@@ -6,6 +6,10 @@ import { useAuth } from '../auth/AuthContext'
 import { AssigneeSelect, DateField, LabeledField, PrioritySelect } from './fields'
 import { Modal, SaveIndicator } from './Modal'
 
+/**
+ * 작업 상세. 별도 저장 버튼 없이 필드마다 바로 저장
+ * (선택 항목은 변경 즉시, 제목·설명은 포커스를 벗어날 때).
+ */
 export function CardModal({
   card,
   members,
@@ -19,7 +23,7 @@ export function CardModal({
   statuses: Status[]
   cardTypes: CardTypeDef[]
   onClose: () => void
-  /** 달력 미리보기 등, 게스트가 아니어도 강제로 읽기 전용 보기로 열 때 쓴다. */
+  /** 달력 미리보기 등, 게스트가 아니어도 강제로 읽기 전용으로 열 때 사용 */
   readOnly?: boolean
 }) {
   const queryClient = useQueryClient()
@@ -44,7 +48,7 @@ export function CardModal({
     onError: (error: Error) => alert(error.message),
   })
 
-  // 저장 표시는 잠깐만 띄운다. 계속 남아 있으면 방금 저장한 건지 예전 것인지 헷갈린다.
+  // 저장 표시는 잠깐만 노출. 계속 남아 있으면 방금 저장한 건지 예전 것인지 헷갈림
   useEffect(() => {
     if (savedAt === null) return
     const timer = setTimeout(() => setSavedAt(null), 2000)
@@ -137,6 +141,7 @@ export function CardModal({
             disabled={locked}
             className="w-full rounded border px-2 py-1.5 disabled:bg-slate-100 disabled:text-slate-500"
           >
+            {/* 지워진 유형을 쓰는 작업도 현재 값이 보이도록 목록에 추가 */}
             {!cardTypes.some((t) => t.name === card.type) && <option value={card.type}>{card.type}</option>}
             {cardTypes.map((t) => (
               <option key={t.id} value={t.name}>

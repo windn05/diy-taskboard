@@ -5,7 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
-/** WARN/ERROR만 영속화한다. 전체 로그는 메모리 링버퍼(LogService)에만 보관한다. */
+/** WARN/ERROR만 영속화. 전체 로그는 메모리 링버퍼(LogService)에만 보관 */
 @Entity
 @Table(name = "system_logs", indexes = @Index(name = "idx_system_logs_level_id", columnList = "level, id"))
 @Getter

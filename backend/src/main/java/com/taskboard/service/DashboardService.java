@@ -1,5 +1,6 @@
 package com.taskboard.service;
 
+import com.taskboard.config.TimeConfig;
 import com.taskboard.domain.Card;
 import com.taskboard.domain.Release;
 import com.taskboard.domain.Status;
@@ -20,14 +21,10 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 /**
- * 첫 화면에서 쓸 요약. 프로젝트마다 따로 조회하면 요청이 N개가 되므로 한 번에 모아서 내려준다.
+ * 홈 화면 데이터. 프로젝트별로 나눠 요청하지 않도록 한 번에 모아서 응답.
  *
- * <p>"끝난 일"은 기본적으로 상태 이름이 아니라 <b>배포 여부</b>로 판단한다. 상태 이름은 관리자가 언제든
- * 바꿀 수 있어서 코드가 의존하면 조용히 깨지지만, 배포된 작업은 정의상 마무리된 일이다.
- *
- * <p>다만 "마감 임박·지난 작업"만은 예외로 <b>"개발완료" 상태(그 이후 순서 포함)도 제외</b>한다 —
- * 개발은 끝나고 배포만 기다리는 작업까지 "마감이 급하다"고 띄우는 건 실제로 유용하지 않다는 요청 때문.
- * 이름 매칭이라 "개발완료"라는 상태가 없으면 이 예외는 적용되지 않는다(기존 배포 여부 기준만 남음).
+ * <p>완료 여부는 상태 이름이 아니라 <b>배포 여부</b>(releaseId)로 판단 — 상태 이름은 관리자가 바꿀 수 있음.
+ * 예외로 "마감 임박"에서는 "개발완료" 상태(와 그 뒤 순서)도 제외. 이름 매칭이라 해당 상태가 없으면 미적용
  */
 @Service
 @RequiredArgsConstructor
@@ -71,7 +68,7 @@ public class DashboardService {
                 .sorted(byDueDate())
                 .toList();
 
-        LocalDate threshold = LocalDate.now().plusDays(DUE_SOON_DAYS);
+        LocalDate threshold = LocalDate.now(TimeConfig.BUSINESS_ZONE).plusDays(DUE_SOON_DAYS);
         List<Card> dueSoon = openCards.stream()
                 .filter(card -> card.getDueDate() != null && !card.getDueDate().isAfter(threshold))
                 .filter(card -> developedOrder == null || statusOrders.getOrDefault(card.getStatusId(), 0) < developedOrder)
@@ -86,10 +83,7 @@ public class DashboardService {
                 calendarTasks(cards, workspaceNames));
     }
 
-    /**
-     * 달력 바에는 개수 제한을 두지 않는다 — 한 달 치를 다 봐야 하는 화면이라 8개로 자르면 의미가 없다.
-     * 배포된 작업도 시작일·마감일은 지난 일정이니 그대로 보여준다(openCards로 거르지 않는다).
-     */
+    /** 달력용. 한 달 치를 모두 보여야 해서 개수 제한 없음, 배포된 작업도 포함 */
     private List<CalendarTask> calendarTasks(List<Card> cards, Map<Long, String> workspaceNames) {
         return cards.stream()
                 .filter(card -> card.getStartDate() != null || card.getDueDate() != null)
@@ -122,10 +116,7 @@ public class DashboardService {
                 .toList();
     }
 
-    /**
-     * 최근 등록된 작업. 마감이 임박한 일이 없는 시기에도 홈이 비어 보이지 않게 채우는 자리다.
-     * 배포된 작업도 뺀다면 오래된 프로젝트에서는 또 비어버리므로 거르지 않는다.
-     */
+    /** 최근 등록 순. 배포된 작업도 포함 — 빼면 오래된 프로젝트에서는 목록이 비어버림 */
     private List<RecentCard> recentCards(List<Card> cards, Map<Long, String> workspaceNames,
                                           Map<Long, String> statusNames) {
         return cards.stream()
@@ -138,7 +129,7 @@ public class DashboardService {
                         card.getTitle(),
                         statusNames.getOrDefault(card.getStatusId(), "-"),
                         card.getPriority().name(),
-                        card.getCreatedAt() == null ? null : card.getCreatedAt().toLocalDate()))
+                        card.getCreatedAt()))
                 .toList();
     }
 

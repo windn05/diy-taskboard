@@ -7,19 +7,19 @@ import { useAuth } from '../auth/AuthContext'
 import type { Card, Release, Status } from '../api/types'
 import { CheckIcon } from '../components/icons'
 
-// 시작일 최신순. 시작일이 없는 작업은 뒤로 보낸다 (작업 목록과 동일한 규칙).
+// 시작일 최신순. 시작일이 없는 작업은 뒤로 (작업 목록과 동일한 규칙)
 function byStartDateDesc(a: Card, b: Card) {
   if (!a.startDate) return 1
   if (!b.startDate) return -1
   return b.startDate.localeCompare(a.startDate)
 }
 
-/** 이 타입은 배포로 묶을 작업이 아니라서 후보 목록에서 뺀다. */
+/** 배포로 묶을 작업이 아닌 타입이라 후보 목록에서 제외 */
 const EXCLUDED_TYPE = '문서 및 기타작업'
 
 /**
- * 배포 흐름: 아직 배포되지 않은 작업 중에서 고르고, 버전·패치노트를 적어 확정한다.
- * 확정하면 고른 작업들이 지정한 상태(보통 "배포 완료")로 넘어간다.
+ * 배포 흐름: 아직 배포되지 않은 작업 중에서 고르고, 버전·패치노트를 적어 확정.
+ * 확정하면 고른 작업들이 지정한 상태(보통 "배포 완료")로 이동
  */
 export function ProjectReleasesPage() {
   const { workspaceId } = useParams()
@@ -40,17 +40,19 @@ export function ProjectReleasesPage() {
   )
 }
 
-/** "개발 완료"처럼 배포 직전 단계로 보이는 상태를 기본 필터로 제안한다. 없으면 전체를 보여준다. */
+/** "개발 완료"처럼 배포 직전 단계로 보이는 상태를 기본 필터로 제안. 없으면 전체 표시 */
 function guessDefaultStatusId(statuses: Status[]) {
   return statuses.find((s) => s.name.includes('개발 완료'))?.id ?? ''
 }
 
+/** 배포 확정 후 작업을 옮길 상태의 기본값. "배포 완료"가 없으면 비워 둠(상태를 옮기지 않음) */
 function guessCompletedStatusId(statuses: Status[]) {
   return statuses.find((s) => s.name.includes('배포 완료'))?.id ?? ''
 }
 
 type QueryClient = ReturnType<typeof useQueryClient>
 
+/** 새 배포 만들기: 후보 작업 선택 → 버전·패치노트 입력 → 확정 */
 function NewReleaseForm({
   workspaceId,
   statuses,
@@ -186,6 +188,7 @@ function NewReleaseForm({
   )
 }
 
+/** 지난 배포 목록 (최신순) */
 function ReleaseHistory({
   releases,
   readOnly,
@@ -220,6 +223,7 @@ function ReleaseHistory({
   )
 }
 
+/** 배포 한 건. 패치노트 수정과 배포 취소 가능 */
 function ReleaseCard({
   release,
   readOnly,
@@ -234,6 +238,7 @@ function ReleaseCard({
   const [editing, setEditing] = useState(false)
   const [notes, setNotes] = useState(release.notes ?? '')
 
+  // 배포가 바뀌면 후보 목록과 작업 목록(버전 표시)도 갱신 필요
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['releases', workspaceId] })
     queryClient.invalidateQueries({ queryKey: ['release-candidates', workspaceId] })

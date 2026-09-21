@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** 프로젝트와 멤버 관리. 멤버 여부와 무관하게 모든 프로젝트 대상 */
 @RestController
 @RequestMapping("/admin/workspaces")
 @RequiredArgsConstructor
@@ -18,6 +19,7 @@ public class AdminWorkspaceController {
 
     private final WorkspaceService workspaceService;
 
+    /** 멤버가 아닌 프로젝트와 비공개 프로젝트까지 모두 포함 */
     @GetMapping
     public List<AdminWorkspaceResponse> list() {
         return workspaceService.listAllForAdmin();

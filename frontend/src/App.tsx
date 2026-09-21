@@ -15,10 +15,14 @@ import { AdminUsersTab } from './pages/admin/AdminUsersTab'
 import { AdminSettingsTab } from './pages/admin/AdminSettingsTab'
 import { MonitoringPage } from './pages/MonitoringPage'
 
+/**
+ * 라우트는 앱 단위(TaskBoard·관리자·모니터링)로 나뉘고, 앱마다 자기 레이아웃(셸) 보유.
+ * 라우트 가드는 화면 진입만 막고, 실제 권한은 서버가 검사
+ */
 export function App() {
   return (
     <Routes>
-      {/* 공개 회원가입 화면은 없다. 계정은 관리자가 /admin/users 에서 만든다. */}
+      {/* 공개 회원가입 화면 없음. 계정은 관리자가 /admin/users 에서 생성 */}
       <Route path="/login" element={<LoginPage />} />
 
       {/* TaskBoard 앱 */}
@@ -37,7 +41,7 @@ export function App() {
         </Route>
       </Route>
 
-      {/* 관리자 앱 — TaskBoard와 셸을 공유하지 않는다 */}
+      {/* 관리자 앱 — TaskBoard와 셸 비공유 */}
       <Route
         element={
           <AdminRoute>

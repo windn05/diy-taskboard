@@ -7,7 +7,7 @@ const TABS = [
   { to: '/admin/settings', label: '상태/타입 관리', end: false },
 ]
 
-/** 관리자 앱의 셸. TaskBoard와 사이드바를 공유하지 않고, 탭은 URL로 직접 진입할 수 있다. */
+/** 관리자 앱의 셸. TaskBoard와 사이드바를 공유하지 않고, 탭은 URL로 직접 진입 가능 */
 export function AdminLayout() {
   return (
     <div className="flex h-screen flex-col">

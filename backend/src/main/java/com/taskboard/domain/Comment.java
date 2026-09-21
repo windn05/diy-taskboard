@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/** 작업에 달린 댓글. 수정 기능 없이 작성·삭제만 지원 */
 @Entity
 @Table(name = "comments")
 @Getter

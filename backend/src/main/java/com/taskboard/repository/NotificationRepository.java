@@ -13,6 +13,7 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
 
     long countByUserIdAndReadFalse(Long userId);
 
+    /** 본인 알림만 조회 — 남의 알림 id로 읽음 처리하는 것을 차단 */
     Optional<Notification> findByIdAndUserId(Long id, Long userId);
 
     List<Notification> findByUserIdAndReadFalse(Long userId);

@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/** 작업 변경 이력. action: CREATED | UPDATED | MOVED */
 @Entity
 @Table(name = "activity_logs")
 @Getter

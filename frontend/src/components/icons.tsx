@@ -2,7 +2,7 @@ import type { SVGProps } from 'react'
 
 /**
  * 화면에서 쓰는 선(stroke) 아이콘. 이모지와 달리 OS에 따라 모양이 달라지지 않고,
- * currentColor를 쓰므로 글자 색과 크기를 그대로 따라간다.
+ * currentColor를 쓰므로 글자 색과 크기를 그대로 따름
  */
 type IconProps = SVGProps<SVGSVGElement> & { size?: number }
 

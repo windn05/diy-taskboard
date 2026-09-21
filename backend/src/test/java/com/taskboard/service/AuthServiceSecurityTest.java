@@ -59,7 +59,7 @@ class AuthServiceSecurityTest {
                 .isInstanceOf(TooManyAttemptsException.class);
     }
 
-    /** 없는 아이디와 틀린 비밀번호를 다르게 알려주면 계정 존재 여부가 새어 나간다. */
+    /** 없는 아이디와 틀린 비밀번호를 다르게 알려주면 계정 존재 여부가 노출됨 */
     @Test
     void 없는_아이디와_틀린_비밀번호는_같은_메시지를_준다() {
         when(userRepository.findByUsername("admin")).thenReturn(Optional.of(user));

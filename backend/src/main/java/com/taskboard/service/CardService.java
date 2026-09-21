@@ -20,6 +20,10 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
+/**
+ * 작업(카드) CRUD. 조회는 읽기 권한, 변경은 프로젝트 멤버만 가능.
+ * 변경마다 활동 이력을 남기고, 커밋 후 같은 프로젝트 접속자에게 이벤트 전송
+ */
 @Service
 @RequiredArgsConstructor
 public class CardService {
@@ -32,13 +36,13 @@ public class CardService {
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
-    // labels가 LAZY라 조회에도 트랜잭션이 필요하다. 없으면 OSIV가 켜져 있을 때만 우연히 동작한다.
+    // labels가 LAZY라 조회에도 트랜잭션 필요. 없으면 OSIV가 켜져 있을 때만 우연히 동작
     @Transactional(readOnly = true)
     public List<CardResponse> list(CurrentUser user, Long workspaceId) {
         workspaceService.requireReadAccess(user, workspaceId);
         List<Card> cards = cardRepository.findByWorkspaceIdOrderByCreatedAtAsc(workspaceId);
 
-        // 댓글 수는 카드마다 따로 세면 N+1이 되니, 한 번에 모아서 카드별로 묶는다.
+        // 댓글 수를 카드마다 세면 N+1이라, 한 번에 모아서 카드별로 집계
         Map<Long, Long> commentCounts = commentRepository.findByCardIdIn(cards.stream().map(Card::getId).toList())
                 .stream().collect(Collectors.groupingBy(Comment::getCardId, Collectors.counting()));
 
@@ -75,7 +79,7 @@ public class CardService {
         if (request.getType() != null) card.setType(request.getType());
         if (request.getPriority() != null) card.setPriority(Card.Priority.valueOf(request.getPriority().toUpperCase()));
         if (request.getLabels() != null) card.setLabels(request.getLabels());
-        // 아래 셋은 null이 "지우기"를 뜻하므로 전달 여부로 판단한다.
+        // 아래 셋은 null이 "지우기"를 뜻하므로 전달 여부로 판단
         if (request.isAssigneeIdPresent()) card.setAssigneeId(request.getAssigneeId());
         if (request.isStartDatePresent()) card.setStartDate(request.getStartDate());
         if (request.isDueDatePresent()) card.setDueDate(request.getDueDate());
@@ -95,11 +99,13 @@ public class CardService {
         publish("DELETED", deleted);
     }
 
+    /** 실제 전송은 커밋 이후 RealtimeEventBroadcaster가 처리 */
     private CardResponse publish(String type, CardResponse card) {
         eventPublisher.publishEvent(new CardEvent(type, card));
         return card;
     }
 
+    /** 상태를 지정하지 않은 새 작업은 첫 번째 컬럼에 배치 */
     private Long defaultStatusId() {
         return statusService.list().stream().findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("상태가 존재하지 않습니다."))
@@ -114,13 +120,13 @@ public class CardService {
         return cardRepository.findById(cardId).orElseThrow(() -> new EntityNotFoundException("카드를 찾을 수 없습니다."));
     }
 
-    /** 같은 패키지의 ReleaseService도 쓴다. 단건이라 댓글 수를 그때그때 센다(N+1 걱정이 없는 범위). */
+    /** 같은 패키지의 ReleaseService도 사용. 단건이라 댓글 수를 그때그때 조회(N+1 걱정 없는 범위) */
     CardResponse toResponse(Card card) {
         return toResponse(card, commentRepository.countByCardId(card.getId()));
     }
 
     private CardResponse toResponse(Card card, long commentCount) {
-        // labels는 LAZY 컬렉션이라 세션 밖(트랜잭션 커밋 후 브로드캐스트 등)에서 직렬화하면 깨진다. 여기서 복사해 분리한다.
+        // labels는 LAZY 컬렉션이라 세션 밖(커밋 후 브로드캐스트 등)에서 직렬화하면 실패. 여기서 복사해 분리
         return new CardResponse(card.getId(), card.getWorkspaceId(), card.getStatusId(), card.getTitle(), card.getDescription(),
                 card.getType(), card.getPriority().name(), card.getAssigneeId(), List.copyOf(card.getLabels()),
                 card.getStartDate(), card.getDueDate(), card.getReleaseId(), commentCount,

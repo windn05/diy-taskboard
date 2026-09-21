@@ -5,6 +5,7 @@ import lombok.*;
 
 import java.time.LocalDateTime;
 
+/** 프로젝트 */
 @Entity
 @Table(name = "workspaces")
 @Getter
@@ -24,7 +25,7 @@ public class Workspace {
     @Column(nullable = false)
     private Long ownerId;
 
-    /** 게스트에게 공개할지 여부. 멤버는 이 값과 무관하게 자기 프로젝트를 본다. */
+    /** 게스트 공개 여부. 멤버는 이 값과 무관하게 자기 프로젝트 조회 가능 */
     @Column(nullable = false)
     @Builder.Default
     private boolean visible = true;

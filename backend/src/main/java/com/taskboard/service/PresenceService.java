@@ -17,8 +17,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * 프로젝트별 접속자를 메모리에 집계한다. 단일 서버 기준이며,
- * 다중 서버로 확장할 경우 Redis 등 공유 저장소로 옮겨야 한다.
+ * 프로젝트별 접속자를 메모리에 집계. 단일 서버 기준이며,
+ * 다중 서버로 확장하면 Redis 등 공유 저장소로 이전 필요
  */
 @Service
 @RequiredArgsConstructor
@@ -28,12 +28,13 @@ public class PresenceService {
 
     private final SimpMessagingTemplate messagingTemplate;
 
-    /** key: STOMP 세션ID|구독ID — 한 세션이 여러 프로젝트를 구독할 수 있으므로 구독 단위로 관리한다. */
+    /** key: STOMP 세션ID|구독ID — 한 세션이 여러 프로젝트를 구독할 수 있어 구독 단위로 관리 */
     private final Map<String, Registration> registrations = new ConcurrentHashMap<>();
 
     private record Registration(Long workspaceId, String sessionId, PresenceUser user) {
     }
 
+    /** 접속자 토픽(/topic/workspaces/{id}/presence)을 구독한 경우에만 프로젝트 id 반환 */
     public static Optional<Long> parseWorkspaceId(String destination) {
         if (destination == null) return Optional.empty();
         Matcher matcher = PRESENCE_DESTINATION.matcher(destination);
@@ -61,6 +62,7 @@ public class PresenceService {
         affected.forEach(this::broadcast);
     }
 
+    /** 여러 탭으로 들어온 같은 사용자는 한 명으로 합침(distinct) */
     public PresenceResponse snapshot(Long workspaceId) {
         return new PresenceResponse(registrations.values().stream()
                 .filter(registration -> registration.workspaceId().equals(workspaceId))

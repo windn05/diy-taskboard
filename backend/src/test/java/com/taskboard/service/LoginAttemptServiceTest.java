@@ -46,7 +46,7 @@ class LoginAttemptServiceTest {
         assertThatCode(() -> service.checkNotLocked("admin")).doesNotThrowAnyException();
     }
 
-    /** 대소문자를 따로 세면 Admin/ADMIN을 번갈아 시도해 잠금을 우회할 수 있다. */
+    /** 대소문자를 따로 세면 Admin/ADMIN을 번갈아 시도해 잠금 우회 가능 */
     @Test
     void 대소문자가_달라도_같은_계정으로_센다() {
         service.recordFailure("admin");

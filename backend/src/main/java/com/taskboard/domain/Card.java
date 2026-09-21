@@ -8,6 +8,11 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
+/**
+ * 작업(칸반 카드).
+ * 다른 엔티티는 {@code @ManyToOne} 대신 id 값으로 참조 — 지연 로딩·N+1 걱정 없이
+ * 필요한 것만 명시적으로 조회하기 위함. 모든 엔티티에 공통인 규칙
+ */
 @Entity
 @Table(name = "cards")
 @Getter
@@ -33,6 +38,7 @@ public class Card {
     @Column(columnDefinition = "TEXT")
     private String description;
 
+    /** 작업 유형 이름. CardType id가 아니라 이름을 그대로 저장 */
     @Column(nullable = false)
     @Builder.Default
     private String type = "Task";
@@ -45,7 +51,7 @@ public class Card {
     @Column(name = "assignee_id")
     private Long assigneeId;
 
-    /** 이 작업이 포함된 배포. 비어 있으면 아직 배포되지 않은 것이다. */
+    /** 이 작업이 포함된 배포. 비어 있으면 미배포 */
     @Column(name = "release_id")
     private Long releaseId;
 

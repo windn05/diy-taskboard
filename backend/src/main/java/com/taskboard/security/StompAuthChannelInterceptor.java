@@ -19,7 +19,7 @@ import java.util.regex.Pattern;
 
 /**
  * STOMP CONNECT 헤더의 JWT를 REST와 동일한 방식으로 검증하고,
- * 이후 SUBSCRIBE/DISCONNECT 이벤트에서 사용자를 식별할 수 있도록 세션 Principal을 설정한다.
+ * 이후 SUBSCRIBE/DISCONNECT 이벤트에서 사용자를 식별할 수 있도록 세션 Principal 설정
  */
 @Component
 @RequiredArgsConstructor
@@ -28,13 +28,13 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     private final TokenAuthenticator tokenAuthenticator;
     private final WorkspaceService workspaceService;
 
-    /** 관리자 전용 토픽 접두어. REST의 /admin/** 과 같은 기준을 WebSocket에도 적용한다. */
+    /** 관리자 전용 토픽 접두어. REST의 /admin/** 과 같은 기준을 WebSocket에도 적용 */
     private static final String ADMIN_TOPIC_PREFIX = "/topic/admin/";
 
-    /** 개인 채널. /topic/users/{userId}/... 는 본인만 구독할 수 있다. */
+    /** 개인 채널. /topic/users/{userId}/... 는 본인만 구독 가능 */
     private static final Pattern USER_TOPIC = Pattern.compile("^/topic/users/(-?\\d+)/.+$");
 
-    /** 프로젝트 채널. /topic/workspaces/{id}/... 는 그 프로젝트를 볼 수 있는 사람만 구독한다. */
+    /** 프로젝트 채널. /topic/workspaces/{id}/... 는 그 프로젝트를 볼 수 있는 사람만 구독 가능 */
     private static final Pattern WORKSPACE_TOPIC = Pattern.compile("^/topic/workspaces/(\\d+)/.+$");
 
     @Override
@@ -73,8 +73,8 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
     }
 
     /**
-     * REST와 같은 조회 권한을 구독에도 적용한다. 이게 없으면 목록에서 감춘 프로젝트라도
-     * 주소만 알면 실시간 이벤트(작업·댓글·접속자)를 그대로 받아볼 수 있다.
+     * REST와 같은 조회 권한을 구독에도 적용. 없으면 목록에서 숨긴 프로젝트라도
+     * 주소만 알면 실시간 이벤트(작업·댓글·접속자)를 그대로 받아볼 수 있음
      */
     private void requireWorkspaceReadAccess(Principal principal, Long workspaceId) {
         CurrentUser user = currentUser(principal);
@@ -84,7 +84,7 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         try {
             workspaceService.requireReadAccess(user, workspaceId);
         } catch (RuntimeException e) {
-            // 존재하지 않는 프로젝트인지 권한이 없는 것인지 굳이 구분해 알려주지 않는다.
+            // 존재하지 않는 프로젝트인지 권한이 없는 것인지 구분해서 알려주지 않음
             throw new MessagingException("구독할 수 없는 프로젝트입니다.");
         }
     }

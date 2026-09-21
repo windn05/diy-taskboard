@@ -58,7 +58,7 @@ class RequestMetricsServiceTest {
 
         assertThat(snapshot.series()).hasSize(60);
         assertThat(snapshot.series()).last().extracting(MinutePoint::requests).isEqualTo(1L);
-        // 트래픽이 없던 구간은 0으로 채워져 그래프가 끊기지 않는다.
+        // 트래픽이 없던 구간은 0으로 채워져 그래프가 끊기지 않음
         assertThat(snapshot.series()).first().extracting(MinutePoint::requests).isEqualTo(0L);
     }
 

@@ -8,6 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
+/** 작업 유형 조회. 변경은 AdminCardTypeController */
 @RestController
 @RequiredArgsConstructor
 public class CardTypeController {

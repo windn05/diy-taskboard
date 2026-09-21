@@ -1,3 +1,4 @@
+// 작업(카드)과 댓글
 import { api } from './client'
 import type { Card, CardPriority, Comment } from './types'
 
@@ -18,6 +19,7 @@ export type CreateCardInput = {
 export const createCard = (workspaceId: number, input: CreateCardInput) =>
   api<Card>(`/workspaces/${workspaceId}/cards`, { method: 'POST', body: JSON.stringify(input) })
 
+// 보낸 필드만 변경. assigneeId·startDate·dueDate는 null을 보내면 비움
 export const updateCard = (cardId: number, input: Partial<CreateCardInput>) =>
   api<Card>(`/cards/${cardId}`, { method: 'PATCH', body: JSON.stringify(input) })
 

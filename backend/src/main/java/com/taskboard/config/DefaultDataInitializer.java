@@ -17,11 +17,11 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
- * 전역 상태·타입의 초기값을 기동 시점에 한 번만 넣는다.
- * 조회 메서드에서 만들면 GET 요청이 쓰기를 유발해, 읽기 전용이어야 할 게스트도 데이터를 만들게 된다.
+ * 전역 상태·타입의 초기값을 기동 시점에 한 번만 생성.
+ * 조회 메서드에서 만들면 GET 요청이 쓰기를 유발해, 읽기 전용인 게스트도 데이터를 만들게 됨.
  *
- * <p>최초 관리자도 여기서 만든다. 공개 회원가입을 없앤 뒤로는 계정을 만들려면 관리자여야 하는데,
- * 새 DB에는 그 관리자가 없다. 그 순환을 끊는 유일한 통로다.
+ * <p>최초 관리자도 여기서 생성. 공개 회원가입이 없어 계정을 만들려면 관리자가 필요한데,
+ * 새 DB에는 관리자가 없음. 그 순환을 끊는 유일한 통로
  */
 @Slf4j
 @Component
@@ -58,7 +58,7 @@ public class DefaultDataInitializer implements ApplicationRunner {
         createBootstrapAdminIfNeeded();
     }
 
-    /** 계정이 하나도 없을 때만 만든다. 이미 계정이 있으면 환경변수가 남아 있어도 아무 일도 하지 않는다. */
+    /** 계정이 하나도 없을 때만 생성. 계정이 있으면 환경변수가 남아 있어도 무시 */
     private void createBootstrapAdminIfNeeded() {
         if (userRepository.count() > 0) return;
 

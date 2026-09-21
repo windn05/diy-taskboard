@@ -29,6 +29,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+/** 프로젝트·멤버 관리와 프로젝트 단위 권한 검사. 다른 서비스는 여기의 require* 메서드로 권한 확인 */
 @Service
 @RequiredArgsConstructor
 public class WorkspaceService {
@@ -42,6 +43,7 @@ public class WorkspaceService {
     private final ReleaseRepository releaseRepository;
     private final NotificationService notificationService;
 
+    /** 만든 사람은 OWNER 멤버로 자동 등록 */
     @Transactional
     public WorkspaceResponse create(Long userId, CreateWorkspaceRequest request) {
         Workspace workspace = Workspace.builder().name(request.name()).ownerId(userId).build();
@@ -55,8 +57,8 @@ public class WorkspaceService {
     }
 
     /**
-     * 프로젝트 접근은 멤버십으로 정한다. 관리자도 예외가 아니며, 전체 목록은 관리자 앱에서만 본다.
-     * 게스트는 멤버가 될 수 없으므로 {@link #openToGuest} 조건을 만족하는 프로젝트만 볼 수 있다.
+     * 프로젝트 접근은 멤버십 기준. 관리자도 예외가 아니며, 전체 목록은 관리자 앱에서만 조회.
+     * 게스트는 멤버가 될 수 없으므로 {@link #openToGuest} 조건을 만족하는 프로젝트만 조회 가능
      */
     @Transactional(readOnly = true)
     public List<WorkspaceResponse> listMine(CurrentUser user) {
@@ -75,7 +77,7 @@ public class WorkspaceService {
 
         return memberships.stream()
                 .map(m -> {
-                    // 멤버는 게스트 공개 여부와 무관하게 자기 프로젝트를 본다.
+                    // 멤버는 게스트 공개 여부와 무관하게 자기 프로젝트 조회 가능
                     Workspace w = workspaces.get(m.getWorkspaceId());
                     return w != null
                             ? new WorkspaceResponse(w.getId(), w.getName(), w.getOwnerId(), m.getRole().name())
@@ -100,6 +102,7 @@ public class WorkspaceService {
         return new AdminWorkspaceResponse(workspace.getId(), workspace.getName(), workspace.getOwnerId(), workspace.isVisible());
     }
 
+    /** 연관관계 cascade가 없으므로 딸린 데이터를 참조 순서대로 직접 삭제 */
     @Transactional
     public void deleteAsAdmin(Long workspaceId) {
         if (!workspaceRepository.existsById(workspaceId)) {
@@ -134,15 +137,15 @@ public class WorkspaceService {
                 .toList();
     }
 
-    /** 연관 엔티티를 한 번에 조회해 id로 찾을 수 있게 만든다 (건별 findById로 인한 N+1 방지). */
+    /** 연관 엔티티를 한 번에 조회해 id로 찾을 수 있게 변환 (건별 findById로 인한 N+1 방지) */
     private <T> Map<Long, T> findAllByIdAsMap(JpaRepository<T, Long> repository, List<Long> ids, Function<T, Long> idOf) {
         if (ids.isEmpty()) return Map.of();
         return repository.findAllById(ids).stream().collect(Collectors.toMap(idOf, entity -> entity));
     }
 
     /**
-     * 멤버 관리는 시스템 관리자만 한다. 워크스페이스 역할(OWNER/ADMIN)이 아니라 시스템 ADMIN 기준이므로,
-     * 관리자는 자신이 만들지 않은 프로젝트의 멤버도 관리할 수 있다.
+     * 멤버 관리는 시스템 관리자 전용. 워크스페이스 역할(OWNER/ADMIN)이 아니라 시스템 ADMIN 기준이므로,
+     * 관리자는 자신이 만들지 않은 프로젝트의 멤버도 관리 가능
      */
     @Transactional(readOnly = true)
     public List<MemberResponse> listMembersAsAdmin(Long workspaceId) {
@@ -190,7 +193,7 @@ public class WorkspaceService {
         }
     }
 
-    /** 조회 권한. 멤버는 멤버십으로, 게스트는 {@link #openToGuest} 조건으로 판단한다. */
+    /** 조회 권한. 멤버는 멤버십으로, 게스트는 {@link #openToGuest} 조건으로 판단 */
     public void requireReadAccess(CurrentUser user, Long workspaceId) {
         if (!user.isGuest()) {
             requireMember(user.getId(), workspaceId);
@@ -200,10 +203,10 @@ public class WorkspaceService {
     }
 
     /**
-     * 게스트가 볼 수 있는 프로젝트의 조건. 둘 다 만족해야 한다.
+     * 게스트가 볼 수 있는 프로젝트의 조건. 둘 다 만족해야 함
      * <ol>
      *   <li>관리자가 "게스트 공개"로 지정했을 것({@code visible})</li>
-     *   <li>관리자 외의 멤버가 한 명이라도 있을 것 — 관리자 혼자 쓰는 프로젝트는 아직 남에게 보일 단계가 아니다</li>
+     *   <li>관리자 외의 멤버가 한 명이라도 있을 것 — 관리자 혼자 쓰는 프로젝트는 아직 공개할 단계가 아님</li>
      * </ol>
      */
     private void openToGuest(Long workspaceId) {
@@ -217,11 +220,13 @@ public class WorkspaceService {
         }
     }
 
+    /** 쓰기 권한. 게스트는 멤버가 될 수 없으므로 항상 거부 */
     public WorkspaceMember requireMember(Long userId, Long workspaceId) {
         return memberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new AccessDeniedException("워크스페이스 멤버가 아닙니다."));
     }
 
+    /** 멤버이면서 지정한 프로젝트 역할 중 하나여야 함 */
     public void requireRole(Long userId, Long workspaceId, WorkspaceRole... allowed) {
         WorkspaceMember member = requireMember(userId, workspaceId);
         for (WorkspaceRole role : allowed) {

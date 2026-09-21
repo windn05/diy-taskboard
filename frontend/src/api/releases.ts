@@ -1,8 +1,10 @@
+// 배포(버전) 기록
 import { api } from './client'
 import type { Card, Release } from './types'
 
 export const listReleases = (workspaceId: number) => api<Release[]>(`/workspaces/${workspaceId}/releases`)
 
+// 아직 배포되지 않은 작업. statusId를 주면 해당 상태만
 export const listReleaseCandidates = (workspaceId: number, statusId?: number) =>
   api<Card[]>(
     `/workspaces/${workspaceId}/releases/candidates${statusId ? `?statusId=${statusId}` : ''}`,

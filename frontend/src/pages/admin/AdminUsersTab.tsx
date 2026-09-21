@@ -5,7 +5,7 @@ import { ApiError } from '../../api/client'
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: '관리자', USER: '일반 사용자' }
 
-/** 계정 생성은 여기서만 한다 — 공개 회원가입 화면은 없앴다. */
+/** 계정 생성은 여기서만 가능 — 공개 회원가입 화면 없음 */
 export function AdminUsersTab() {
   const queryClient = useQueryClient()
   const { data: users } = useQuery({ queryKey: ['admin-users'], queryFn: adminListUsers })

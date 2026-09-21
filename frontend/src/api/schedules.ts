@@ -1,3 +1,4 @@
+// 개인 일정 (본인에게만 보임)
 import { api } from './client'
 import type { Schedule } from './types'
 

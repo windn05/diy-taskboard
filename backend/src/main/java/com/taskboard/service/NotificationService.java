@@ -15,6 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
+/** 사용자 알림. 현재는 담당 작업에 댓글이 달렸을 때만 생성 */
 @Service
 @RequiredArgsConstructor
 public class NotificationService {
@@ -26,8 +27,8 @@ public class NotificationService {
     private final ApplicationEventPublisher eventPublisher;
 
     /**
-     * 작업에 댓글이 달리면 담당자에게 알린다.
-     * 담당자가 없거나 본인이 단 댓글이면 알리지 않는다 — 자기 행동을 자기에게 알릴 이유가 없다.
+     * 작업에 댓글이 달리면 담당자에게 알림.
+     * 담당자가 없거나 본인이 단 댓글이면 알리지 않음 — 자기 행동을 자기에게 알릴 이유 없음
      */
     @Transactional
     public void notifyComment(Card card, Long actorId) {
@@ -47,10 +48,11 @@ public class NotificationService {
         eventPublisher.publishEvent(new NotificationCreatedEvent(assigneeId, toResponse(saved)));
     }
 
-    /** 커밋 이후에 푸시하기 위한 내부 이벤트. */
+    /** 커밋 이후 푸시하기 위한 내부 이벤트 */
     public record NotificationCreatedEvent(Long userId, NotificationResponse notification) {
     }
 
+    /** 최근 DEFAULT_LIMIT건만 응답. 안 읽은 개수는 전체 기준 */
     @Transactional(readOnly = true)
     public NotificationListResponse list(Long userId) {
         List<NotificationResponse> notifications = notificationRepository
@@ -72,7 +74,7 @@ public class NotificationService {
         notificationRepository.findByUserIdAndReadFalse(userId).forEach(n -> n.setRead(true));
     }
 
-    /** 작업이 사라지면 그 작업을 가리키는 알림도 의미가 없다. */
+    /** 작업이 사라지면 그 작업을 가리키는 알림도 삭제 */
     @Transactional
     public void deleteByCardIds(List<Long> cardIds) {
         if (!cardIds.isEmpty()) notificationRepository.deleteByCardIdIn(cardIds);

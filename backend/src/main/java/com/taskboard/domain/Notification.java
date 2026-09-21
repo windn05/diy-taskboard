@@ -6,8 +6,8 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * 사용자별 알림. 작업 제목·작성자 이름은 발생 시점의 값을 그대로 저장한다.
- * 알림은 "그때 일어난 일"이라, 나중에 작업 제목이 바뀌어도 당시 맥락이 남아야 하기 때문.
+ * 사용자별 알림. 작업 제목·작성자 이름은 발생 시점의 값을 그대로 저장.
+ * 알림은 "그때 일어난 일"이라, 나중에 작업 제목이 바뀌어도 당시 맥락을 남기기 위함
  */
 @Entity
 @Table(name = "notifications", indexes = @Index(name = "idx_notifications_user", columnList = "user_id, id"))

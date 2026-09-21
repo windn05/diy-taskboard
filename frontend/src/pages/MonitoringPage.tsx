@@ -3,12 +3,13 @@ import { useQuery } from '@tanstack/react-query'
 import { getLogHistory, getMetrics, getSystemStats } from '../api/monitoring'
 import type { LogEntry, LogLevel } from '../api/types'
 import { useLogStream } from '../hooks/useLogStream'
+import { localTimeOf } from '../time'
 
 /** 이 이상이면 경고색 */
 const DANGER_PERCENT = 85
 
 const shortLogger = (name: string) => name.split('.').pop() ?? name
-const timeOf = (iso: string) => iso.slice(11, 19)
+const timeOf = localTimeOf
 const ratio = (used: number, total: number) => (total > 0 ? (used / total) * 100 : 0)
 
 function formatUptime(seconds: number) {
@@ -19,8 +20,8 @@ function formatUptime(seconds: number) {
 }
 
 /**
- * 지표 묶음. 무엇을 기준으로 잰 값인지를 제목 옆에 붙인다 — 같은 "메모리"라도 서버 전체(VM)와
- * 백엔드 컨테이너는 전혀 다른 숫자라서.
+ * 지표 묶음. 무엇을 기준으로 잰 값인지 제목 옆에 표시 — 같은 "메모리"라도 서버 전체(VM)와
+ * 백엔드 컨테이너는 전혀 다른 숫자
  */
 function MetricBox({ title, scope, children }: { title: string; scope: string; children: ReactNode }) {
   return (
@@ -34,7 +35,7 @@ function MetricBox({ title, scope, children }: { title: string; scope: string; c
   )
 }
 
-/** 사용률 한 줄: 이름 · 게이지 · 퍼센트 · 부연. percent가 null이면 아직 값이 없는 것이다. */
+/** 사용률 한 줄: 이름 · 게이지 · 퍼센트 · 부연. percent가 null이면 아직 값 없음 */
 function GaugeRow({ label, percent, detail }: { label: string; percent: number | null; detail: string }) {
   const danger = percent !== null && percent >= DANGER_PERCENT
   return (
@@ -96,7 +97,7 @@ function LogRow({ entry }: { entry: LogEntry }) {
   )
 }
 
-/** 레벨 하나가 자기 영역을 갖는다. 목록만 안에서 스크롤되고, 헤더 색이 어느 레벨인지 알려준다. */
+/** 레벨마다 별도 영역. 목록만 안에서 스크롤되고, 헤더 색으로 레벨 구분 */
 function LogPanel({ title, accent, entries, empty }: { title: string; accent: string; entries: LogEntry[]; empty: string }) {
   return (
     <section className="flex h-72 min-h-0 flex-col overflow-hidden rounded-lg border bg-white md:h-auto">
@@ -116,7 +117,7 @@ function LogPanel({ title, accent, entries, empty }: { title: string; accent: st
 
 const INFO_AND_BELOW: LogLevel[] = ['TRACE', 'DEBUG', 'INFO']
 
-/** 실시간 버퍼와 DB 기록에 같은 항목이 모두 있을 수 있어 합치면서 중복을 뺀다. 최신이 위. */
+/** 실시간 버퍼와 DB 기록에 같은 항목이 모두 있을 수 있어 합치면서 중복 제거. 최신이 위 */
 function mergeLogs(live: LogEntry[], saved: LogEntry[], level: LogLevel) {
   const seen = new Set<string>()
   return [...live, ...saved]
@@ -134,7 +135,7 @@ export function MonitoringPage() {
   const { data: metrics } = useQuery({ queryKey: ['metrics'], queryFn: getMetrics, refetchInterval: 5000 })
   const { data: system } = useQuery({ queryKey: ['system-stats'], queryFn: getSystemStats, refetchInterval: 5000 })
   const { entries, connected } = useLogStream()
-  // WARN/ERROR는 DB에 남은 기록(재시작 전 것 포함)도 함께 보여준다. 새로 쌓이는 것도 따라오도록 주기적으로 다시 읽는다.
+  // WARN/ERROR는 DB에 남은 기록(재시작 전 것 포함)도 함께 표시. 새로 쌓이는 것도 따라오도록 주기적으로 재조회
   const { data: history } = useQuery({
     queryKey: ['log-history'],
     queryFn: () => getLogHistory('WARN', 100),
@@ -154,9 +155,9 @@ export function MonitoringPage() {
       : null
 
   return (
-    // 한 화면에 담는다: 위는 지표(작게), 아래는 INFO · WARN · ERROR 세 영역. 페이지는 스크롤되지 않고 로그 목록만 각자 안에서 스크롤된다.
+    // 한 화면에 표시: 위는 지표(작게), 아래는 INFO · WARN · ERROR 세 영역. 페이지는 스크롤되지 않고 로그 목록만 각자 스크롤
     <div className="flex flex-col gap-3 p-4 md:h-full">
-      {/* 박스가 4개라 중간 폭에서는 2×2로 접고, 넓을 때만 한 줄에 편다. */}
+      {/* 박스가 4개라 중간 폭에서는 2×2로 접고, 넓을 때만 한 줄로 배치 */}
       <div className="grid shrink-0 grid-cols-1 gap-3 md:grid-cols-2 xl:grid-cols-4">
         <MetricBox title="서버" scope="VM 전체">
           <GaugeRow
@@ -208,7 +209,7 @@ export function MonitoringPage() {
           ) : (
             <ValueRow label="커넥션 풀" value="-" detail={db ? 'HikariCP가 아님' : '불러오는 중'} />
           )}
-          {/* CPU·메모리가 멀쩡해도 여기가 0을 넘으면 요청이 커넥션을 못 얻고 멈춰 있는 것이다. */}
+          {/* CPU·메모리가 멀쩡해도 여기가 0을 넘으면 요청이 커넥션을 못 얻고 멈춰 있는 상태 */}
           <ValueRow
             label="대기 중인 요청"
             value={db?.poolWaiting != null ? `${db.poolWaiting}` : '-'}
@@ -240,7 +241,7 @@ export function MonitoringPage() {
       <div className="flex min-h-0 flex-1 flex-col gap-2">
         <div className="flex shrink-0 items-center gap-2 text-xs text-slate-500">
           <h2 className="text-sm font-semibold text-slate-800">로그</h2>
-          {/* 이 연결 표시는 로그 스트림에만 해당한다. 위 수치들은 5초마다 따로 조회한다. */}
+          {/* 이 연결 표시는 로그 스트림에만 해당. 위 수치들은 5초마다 별도 조회 */}
           <span className={`inline-block h-2 w-2 rounded-full ${connected ? 'bg-emerald-500' : 'bg-slate-300'}`} />
           {connected ? '실시간 연결됨' : '연결 끊김'}
         </div>

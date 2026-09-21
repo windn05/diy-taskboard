@@ -19,8 +19,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 /**
- * Logback appender를 Spring 빈으로 만들어 루트 로거에 직접 붙인다.
- * logback.xml에 선언하면 LogService를 주입할 수 없기 때문에 코드로 등록한다.
+ * Logback appender를 Spring 빈으로 만들어 루트 로거에 직접 연결.
+ * logback.xml에 선언하면 LogService를 주입할 수 없어 코드로 등록
  */
 @Component
 @RequiredArgsConstructor

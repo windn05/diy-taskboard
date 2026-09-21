@@ -17,6 +17,9 @@ spring:
     properties:
       hibernate:
         format_sql: true
+        # LocalDateTime을 UTC 그대로 저장·조회 (JVM 기본 시간대도 UTC로 고정)
+        jdbc:
+          time_zone: UTC
 
 jwt:
   # 운영에서는 반드시 JWT_SECRET을 넣어야 한다. 기본값이 노출되면 토큰을 위조할 수 있다.

@@ -20,6 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
+/** 댓글. 작성은 프로젝트 멤버, 삭제는 작성자 본인만 가능. 작성 시 담당자에게 알림 */
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -37,7 +38,7 @@ public class CommentService {
         workspaceService.requireReadAccess(user, card.getWorkspaceId());
         List<Comment> comments = commentRepository.findByCardIdOrderByCreatedAtAsc(cardId);
 
-        // 작성자 이름은 한 번에 모아 온다 (댓글마다 findById 하면 N+1).
+        // 작성자 이름은 한 번에 조회 (댓글마다 findById 하면 N+1)
         Map<Long, String> authorNames = userRepository
                 .findAllById(comments.stream().map(Comment::getUserId).distinct().toList()).stream()
                 .collect(Collectors.toMap(User::getId, User::getName));
@@ -57,7 +58,7 @@ public class CommentService {
         return response;
     }
 
-    /** 본인이 쓴 댓글만 지울 수 있다. */
+    /** 본인이 쓴 댓글만 삭제 가능 */
     @Transactional
     public void delete(Long userId, Long commentId) {
         Comment comment = commentRepository.findById(commentId)

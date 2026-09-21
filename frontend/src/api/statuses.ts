@@ -1,3 +1,4 @@
+// 작업 상태(칸반 컬럼). 조회는 누구나, 변경은 관리자만
 import { api } from './client'
 import type { Status } from './types'
 

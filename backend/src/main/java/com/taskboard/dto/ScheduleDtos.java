@@ -5,6 +5,7 @@ import jakarta.validation.constraints.NotNull;
 
 import java.time.LocalDate;
 
+/** 개인 일정 요청/응답 */
 public class ScheduleDtos {
 
     public record CreateScheduleRequest(

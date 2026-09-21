@@ -11,6 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+/** 개인 일정. 본인에게만 보이며 프로젝트와 무관 */
 @RestController
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
