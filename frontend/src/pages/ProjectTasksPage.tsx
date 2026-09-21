@@ -61,7 +61,7 @@ export function ProjectTasksPage() {
   const activeCard = tasks.find((c) => c.id === activeCardId) ?? null
 
   if (!statuses || !cards) {
-    return <div className="p-8 text-sm text-slate-400">불러오는 중...</div>
+    return <div className="p-8 text-sm text-slate-500">불러오는 중...</div>
   }
 
   const statusName = (statusId: number) => statuses.find((s) => s.id === statusId)?.name ?? '-'
@@ -109,7 +109,7 @@ export function ProjectTasksPage() {
                     {statusName(card.statusId)}
                   </span>
                   {card.releaseId && (
-                    <span className="ml-1.5 text-[11px] font-medium text-slate-400">
+                    <span className="ml-1.5 text-[11px] font-medium text-slate-500">
                       {releaseVersion.get(card.releaseId) ?? '-'}
                     </span>
                   )}
@@ -138,7 +138,7 @@ export function ProjectTasksPage() {
 
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
                   작업이 없습니다.
                 </td>
               </tr>

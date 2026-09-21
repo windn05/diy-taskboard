@@ -50,9 +50,10 @@ public class SystemStatsService {
     /** {@code /proc/stat}의 CPU 사용률은 두 시점의 차이로만 구할 수 있어 직전 샘플을 들고 있는다. */
     private final AtomicReference<CpuTimes> previousCpu = new AtomicReference<>();
 
+    /** DB 지표는 DataSource가 필요해 이 클래스가 다루지 않는다 — 컨트롤러가 DbStatsService의 값을 채워 넣는다. */
     public SystemStatsResponse snapshot() {
         var os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
-        return new SystemStatsResponse(hostStats(os), backendStats(os));
+        return new SystemStatsResponse(hostStats(os), backendStats(os), null);
     }
 
     /**

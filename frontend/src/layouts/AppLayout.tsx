@@ -28,7 +28,7 @@ export function AppLayout() {
           {!isGuest && (
             <button
               onClick={() => setAddingTask(true)}
-              className="rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+              className="rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
               title="새 작업"
             >
               <PlusIcon size={16} />
@@ -49,7 +49,7 @@ export function AppLayout() {
           </NavLink>
 
           <div className="mb-1 px-2 py-1">
-            <span className="text-xs font-semibold text-slate-400">프로젝트</span>
+            <span className="text-xs font-semibold text-slate-500">프로젝트</span>
           </div>
 
           <nav className="space-y-0.5">

@@ -98,7 +98,7 @@ export function CardModal({
   const footer = (
     <div className="flex items-center justify-between">
       {locked ? (
-        <p className="text-xs text-slate-400">{isGuest ? '게스트는 읽기 전용입니다.' : '미리보기 — 읽기 전용입니다.'}</p>
+        <p className="text-xs text-slate-500">{isGuest ? '게스트는 읽기 전용입니다.' : '미리보기 — 읽기 전용입니다.'}</p>
       ) : (
         <button onClick={handleDelete} className="text-sm text-red-600 hover:underline">
           작업 삭제
@@ -221,11 +221,11 @@ export function CardModal({
             <div key={c.id} className="group rounded bg-slate-50 px-3 py-2 text-sm">
               <div className="mb-1 flex items-baseline gap-2">
                 <span className="text-xs font-semibold text-slate-700">{c.authorName}</span>
-                <span className="text-[11px] text-slate-400">{new Date(c.createdAt).toLocaleString()}</span>
+                <span className="text-[11px] text-slate-500">{new Date(c.createdAt).toLocaleString()}</span>
                 {!locked && user?.userId === c.userId && (
                   <button
                     onClick={() => confirm('댓글을 삭제할까요?') && deleteCommentMutation.mutate(c.id)}
-                    className="ml-auto text-[11px] text-slate-400 opacity-0 hover:text-red-600 group-hover:opacity-100"
+                    className="ml-auto text-[11px] text-slate-500 opacity-0 hover:text-red-600 group-hover:opacity-100"
                   >
                     삭제
                   </button>
@@ -234,7 +234,7 @@ export function CardModal({
               <p className="whitespace-pre-wrap">{c.content}</p>
             </div>
           ))}
-          {comments?.length === 0 && <p className="py-3 text-center text-sm text-slate-400">댓글이 없습니다.</p>}
+          {comments?.length === 0 && <p className="py-3 text-center text-sm text-slate-500">댓글이 없습니다.</p>}
         </div>
       </section>
     </Modal>

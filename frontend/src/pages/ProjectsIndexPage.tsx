@@ -9,7 +9,7 @@ export function ProjectsIndexPage() {
   if (projects && projects.length > 0) return <Navigate to={`/projects/${projects[0].id}`} replace />
 
   return (
-    <div className="flex h-full items-center justify-center text-sm text-slate-400">
+    <div className="flex h-full items-center justify-center text-sm text-slate-500">
       좌측에서 프로젝트를 추가해주세요.
     </div>
   )

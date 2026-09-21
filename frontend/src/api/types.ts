@@ -165,4 +165,16 @@ export type BackendStats = {
   uptimeSeconds: number
 }
 
-export type SystemStats = { host: HostStats; backend: BackendStats }
+/**
+ * DB. 풀이 HikariCP가 아니거나 Postgres가 아닌 환경에서는 해당 항목이 null로 온다.
+ * poolWaiting이 0보다 크면 커넥션을 못 얻어 대기 중인 요청이 있다는 뜻이다.
+ */
+export type DbStats = {
+  poolActive: number | null
+  poolIdle: number | null
+  poolMax: number | null
+  poolWaiting: number | null
+  sizeMb: number | null
+}
+
+export type SystemStats = { host: HostStats; backend: BackendStats; db: DbStats }

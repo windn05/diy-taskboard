@@ -71,7 +71,7 @@ export function NotificationBell() {
             {unreadCount > 0 && (
               <button
                 onClick={() => readAllMutation.mutate()}
-                className="text-xs text-slate-400 hover:text-slate-700"
+                className="text-xs text-slate-500 hover:text-slate-700"
               >
                 모두 읽음
               </button>
@@ -90,12 +90,12 @@ export function NotificationBell() {
                   <span className="text-sm text-slate-700">
                     <b>{notification.actorName}</b>님이 <b>{notification.cardTitle}</b>에 댓글을 남겼습니다
                   </span>
-                  <span className="text-[11px] text-slate-400">{timeAgo(notification.createdAt)}</span>
+                  <span className="text-[11px] text-slate-500">{timeAgo(notification.createdAt)}</span>
                 </button>
               </li>
             ))}
             {notifications.length === 0 && (
-              <li className="px-3 py-8 text-center text-sm text-slate-400">알림이 없습니다.</li>
+              <li className="px-3 py-8 text-center text-sm text-slate-500">알림이 없습니다.</li>
             )}
           </ul>
         </div>

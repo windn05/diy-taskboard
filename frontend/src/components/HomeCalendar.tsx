@@ -227,9 +227,9 @@ function WeekRow({
                     : !inMonth
                       ? 'text-slate-300'
                       : i === 0
-                        ? 'text-red-500'
+                        ? 'text-red-600'
                         : i === 6
-                          ? 'text-blue-500'
+                          ? 'text-blue-600'
                           : 'text-slate-600'
                 }
               >
@@ -245,7 +245,7 @@ function WeekRow({
           <button
             type="button"
             onClick={() => setExpanded(false)}
-            className="absolute right-1 top-0 z-10 text-[10px] text-slate-400 hover:text-slate-700"
+            className="absolute right-1 top-0 z-10 text-[10px] text-slate-500 hover:text-slate-700"
           >
             접기 ▲
           </button>
@@ -317,7 +317,7 @@ function CardPreviewModal({ workspaceId, cardId, onClose }: { workspaceId: numbe
   if (!card || !statuses) {
     return (
       <Modal title={<h2 className="text-lg font-semibold">불러오는 중...</h2>} onClose={onClose}>
-        <p className="py-8 text-center text-sm text-slate-400">작업 정보를 불러오는 중입니다...</p>
+        <p className="py-8 text-center text-sm text-slate-500">작업 정보를 불러오는 중입니다...</p>
       </Modal>
     )
   }
@@ -411,7 +411,8 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         {WEEKDAYS.map((d, i) => (
           <div
             key={d}
-            className={`py-1.5 ${i < 6 ? 'border-r' : ''} ${i === 0 ? 'text-red-400' : i === 6 ? 'text-blue-400' : 'text-slate-400'}`}
+            // 평일이 slate-500이라 주말도 같은 무게로 맞춘다. 400단계는 흰 배경에서 대비가 3:1도 안 된다.
+            className={`py-1.5 ${i < 6 ? 'border-r' : ''} ${i === 0 ? 'text-red-600' : i === 6 ? 'text-blue-600' : 'text-slate-500'}`}
           >
             {d}
           </div>

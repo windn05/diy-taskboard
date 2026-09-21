@@ -122,7 +122,7 @@ export function AdminProjectsTab() {
 
             {projects?.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-400">
+                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
                   프로젝트가 없습니다.
                 </td>
               </tr>

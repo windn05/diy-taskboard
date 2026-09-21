@@ -5,6 +5,7 @@ import com.taskboard.dto.LogDtos.LogEntry;
 import com.taskboard.repository.SystemLogRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
+import org.mockito.ArgumentCaptor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 
 import java.time.LocalDateTime;
@@ -21,6 +22,8 @@ import static org.mockito.Mockito.when;
 
 class LogServiceTest {
 
+    private static final int RETENTION_DAYS = 7;
+
     private SystemLogRepository repository;
     private SimpMessagingTemplate messagingTemplate;
     private LogService logService;
@@ -29,7 +32,7 @@ class LogServiceTest {
     void setUp() {
         repository = mock(SystemLogRepository.class);
         messagingTemplate = mock(SimpMessagingTemplate.class);
-        logService = new LogService(repository, messagingTemplate, 3);
+        logService = new LogService(repository, messagingTemplate, 3, RETENTION_DAYS);
     }
 
     private LogEntry entry(String level, String message) {
@@ -115,5 +118,29 @@ class LogServiceTest {
 
         verify(repository).findByLevelInOrderByIdDesc(any(), any());
         verify(repository, never()).findAll();
+    }
+
+    @Test
+    void 정리는_보존기간만큼_지난_시각을_기준으로_삭제한다() {
+        // 호출 전후로 기준선을 잡아, 그 사이의 값이 나오는지 본다. 단위를 일이 아닌 것으로
+        // 바꾸거나 minusDays를 빠뜨리면 범위를 벗어나 실패한다.
+        LocalDateTime notOlderThan = LocalDateTime.now().minusDays(RETENTION_DAYS);
+        logService.purgeOldLogs();
+        LocalDateTime notNewerThan = LocalDateTime.now().minusDays(RETENTION_DAYS);
+
+        ArgumentCaptor<LocalDateTime> cutoff = ArgumentCaptor.forClass(LocalDateTime.class);
+        verify(repository).deleteLoggedBefore(cutoff.capture());
+        assertThat(cutoff.getValue()).isBetween(notOlderThan, notNewerThan);
+    }
+
+    @Test
+    void 정리는_메모리_버퍼를_건드리지_않는다() {
+        logService.record(entry("ERROR", "남아야 하는 로그"));
+
+        logService.purgeOldLogs();
+
+        assertThat(logService.recent("TRACE", 10))
+                .extracting(LogEntry::message)
+                .containsExactly("남아야 하는 로그");
     }
 }

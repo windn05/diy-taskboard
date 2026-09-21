@@ -46,7 +46,7 @@ export function AppHeader({
         >
           {CurrentIcon && <CurrentIcon size={16} className="text-slate-500" />}
           {current?.label}
-          <ChevronDownIcon size={12} className="text-slate-400" />
+          <ChevronDownIcon size={12} className="text-slate-500" />
         </button>
 
         {open && (
@@ -86,17 +86,18 @@ export function AppHeader({
         <NotificationBell />
         <span className="text-slate-600">{user?.username}</span>
         {isGuest ? (
-          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-500">게스트 · 읽기 전용</span>
+          // 흰 배경이 아니라 slate-100 칩 위에 얹히므로 한 단계 더 진하게 가야 4.5:1을 넘는다.
+          <span className="rounded bg-slate-100 px-1.5 py-0.5 text-[11px] text-slate-600">게스트 · 읽기 전용</span>
         ) : (
           // 게스트는 저장되는 계정이 아니라 바꿀 비밀번호가 없다.
           <button
             onClick={() => setChangingPassword(true)}
-            className="text-xs text-slate-400 hover:text-slate-700"
+            className="text-xs text-slate-500 hover:text-slate-700"
           >
             비밀번호 변경
           </button>
         )}
-        <button onClick={logout} className="text-slate-400 hover:text-slate-700">
+        <button onClick={logout} className="text-slate-500 hover:text-slate-700">
           로그아웃
         </button>
       </div>

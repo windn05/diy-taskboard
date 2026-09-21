@@ -18,7 +18,7 @@ export function HomePage() {
   const { user, isGuest } = useAuth()
   const { data, isLoading } = useQuery({ queryKey: ['dashboard'], queryFn: getDashboard })
 
-  if (isLoading) return <div className="p-8 text-sm text-slate-400">불러오는 중...</div>
+  if (isLoading) return <div className="p-8 text-sm text-slate-500">불러오는 중...</div>
   if (!data) return null
 
   return (
@@ -99,10 +99,10 @@ function Panel({
     <section className={`flex flex-col overflow-hidden rounded-lg border ${grow ? 'min-h-0 flex-1' : 'shrink-0'}`}>
       <h2 className="flex shrink-0 items-baseline gap-2 border-b bg-slate-50 px-4 py-2.5 text-sm font-semibold text-slate-600">
         {title}
-        {count !== undefined && count > 0 && <span className="text-xs font-normal text-slate-400">{count}</span>}
+        {count !== undefined && count > 0 && <span className="text-xs font-normal text-slate-500">{count}</span>}
       </h2>
       {isEmpty ? (
-        <p className="bg-white px-4 py-6 text-center text-sm text-slate-400">{empty}</p>
+        <p className="bg-white px-4 py-6 text-center text-sm text-slate-500">{empty}</p>
       ) : (
         <div className={`divide-y divide-slate-100 bg-white ${grow ? 'min-h-0 flex-1 overflow-y-auto' : ''}`}>
           {children}
@@ -121,8 +121,8 @@ function TaskRow({ task, showOverdue }: { task: MyTask; showOverdue?: boolean })
       <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${PRIORITY_COLOR[task.priority]}`}>
         {task.priority}
       </span>
-      <span className="w-20 shrink-0 truncate text-right text-xs text-slate-400">{task.workspaceName}</span>
-      <span className={`w-20 shrink-0 text-right text-xs ${overdue ? 'font-semibold text-red-600' : 'text-slate-400'}`}>
+      <span className="w-20 shrink-0 truncate text-right text-xs text-slate-500">{task.workspaceName}</span>
+      <span className={`w-20 shrink-0 text-right text-xs ${overdue ? 'font-semibold text-red-600' : 'text-slate-500'}`}>
         {task.dueDate ?? '-'}
       </span>
     </Link>
@@ -136,8 +136,8 @@ function RecentCardRow({ card }: { card: RecentCard }) {
       <span className="shrink-0 rounded border border-slate-200 px-1.5 py-0.5 text-[11px] text-slate-500">
         {card.statusName}
       </span>
-      <span className="w-20 shrink-0 truncate text-right text-xs text-slate-400">{card.workspaceName}</span>
-      <span className="w-20 shrink-0 text-right text-xs text-slate-400">{card.createdDate ?? '-'}</span>
+      <span className="w-20 shrink-0 truncate text-right text-xs text-slate-500">{card.workspaceName}</span>
+      <span className="w-20 shrink-0 text-right text-xs text-slate-500">{card.createdDate ?? '-'}</span>
     </Link>
   )
 }
@@ -146,8 +146,8 @@ function ReleaseRow({ release }: { release: RecentRelease }) {
   return (
     <Link to={`/projects/${release.workspaceId}/releases`} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50">
       <span className="font-semibold text-slate-800">{release.version}</span>
-      <span className="text-xs text-slate-400">{release.workspaceName}</span>
-      <span className="ml-auto text-xs text-slate-400">
+      <span className="text-xs text-slate-500">{release.workspaceName}</span>
+      <span className="ml-auto text-xs text-slate-500">
         작업 {release.cardCount}건 · {new Date(release.releasedAt).toLocaleDateString()}
       </span>
     </Link>

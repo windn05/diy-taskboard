@@ -17,7 +17,21 @@ public class MetricsDtos {
     }
 
     /** 자원 현황을 "서버 전체"와 "백엔드 프로세스"로 나눠 준다. 섞으면 컨테이너 한도가 서버 메모리처럼 보인다. */
-    public record SystemStatsResponse(HostStats host, BackendStats backend) {
+    public record SystemStatsResponse(HostStats host, BackendStats backend, DbStats db) {
+    }
+
+    /**
+     * DB. 커넥션 풀은 CPU·메모리가 멀쩡해도 요청이 멈추는 대표적인 경로라 따로 본다
+     * ({@code waiting}이 0보다 크면 이미 대기가 걸린 것이다).
+     *
+     * <p>풀이 HikariCP가 아니거나 Postgres가 아닌 환경(테스트의 H2)에서는 해당 항목이 null이다.
+     */
+    public record DbStats(
+            Integer poolActive,
+            Integer poolIdle,
+            Integer poolMax,
+            Integer poolWaiting,
+            Long sizeMb) {
     }
 
     /** 서버(VM) 전체. 백엔드·DB·프록시가 함께 쓰는 자원이다. */

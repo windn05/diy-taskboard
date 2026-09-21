@@ -46,7 +46,7 @@ export function LoginPage() {
         {/* 좌측: 메뉴 영역 */}
         <div className="hidden w-72 shrink-0 items-center justify-center border-r bg-slate-50 sm:flex">
           <div className="w-48 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-            <p className="mb-3 text-center text-xs font-semibold tracking-wide text-slate-400">메뉴 선택</p>
+            <p className="mb-3 text-center text-xs font-semibold tracking-wide text-slate-500">메뉴 선택</p>
             <div className="space-y-2">
               {APPS.map((app) => (
                 <button

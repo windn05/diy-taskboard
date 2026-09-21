@@ -3,11 +3,16 @@ package com.taskboard.service;
 import com.taskboard.domain.SystemLog;
 import com.taskboard.dto.LogDtos.LogEntry;
 import com.taskboard.repository.SystemLogRepository;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
+import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -29,17 +34,38 @@ public class LogService {
      */
     private static final ThreadLocal<Boolean> HANDLING = new ThreadLocal<>();
 
+    private static final Logger log = LoggerFactory.getLogger(LogService.class);
+
     private final SystemLogRepository repository;
     private final SimpMessagingTemplate messagingTemplate;
     private final int bufferSize;
+    private final int retentionDays;
     private final Deque<LogEntry> buffer = new ArrayDeque<>();
 
     public LogService(SystemLogRepository repository,
                       SimpMessagingTemplate messagingTemplate,
-                      @Value("${taskboard.log.buffer-size:500}") int bufferSize) {
+                      @Value("${taskboard.log.buffer-size:500}") int bufferSize,
+                      @Value("${taskboard.log.retention-days:7}") int retentionDays) {
         this.repository = repository;
         this.messagingTemplate = messagingTemplate;
         this.bufferSize = bufferSize;
+        this.retentionDays = retentionDays;
+    }
+
+    /**
+     * 보존 기간이 지난 영속 로그를 지운다. 메모리 버퍼는 {@link #addToBuffer}에서 이미 상한이 걸려 있지만
+     * DB 쪽은 상한이 없어, 두지 않으면 무한히 늘어난다. 조회는 어차피 최신 N건만 하므로 오래된 행은
+     * 보이지도 않으면서 디스크만 차지한다.
+     *
+     * <p>장애가 나면 요청마다 ERROR가 쌓여 유입이 급증하는데(스택트레이스 포함), 그때 디스크가 차면
+     * 원래 장애가 복구된 뒤에도 DB가 못 쓰게 되는 2차 장애가 된다. 트래픽이 적은 새벽에 하루 한 번 돈다.
+     */
+    @Scheduled(cron = "0 0 4 * * *")
+    @Transactional
+    public void purgeOldLogs() {
+        int deleted = repository.deleteLoggedBefore(LocalDateTime.now().minusDays(retentionDays));
+        // INFO는 DB에 영속되지 않으므로(PERSISTED_LEVELS) 이 로그가 다시 행을 만들지는 않는다.
+        if (deleted > 0) log.info("보존 기간({}일)이 지난 시스템 로그 {}건을 삭제했다.", retentionDays, deleted);
     }
 
     public void record(LogEntry entry) {

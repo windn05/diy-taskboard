@@ -1,8 +1,6 @@
 import { api } from './client'
 import type { Tokens } from './types'
 
-// 공개 회원가입은 없다. 계정 생성은 관리자 앱에서 한다(api/admin.ts의 adminCreateUser).
-
 export const login = (data: { username: string; password: string }) =>
   api<Tokens>('/auth/login', { method: 'POST', body: JSON.stringify(data) })
 

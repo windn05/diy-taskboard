@@ -37,7 +37,7 @@ export function AdminUsersTab() {
         <h2 className="mb-3 text-sm font-semibold text-slate-700">계정 목록</h2>
         <table className="w-full text-sm">
           <thead>
-            <tr className="border-b text-left text-xs text-slate-400">
+            <tr className="border-b text-left text-xs text-slate-500">
               <th className="pb-2 font-medium">아이디</th>
               <th className="pb-2 font-medium">이름</th>
               <th className="pb-2 font-medium">역할</th>
@@ -112,7 +112,7 @@ export function AdminUsersTab() {
             계정 만들기
           </button>
         </form>
-        <p className="mt-3 text-[11px] leading-relaxed text-slate-400">
+        <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
           만든 계정의 비밀번호는 본인이 로그인한 뒤 헤더에서 직접 바꿉니다. 관리자가 대신 바꿀 수는 없습니다.
         </p>
       </section>

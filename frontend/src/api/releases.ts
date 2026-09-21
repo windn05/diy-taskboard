@@ -3,7 +3,6 @@ import type { Card, Release } from './types'
 
 export const listReleases = (workspaceId: number) => api<Release[]>(`/workspaces/${workspaceId}/releases`)
 
-/** 아직 배포되지 않은 작업. statusId를 주면 그 상태만 추린다. */
 export const listReleaseCandidates = (workspaceId: number, statusId?: number) =>
   api<Card[]>(
     `/workspaces/${workspaceId}/releases/candidates${statusId ? `?statusId=${statusId}` : ''}`,

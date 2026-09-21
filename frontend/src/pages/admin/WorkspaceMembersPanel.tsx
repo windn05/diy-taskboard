@@ -59,7 +59,7 @@ export function WorkspaceMembersPanel({ workspaceId }: { workspaceId: number }) 
         {members?.map((member) => (
           <li key={member.userId} className="flex items-center gap-2 text-sm">
             <span className="font-medium">{member.name}</span>
-            <span className="text-xs text-slate-400">{member.username}</span>
+            <span className="text-xs text-slate-500">{member.username}</span>
             <span className="rounded bg-white px-1.5 py-0.5 text-[11px] text-slate-500">
               {ROLE_LABEL[member.role] ?? member.role}
             </span>
@@ -71,7 +71,7 @@ export function WorkspaceMembersPanel({ workspaceId }: { workspaceId: number }) 
             </button>
           </li>
         ))}
-        {members?.length === 0 && <li className="text-xs text-slate-400">멤버가 없습니다.</li>}
+        {members?.length === 0 && <li className="text-xs text-slate-500">멤버가 없습니다.</li>}
       </ul>
 
       {candidates.length > 0 ? (
@@ -110,7 +110,7 @@ export function WorkspaceMembersPanel({ workspaceId }: { workspaceId: number }) 
           </button>
         </form>
       ) : (
-        <p className="text-xs text-slate-400">추가할 수 있는 사용자가 없습니다.</p>
+        <p className="text-xs text-slate-500">추가할 수 있는 사용자가 없습니다.</p>
       )}
     </div>
   )

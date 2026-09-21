@@ -30,7 +30,7 @@ export function ProjectReleasesPage() {
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
   const { data: releases } = useQuery({ queryKey: ['releases', wsId], queryFn: () => listReleases(wsId) })
 
-  if (!statuses) return <div className="p-8 text-sm text-slate-400">불러오는 중...</div>
+  if (!statuses) return <div className="p-8 text-sm text-slate-500">불러오는 중...</div>
 
   return (
     <div className="space-y-6 p-8">
@@ -166,12 +166,12 @@ function NewReleaseForm({
             <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
               <input type="checkbox" checked={selected.includes(card.id)} onChange={() => toggle(card.id)} />
               <span className="flex-1">{card.title}</span>
-              <span className="text-xs text-slate-400">{card.type}</span>
+              <span className="text-xs text-slate-500">{card.type}</span>
             </label>
           </li>
         ))}
         {candidates?.length === 0 && (
-          <li className="px-3 py-6 text-center text-sm text-slate-400">배포할 수 있는 작업이 없습니다.</li>
+          <li className="px-3 py-6 text-center text-sm text-slate-500">배포할 수 있는 작업이 없습니다.</li>
         )}
       </ul>
 
@@ -211,7 +211,7 @@ function ReleaseHistory({
           />
         ))}
         {releases.length === 0 && (
-          <p className="rounded-lg border bg-white px-4 py-8 text-center text-sm text-slate-400">
+          <p className="rounded-lg border bg-white px-4 py-8 text-center text-sm text-slate-500">
             아직 배포 기록이 없습니다.
           </p>
         )}
@@ -265,8 +265,8 @@ function ReleaseCard({
     <article className="rounded-lg border bg-white p-4">
       <div className="mb-2 flex items-baseline gap-2">
         <h3 className="text-base font-semibold text-slate-800">{release.version}</h3>
-        <span className="text-xs text-slate-400">{new Date(release.releasedAt).toLocaleString()}</span>
-        <span className="text-xs text-slate-400">· 작업 {release.cards.length}건</span>
+        <span className="text-xs text-slate-500">{new Date(release.releasedAt).toLocaleString()}</span>
+        <span className="text-xs text-slate-500">· 작업 {release.cards.length}건</span>
         {!readOnly && (
           <div className="ml-auto flex gap-2">
             <button
@@ -310,7 +310,7 @@ function ReleaseCard({
           <li key={card.id} className="flex items-center gap-2 text-sm text-slate-600">
             <CheckIcon size={14} className="shrink-0 text-emerald-500" />
             <span className="flex-1">{card.title}</span>
-            <span className="text-xs text-slate-400">{card.type}</span>
+            <span className="text-xs text-slate-500">{card.type}</span>
           </li>
         ))}
       </ul>

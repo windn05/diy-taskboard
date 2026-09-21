@@ -43,7 +43,7 @@ export function Modal({
           <div className="min-w-0 flex-1">{title}</div>
           <button
             onClick={onClose}
-            className="shrink-0 rounded p-1 text-slate-400 hover:bg-slate-100 hover:text-slate-700"
+            className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
             title={dismissible ? '닫기 (Esc)' : '닫기'}
           >
             <CloseIcon size={18} />
@@ -60,7 +60,7 @@ export function Modal({
 
 /** 즉시 저장되는 화면에서 "지금 저장됐는지"를 알려준다. */
 export function SaveIndicator({ saving, saved }: { saving: boolean; saved: boolean }) {
-  if (saving) return <span className="text-xs text-slate-400">저장 중…</span>
+  if (saving) return <span className="text-xs text-slate-500">저장 중…</span>
   if (saved) return <span className="text-xs text-emerald-600">저장됨</span>
   return null
 }

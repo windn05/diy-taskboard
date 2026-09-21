@@ -19,7 +19,7 @@ function initial(username: string) {
 
 export function PresenceBar({ users, meId }: { users: PresenceUser[]; meId?: number }) {
   if (users.length === 0) {
-    return <span className="text-xs text-slate-400">접속자 없음</span>
+    return <span className="text-xs text-slate-500">접속자 없음</span>
   }
 
   return (
@@ -37,7 +37,7 @@ export function PresenceBar({ users, meId }: { users: PresenceUser[]; meId?: num
           </span>
         ))}
       </div>
-      <span className="text-xs text-slate-400">{users.length}명 접속 중</span>
+      <span className="text-xs text-slate-500">{users.length}명 접속 중</span>
     </div>
   )
 }
