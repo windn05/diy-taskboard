@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminCreateUser, adminListUsers } from '../../api/admin'
-import { ApiError } from '../../api/client'
+import { ApiError } from '../../api/axios'
 
 const ROLE_LABELS: Record<string, string> = { ADMIN: '관리자', USER: '일반 사용자' }
 

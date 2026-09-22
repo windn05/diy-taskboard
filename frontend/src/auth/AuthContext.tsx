@@ -1,6 +1,6 @@
 import { createContext, useContext, useState, type ReactNode } from 'react'
 import { decodeAccessToken, guestLogin as guestLoginApi, login as loginApi } from '../api/auth'
-import { getToken, setToken } from '../api/client'
+import { getToken, setToken } from '../api/axios'
 
 type CurrentUser = { userId: number; username: string; role: string }
 

@@ -1,8 +1,8 @@
 // 작업(카드)과 댓글
-import { api } from './client'
+import { del, get, patch, post } from './axios'
 import type { Card, CardPriority, Comment } from './types'
 
-export const listCards = (workspaceId: number) => api<Card[]>(`/workspaces/${workspaceId}/cards`)
+export const listCards = (workspaceId: number) => get<Card[]>(`/workspaces/${workspaceId}/cards`)
 
 export type CreateCardInput = {
   title: string
@@ -17,17 +17,17 @@ export type CreateCardInput = {
 }
 
 export const createCard = (workspaceId: number, input: CreateCardInput) =>
-  api<Card>(`/workspaces/${workspaceId}/cards`, { method: 'POST', body: JSON.stringify(input) })
+  post<Card>(`/workspaces/${workspaceId}/cards`, input)
 
 // 보낸 필드만 변경. assigneeId·startDate·dueDate는 null을 보내면 비움
 export const updateCard = (cardId: number, input: Partial<CreateCardInput>) =>
-  api<Card>(`/cards/${cardId}`, { method: 'PATCH', body: JSON.stringify(input) })
+  patch<Card>(`/cards/${cardId}`, input)
 
-export const deleteCard = (cardId: number) => api<void>(`/cards/${cardId}`, { method: 'DELETE' })
+export const deleteCard = (cardId: number) => del<void>(`/cards/${cardId}`)
 
-export const listComments = (cardId: number) => api<Comment[]>(`/cards/${cardId}/comments`)
+export const listComments = (cardId: number) => get<Comment[]>(`/cards/${cardId}/comments`)
 
 export const addComment = (cardId: number, content: string) =>
-  api<Comment>(`/cards/${cardId}/comments`, { method: 'POST', body: JSON.stringify({ content }) })
+  post<Comment>(`/cards/${cardId}/comments`, { content })
 
-export const deleteComment = (commentId: number) => api<void>(`/cards/comments/${commentId}`, { method: 'DELETE' })
+export const deleteComment = (commentId: number) => del<void>(`/cards/comments/${commentId}`)

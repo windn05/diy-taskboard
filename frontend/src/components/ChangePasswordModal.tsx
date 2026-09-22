@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import { changePassword } from '../api/auth'
-import { ApiError } from '../api/client'
+import { ApiError } from '../api/axios'
 import { Modal } from './Modal'
 
 /** 본인 비밀번호 변경. 게스트에게는 메뉴 자체가 미노출 */

@@ -1,14 +1,13 @@
 // 로그인·토큰
-import { api } from './client'
+import { post } from './axios'
 import type { Tokens } from './types'
 
-export const login = (data: { username: string; password: string }) =>
-  api<Tokens>('/auth/login', { method: 'POST', body: JSON.stringify(data) })
+export const login = (data: { username: string; password: string }) => post<Tokens>('/auth/login', data)
 
-export const guestLogin = () => api<Tokens>('/auth/guest', { method: 'POST' })
+export const guestLogin = () => post<Tokens>('/auth/guest')
 
 export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
-  api<void>('/auth/password', { method: 'POST', body: JSON.stringify(data) })
+  post<void>('/auth/password', data)
 
 /**
  * 토큰 payload에서 사용자 정보 추출. 서명 검증은 하지 않음 —

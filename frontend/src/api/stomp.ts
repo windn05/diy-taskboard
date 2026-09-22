@@ -1,5 +1,5 @@
 import { Client } from '@stomp/stompjs'
-import { getToken } from './client'
+import { getToken } from './axios'
 
 // REST와 같은 호스트의 /ws. 페이지가 https면 wss로 연결
 function brokerUrl() {

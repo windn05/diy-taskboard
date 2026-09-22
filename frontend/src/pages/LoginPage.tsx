@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../auth/AuthContext'
-import { ApiError } from '../api/client'
+import { ApiError } from '../api/axios'
 import { APPS, type AppKey } from '../apps'
 
 /** 로그인. 왼쪽에서 고른 앱으로 로그인 후 바로 이동. 게스트는 항상 TaskBoard 홈으로 이동 */

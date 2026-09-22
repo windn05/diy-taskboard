@@ -1,30 +1,25 @@
 // 관리자 전용 API (/admin/**). 프로젝트·멤버·계정 관리
-import { api } from './client'
+import { del, get, patch, post } from './axios'
 import type { AdminWorkspace, Member, User, Workspace } from './types'
 
-export const adminListWorkspaces = () => api<AdminWorkspace[]>('/admin/workspaces')
+export const adminListWorkspaces = () => get<AdminWorkspace[]>('/admin/workspaces')
 
-export const adminCreateWorkspace = (name: string) =>
-  api<Workspace>('/admin/workspaces', { method: 'POST', body: JSON.stringify({ name }) })
+export const adminCreateWorkspace = (name: string) => post<Workspace>('/admin/workspaces', { name })
 
 export const adminUpdateWorkspace = (id: number, input: { name?: string; visible?: boolean }) =>
-  api<AdminWorkspace>(`/admin/workspaces/${id}`, { method: 'PATCH', body: JSON.stringify(input) })
+  patch<AdminWorkspace>(`/admin/workspaces/${id}`, input)
 
-export const adminDeleteWorkspace = (id: number) => api<void>(`/admin/workspaces/${id}`, { method: 'DELETE' })
+export const adminDeleteWorkspace = (id: number) => del<void>(`/admin/workspaces/${id}`)
 
-export const adminListUsers = () => api<User[]>('/admin/users')
+export const adminListUsers = () => get<User[]>('/admin/users')
 
 export const adminCreateUser = (data: { username: string; password: string; name: string; role: string }) =>
-  api<User>('/admin/users', { method: 'POST', body: JSON.stringify(data) })
+  post<User>('/admin/users', data)
 
-export const adminListMembers = (workspaceId: number) =>
-  api<Member[]>(`/admin/workspaces/${workspaceId}/members`)
+export const adminListMembers = (workspaceId: number) => get<Member[]>(`/admin/workspaces/${workspaceId}/members`)
 
 export const adminAddMember = (workspaceId: number, username: string, role: string) =>
-  api<Member>(`/admin/workspaces/${workspaceId}/members`, {
-    method: 'POST',
-    body: JSON.stringify({ username, role }),
-  })
+  post<Member>(`/admin/workspaces/${workspaceId}/members`, { username, role })
 
 export const adminRemoveMember = (workspaceId: number, userId: number) =>
-  api<void>(`/admin/workspaces/${workspaceId}/members/${userId}`, { method: 'DELETE' })
+  del<void>(`/admin/workspaces/${workspaceId}/members/${userId}`)

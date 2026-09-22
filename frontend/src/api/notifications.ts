@@ -1,10 +1,9 @@
 // 본인 알림
-import { api } from './client'
+import { get, patch, post } from './axios'
 import type { NotificationList } from './types'
 
-export const listNotifications = () => api<NotificationList>('/notifications')
+export const listNotifications = () => get<NotificationList>('/notifications')
 
-export const markNotificationRead = (id: number) =>
-  api<void>(`/notifications/${id}/read`, { method: 'PATCH' })
+export const markNotificationRead = (id: number) => patch<void>(`/notifications/${id}/read`)
 
-export const markAllNotificationsRead = () => api<void>('/notifications/read-all', { method: 'POST' })
+export const markAllNotificationsRead = () => post<void>('/notifications/read-all')
