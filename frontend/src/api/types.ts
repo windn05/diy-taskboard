@@ -1,7 +1,8 @@
 // 백엔드 DTO와 1:1로 맞춘 응답 타입. 날짜는 ISO 문자열(yyyy-MM-dd / yyyy-MM-ddTHH:mm:ss)
 export type User = { id: number; username: string; name: string; role: string }
 
-export type Tokens = { accessToken: string; refreshToken: string }
+/** 로그인 성공·세션 조회(GET /auth/me) 응답. 세션 쿠키는 JS가 못 읽으므로 서버가 내려주는 이 값으로 로그인 상태를 판단 */
+export type SessionUser = { userId: number; username: string; role: string }
 
 /** myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트는 GUEST */
 export type Workspace = { id: number; name: string; ownerId: number; myRole: string }

@@ -1,7 +1,12 @@
 # 배포 환경에서는 아래 값들을 환경변수로 덮어쓴다. 콜론 뒤는 로컬 개발용 기본값이다.
-#   DB_URL, DB_USERNAME, DB_PASSWORD, JWT_SECRET, JPA_DDL_AUTO, JPA_SHOW_SQL, PORT
+#   DB_URL, DB_USERNAME, DB_PASSWORD, REDIS_HOST, REDIS_PORT, JPA_DDL_AUTO, JPA_SHOW_SQL, PORT
 server:
   port: ${PORT:8080}
+  servlet:
+    session:
+      # 쿠키가 크로스사이트 요청엔 안 실리므로 CSRF 토큰 없이도 안전 — 같은 오리진(Caddy/Vite 프록시) 배포 기준
+      cookie:
+        same-site: lax
 
 spring:
   datasource:
@@ -20,12 +25,14 @@ spring:
         # LocalDateTime을 UTC 그대로 저장·조회 (JVM 기본 시간대도 UTC로 고정)
         jdbc:
           time_zone: UTC
-
-jwt:
-  # 운영에서는 반드시 JWT_SECRET을 넣어야 한다. 기본값이 노출되면 토큰을 위조할 수 있다.
-  secret: ${JWT_SECRET:local-only-dev-secret-key-please-32bytes-min}
-  access-token-expiration-ms: 3600000
-  refresh-token-expiration-ms: 604800000
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+  session:
+    # 로그인 세션을 백엔드 프로세스가 아닌 Redis에 둬서, 재배포로 컨테이너가 재시작돼도 로그인이 유지된다.
+    store-type: redis
+    timeout: 1h
 
 springdoc:
   # 운영에서는 SWAGGER_ENABLED=false로 끈다. API 목록을 공개할 이유가 없다.

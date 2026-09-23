@@ -21,7 +21,6 @@ export function useNotifications(userId: number | undefined, enabled: boolean) {
     if (!enabled || userId === undefined) return
 
     const client = createStompClient()
-    if (!client) return
 
     client.onConnect = () => {
       client.subscribe(`/topic/users/${userId}/notifications`, (message) => {

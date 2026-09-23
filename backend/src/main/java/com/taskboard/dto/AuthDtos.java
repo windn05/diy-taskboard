@@ -29,10 +29,13 @@ public class AuthDtos {
             String newPassword) {
     }
 
-    /** accessToken은 API 호출용(단기), refreshToken은 재발급용(장기) */
-    public record TokenResponse(String accessToken, String refreshToken) {
+    public record UserResponse(Long id, String username, String name, String role) {
     }
 
-    public record UserResponse(Long id, String username, String name, String role) {
+    /**
+     * 로그인 성공·세션 조회 응답. 토큰 시절엔 프론트가 JWT를 직접 디코드해 이 정보를 얻었지만
+     * 세션 쿠키는 JS가 못 읽으므로 서버가 이 형태로 내려준다({@code GET /auth/me}도 동일)
+     */
+    public record SessionUser(Long userId, String username, String role) {
     }
 }

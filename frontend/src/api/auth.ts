@@ -1,23 +1,15 @@
-// 로그인·토큰
-import { post } from './axios'
-import type { Tokens } from './types'
+// 로그인·로그아웃(세션)
+import { get, post } from './axios'
+import type { SessionUser } from './types'
 
-export const login = (data: { username: string; password: string }) => post<Tokens>('/auth/login', data)
+export const login = (data: { username: string; password: string }) => post<SessionUser>('/auth/login', data)
 
-export const guestLogin = () => post<Tokens>('/auth/guest')
+export const guestLogin = () => post<SessionUser>('/auth/guest')
 
 export const changePassword = (data: { currentPassword: string; newPassword: string }) =>
   post<void>('/auth/password', data)
 
-/**
- * 토큰 payload에서 사용자 정보 추출. 서명 검증은 하지 않음 —
- * 화면 표시용일 뿐이고, 실제 권한 판단은 서버가 매 요청마다 수행
- */
-export function decodeAccessToken(token: string): { userId: number; username: string; role: string } | null {
-  try {
-    const payload = JSON.parse(atob(token.split('.')[1]))
-    return { userId: payload.userId, username: payload.sub, role: payload.role }
-  } catch {
-    return null
-  }
-}
+/** 새로고침 시 로그인 상태 복원용. 세션 쿠키가 없거나 만료됐으면 401 */
+export const getMe = () => get<SessionUser>('/auth/me')
+
+export const logout = () => post<void>('/auth/logout')

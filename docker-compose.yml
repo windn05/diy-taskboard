@@ -33,6 +33,14 @@ services:
         max-size: "10m"
         max-file: "3"
 
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    mem_limit: 48m
+    # 세션 몇 개 담는 용도라 영속 볼륨 불필요 — 재시작하면 전원 재로그인이면 충분.
+    command: redis-server --maxmemory 32mb --maxmemory-policy allkeys-lru --save ""
+    logging: *logging
+
   backend:
     image: ghcr.io/windn05/diy-taskboard-backend:latest
     restart: unless-stopped
@@ -40,11 +48,13 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      redis:
+        condition: service_started
     environment:
       DB_URL: jdbc:postgresql://db:5432/taskboard
       DB_USERNAME: postgres
       DB_PASSWORD: ${DB_PASSWORD}
-      JWT_SECRET: ${JWT_SECRET}
+      REDIS_HOST: redis
       JPA_DDL_AUTO: ${JPA_DDL_AUTO:-update} # 최초 배포 확인 후 .env에서 validate로 낮춘다
       JPA_SHOW_SQL: "false"
       SWAGGER_ENABLED: "false" # 공개 서버에 API 목록을 노출하지 않는다

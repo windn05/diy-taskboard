@@ -8,11 +8,11 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: false
-
-jwt:
-  secret: test-only-secret-key-please-32bytes-minimum
-  access-token-expiration-ms: 3600000
-  refresh-token-expiration-ms: 604800000
+  # Docker 없이 H2로 테스트하는 것과 같은 이유로, 테스트에선 Redis 대신 컨테이너 내장 세션을 쓴다.
+  # store-type: none 만으로는 spring-session-data-redis가 classpath에 있으면 그대로 Redis를 골라버려서
+  # 자동설정 자체를 꺼야 한다.
+  autoconfigure:
+    exclude: org.springframework.boot.autoconfigure.session.SessionAutoConfiguration
 
 logging:
   level:

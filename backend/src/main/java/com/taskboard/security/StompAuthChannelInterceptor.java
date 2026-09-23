@@ -11,21 +11,25 @@ import org.springframework.messaging.simp.stomp.StompHeaderAccessor;
 import org.springframework.messaging.support.ChannelInterceptor;
 import org.springframework.messaging.support.MessageHeaderAccessor;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContext;
+import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.stereotype.Component;
 
 import java.security.Principal;
+import java.util.Map;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * STOMP CONNECT 헤더의 JWT를 REST와 동일한 방식으로 검증하고,
- * 이후 SUBSCRIBE/DISCONNECT 이벤트에서 사용자를 식별할 수 있도록 세션 Principal 설정
+ * WebSocket 핸드셰이크(HttpSessionHandshakeInterceptor, WebSocketConfig)가 HTTP 세션을
+ * 복사해 둔 것에서 로그인 정보를 그대로 꺼내 쓴다 — REST와 같은 세션을 공유하는 것뿐이라
+ * 토큰을 따로 검증할 필요가 없다. 이후 SUBSCRIBE/DISCONNECT에서 쓸 수 있도록 세션 Principal 설정
  */
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
 
-    private final TokenAuthenticator tokenAuthenticator;
     private final WorkspaceService workspaceService;
 
     /** 관리자 전용 토픽 접두어. REST의 /admin/** 과 같은 기준을 WebSocket에도 적용 */
@@ -43,15 +47,25 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         if (accessor == null) return message;
 
         if (StompCommand.CONNECT.equals(accessor.getCommand())) {
-            CurrentUser user = tokenAuthenticator.resolveBearer(accessor.getFirstNativeHeader("Authorization"))
-                    .orElseThrow(() -> new MessagingException("인증되지 않은 WebSocket 연결입니다."));
-            accessor.setUser(user.toAuthentication());
+            accessor.setUser(resolveFromSession(accessor.getSessionAttributes())
+                    .orElseThrow(() -> new MessagingException("인증되지 않은 WebSocket 연결입니다.")));
         }
 
         if (StompCommand.SUBSCRIBE.equals(accessor.getCommand())) {
             authorizeSubscribe(accessor.getDestination(), accessor.getUser());
         }
         return message;
+    }
+
+    /** HttpSessionHandshakeInterceptor가 복사해 둔 세션 속성에서 Spring Security의 SecurityContext를 꺼낸다 */
+    private Optional<Authentication> resolveFromSession(Map<String, Object> sessionAttributes) {
+        if (sessionAttributes == null) return Optional.empty();
+        Object attribute = sessionAttributes.get(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
+        return Optional.ofNullable(attribute)
+                .filter(SecurityContext.class::isInstance)
+                .map(SecurityContext.class::cast)
+                .map(SecurityContext::getAuthentication)
+                .filter(auth -> auth.getPrincipal() instanceof CurrentUser);
     }
 
     private void authorizeSubscribe(String destination, Principal principal) {

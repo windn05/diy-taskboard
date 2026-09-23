@@ -16,7 +16,6 @@ export function useLogStream() {
 
   useEffect(() => {
     const client = createStompClient()
-    if (!client) return
 
     let active = true
     client.onConnect = () => {

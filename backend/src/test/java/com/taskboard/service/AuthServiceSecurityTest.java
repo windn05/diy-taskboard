@@ -7,7 +7,6 @@ import com.taskboard.dto.AuthDtos.CreateUserRequest;
 import com.taskboard.dto.AuthDtos.LoginRequest;
 import com.taskboard.exception.TooManyAttemptsException;
 import com.taskboard.repository.UserRepository;
-import com.taskboard.security.JwtService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
@@ -34,8 +33,7 @@ class AuthServiceSecurityTest {
     void setUp() {
         userRepository = mock(UserRepository.class);
         passwordEncoder = new BCryptPasswordEncoder();
-        JwtService jwtService = new JwtService("test-only-secret-key-please-32bytes-minimum", 3600000, 604800000);
-        authService = new AuthService(userRepository, passwordEncoder, jwtService, new LoginAttemptService());
+        authService = new AuthService(userRepository, passwordEncoder, new LoginAttemptService());
 
         user = User.builder()
                 .id(1L)

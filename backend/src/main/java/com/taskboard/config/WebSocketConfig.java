@@ -8,6 +8,7 @@ import org.springframework.messaging.simp.config.MessageBrokerRegistry;
 import org.springframework.web.socket.config.annotation.EnableWebSocketMessageBroker;
 import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
+import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
 /**
  * STOMP over WebSocket 설정. 단일 인스턴스라 외부 브로커 없이 내장 SimpleBroker 사용.
@@ -22,8 +23,11 @@ public class WebSocketConfig implements WebSocketMessageBrokerConfigurer {
 
     @Override
     public void registerStompEndpoints(StompEndpointRegistry registry) {
-        // 쿠키가 아닌 토큰으로 인증하므로 Origin 제한 불필요
-        registry.addEndpoint("/ws").setAllowedOriginPatterns("*");
+        // 세션 쿠키는 SameSite=Lax라 다른 오리진에서 보낸 핸드셰이크엔 애초에 실리지 않으므로 Origin 제한 불필요.
+        // HttpSessionHandshakeInterceptor로 HTTP 세션(SecurityContext 포함)을 WebSocket 세션에 그대로 복사한다.
+        registry.addEndpoint("/ws")
+                .setAllowedOriginPatterns("*")
+                .addInterceptors(new HttpSessionHandshakeInterceptor());
     }
 
     @Override

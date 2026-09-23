@@ -1,11 +1,16 @@
-import { createContext, useContext, useState, type ReactNode } from 'react'
-import { decodeAccessToken, guestLogin as guestLoginApi, login as loginApi } from '../api/auth'
-import { getToken, setToken } from '../api/axios'
-
-type CurrentUser = { userId: number; username: string; role: string }
+import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
+import {
+  getMe,
+  guestLogin as guestLoginApi,
+  login as loginApi,
+  logout as logoutApi,
+} from '../api/auth'
+import type { SessionUser } from '../api/types'
 
 type AuthContextValue = {
-  user: CurrentUser | null
+  user: SessionUser | null
+  /** /auth/me 응답을 기다리는 동안(true) ProtectedRoute가 섣불리 /login으로 보내지 않게 함 */
+  loading: boolean
   isGuest: boolean
   login: (username: string, password: string) => Promise<void>
   loginAsGuest: () => Promise<void>
@@ -15,35 +20,37 @@ type AuthContextValue = {
 const AuthContext = createContext<AuthContextValue | null>(null)
 
 /**
- * 로그인 상태. 액세스 토큰만 localStorage에 두고, 사용자 정보는 토큰에서 추출.
- * 새로고침해도 토큰이 남아 있으면 로그인 상태 유지
+ * 로그인 상태. 세션 쿠키는 httpOnly라 JS가 못 읽으므로, 새로고침 때마다 GET /auth/me로
+ * 서버에 물어봐서 로그인 상태를 복원한다(로그인 안 돼 있으면 401 — 정상적인 "비로그인" 응답)
  */
 export function AuthProvider({ children }: { children: ReactNode }) {
-  const [user, setUser] = useState<CurrentUser | null>(() => {
-    const token = getToken()
-    return token ? decodeAccessToken(token) : null
-  })
+  const [user, setUser] = useState<SessionUser | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    getMe()
+      .then(setUser)
+      .catch(() => setUser(null))
+      .finally(() => setLoading(false))
+  }, [])
 
   async function login(username: string, password: string) {
-    const tokens = await loginApi({ username, password })
-    setToken(tokens.accessToken)
-    setUser(decodeAccessToken(tokens.accessToken))
+    setUser(await loginApi({ username, password }))
   }
 
   async function loginAsGuest() {
-    const tokens = await guestLoginApi()
-    setToken(tokens.accessToken)
-    setUser(decodeAccessToken(tokens.accessToken))
+    setUser(await guestLoginApi())
   }
 
   function logout() {
-    setToken(null)
     setUser(null)
+    // 실패해도(이미 만료 등) 프론트 상태는 이미 로그아웃이니 무시
+    logoutApi().catch(() => {})
   }
 
   return (
     <AuthContext.Provider
-      value={{ user, isGuest: user?.role === 'GUEST', login, loginAsGuest, logout }}
+      value={{ user, loading, isGuest: user?.role === 'GUEST', login, loginAsGuest, logout }}
     >
       {children}
     </AuthContext.Provider>

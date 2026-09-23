@@ -48,7 +48,6 @@ export function useProjectSocket(workspaceId: number | null) {
     if (workspaceId === null || Number.isNaN(workspaceId)) return
 
     const client = createStompClient()
-    if (!client) return
 
     let active = true
     const topic = (channel: string) => `/topic/workspaces/${workspaceId}/${channel}`
