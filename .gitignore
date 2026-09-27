@@ -4,6 +4,10 @@
 # DB 백업 파일
 *.sql
 
+# 개인 작업 문서 (저장소에 올리지 않음)
+프로젝트_기획서.md
+오류_이력.md
+
 # backend (Gradle)
 backend/.gradle/
 backend/build/

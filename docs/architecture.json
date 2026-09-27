@@ -1,0 +1,195 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "TaskBoard 배포 구조",
+    "output": "taskboard-architecture.html",
+    "quality_profile": "showcase",
+    "repository": {
+      "url": "https://github.com/windn05/diy-taskboard",
+      "provider": "github",
+      "link_mode": "local-only",
+      "revision": "53bd2239ceef3e401cf450c3fd67ca5bb2d7c97c"
+    },
+    "views": [
+      {
+        "id": "request-path",
+        "label": "요청 경로",
+        "focus": ["browser", "caddy", "backend", "db"],
+        "note": "브라우저에서 시작한 요청이 Caddy를 거쳐 백엔드와 DB에 닿는 주 경로."
+      },
+      {
+        "id": "session-realtime",
+        "label": "세션과 실시간",
+        "focus": ["caddy", "backend", "redis"],
+        "note": "로그인 세션은 Redis에 두고, 실시간 이벤트는 같은 백엔드의 WebSocket으로 흐른다."
+      },
+      {
+        "id": "delivery",
+        "label": "배포 경로",
+        "focus": ["actions", "ghcr", "caddy", "backend"],
+        "note": "CI가 이미지를 굽고 서버는 그것을 받아 올린다. 서버에서 빌드하지 않는다."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "browser",
+      "type": "external",
+      "label": "브라우저",
+      "sublabel": "React 19 SPA",
+      "tag": "세션 쿠키",
+      "pos": [60, 320],
+      "size": [150, 68]
+    },
+    {
+      "id": "caddy",
+      "type": "cloud",
+      "label": "Caddy",
+      "sublabel": "TLS · 정적 SPA · 리버스 프록시",
+      "tag": ":443 / :80",
+      "pos": [330, 320],
+      "size": [180, 68],
+      "sources": [
+        { "path": "Caddyfile", "line": 8, "end_line": 37, "label": "라우팅 규칙" }
+      ]
+    },
+    {
+      "id": "backend",
+      "type": "backend",
+      "label": "Spring Boot 3",
+      "sublabel": "REST + STOMP · Java 17",
+      "tag": ":8080",
+      "pos": [630, 320],
+      "size": [180, 68],
+      "sources": [
+        { "path": "backend/src/main/java/com/taskboard/config/SecurityConfig.java", "label": "인증·인가" },
+        { "path": "backend/src/main/java/com/taskboard/config/WebSocketConfig.java", "label": "STOMP 설정" }
+      ]
+    },
+    {
+      "id": "redis",
+      "type": "database",
+      "label": "Redis 7",
+      "sublabel": "Spring Session 저장소",
+      "tag": ":6379",
+      "pos": [630, 140],
+      "size": [180, 68],
+      "sources": [
+        { "path": "backend/src/main/resources/application.yml", "label": "session store-type" }
+      ]
+    },
+    {
+      "id": "db",
+      "type": "database",
+      "label": "PostgreSQL 16",
+      "sublabel": "작업 · 댓글 · 배포 이력",
+      "tag": ":5432",
+      "pos": [930, 320],
+      "size": [180, 68]
+    },
+    {
+      "id": "actions",
+      "type": "external",
+      "label": "GitHub Actions",
+      "sublabel": "테스트 후 이미지 빌드",
+      "tag": "amd64 / arm64",
+      "pos": [330, 500],
+      "size": [180, 68],
+      "sources": [
+        { "path": ".github/workflows/ci.yml", "label": "CI 파이프라인" }
+      ]
+    },
+    {
+      "id": "ghcr",
+      "type": "cloud",
+      "label": "GHCR",
+      "sublabel": "컨테이너 이미지 저장소",
+      "tag": ":latest / :sha",
+      "pos": [630, 500],
+      "size": [180, 68]
+    }
+  ],
+  "boundaries": [
+    {
+      "kind": "region",
+      "label": "Oracle Cloud VM.Standard.E2.1.Micro · 1GB · Docker Compose",
+      "wraps": ["caddy", "backend", "redis", "db"]
+    }
+  ],
+  "connections": [
+    {
+      "id": "browser-to-caddy",
+      "from": "browser",
+      "to": "caddy",
+      "label": "HTTPS",
+      "variant": "emphasis"
+    },
+    {
+      "id": "caddy-to-backend",
+      "from": "caddy",
+      "to": "backend",
+      "label": "/api · /ws",
+      "variant": "emphasis"
+    },
+    {
+      "id": "backend-to-db",
+      "from": "backend",
+      "to": "db",
+      "label": "JDBC"
+    },
+    {
+      "id": "backend-to-redis",
+      "from": "backend",
+      "to": "redis",
+      "label": "세션 조회·저장",
+      "fromSide": "top",
+      "toSide": "bottom"
+    },
+    {
+      "id": "actions-to-ghcr",
+      "from": "actions",
+      "to": "ghcr",
+      "label": "push",
+      "variant": "dashed"
+    },
+    {
+      "id": "ghcr-to-backend",
+      "from": "ghcr",
+      "to": "backend",
+      "label": "compose pull",
+      "variant": "dashed",
+      "fromSide": "top",
+      "toSide": "bottom"
+    }
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "요청 경로",
+      "items": [
+        "Caddy가 정적 SPA를 직접 서빙하고 /api·/ws만 백엔드로 넘긴다",
+        "Let's Encrypt 인증서를 자동 발급·갱신한다",
+        "프론트는 상대 경로만 쓰므로 도메인이 바뀌어도 코드는 그대로다"
+      ]
+    },
+    {
+      "dot": "emerald",
+      "title": "상태 저장",
+      "items": [
+        "업무 데이터는 PostgreSQL, 로그인 세션은 Redis",
+        "시각은 UTC로 저장하고 화면에서 현지 시각으로 바꾼다",
+        "Redis에 영속 볼륨을 두지 않아 재생성 시 전원 재로그인"
+      ]
+    },
+    {
+      "dot": "violet",
+      "title": "배포",
+      "items": [
+        "1GB VM에서는 빌드가 버거워 CI가 이미지를 굽는다",
+        "서버는 compose pull로 받아 올리기만 한다",
+        "sha 태그로 실행 중 이미지와 커밋을 대조한다"
+      ]
+    }
+  ]
+}
