@@ -5,13 +5,8 @@ import java.util.List;
 /** 모니터링 화면 응답 */
 public class MetricsDtos {
 
-    /** minute는 ISO-8601 분 단위 시각 */
-    public record MinutePoint(String minute, long requests, long errors, double avgResponseMs) {
-    }
-
-    /** series는 최근 60분의 분 단위 추이, total·avg도 같은 60분 기준 */
+    /** 최근 60분 합계. 분 단위 추이는 화면에서 쓰지 않아 응답에 담지 않음 */
     public record MetricsResponse(
-            List<MinutePoint> series,
             long totalRequests,
             long totalErrors,
             double avgResponseMs,

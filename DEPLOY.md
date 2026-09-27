@@ -79,7 +79,7 @@ openssl rand -base64 48
 cp .env.example .env && nano .env
 ```
 
-`JWT_SECRET`은 반드시 바꾼다. 기본값이 저장소에 공개돼 있어 그대로 두면 누구나 관리자 토큰을 위조할 수 있다.
+`DB_PASSWORD`와 부트스트랩 관리자 비밀번호를 반드시 바꾼다. 기본값이 저장소에 공개돼 있다.
 
 ```bash
 docker compose pull && docker compose up -d
@@ -179,7 +179,6 @@ curl -I https://taskboard.example.com
 |---|---|---|
 | `DB_PASSWORD` | ✅ | Postgres 비밀번호 |
 | `SITE_ADDRESS` | | 도메인. 넣으면 HTTPS 자동 전환, 비우면 `:80` 평문 |
-| `JWT_SECRET` | ✅ | 32바이트 이상. **기본값을 그대로 쓰면 안 된다** |
 | `BOOTSTRAP_ADMIN_USERNAME` | | 계정이 0건일 때만 쓰인다 |
 | `BOOTSTRAP_ADMIN_PASSWORD` | | 위와 같음. 8자 이상 |
 | `JPA_DDL_AUTO` | | 기본 `update`. 최초 배포 후 `validate` 권장 |
@@ -245,5 +244,6 @@ JAVA_OPTS=-Xmx2g
 ## 운영 메모
 
 - 컨테이너 로그는 10MB × 3개로 회전한다. 기본값은 무한히 쌓여 부트 볼륨을 채운다
-- `system_logs` 테이블에는 WARN/ERROR만 쌓인다. 오래된 행을 정리하는 배치는 아직 없다
-- `SITE_ADDRESS`를 비워두면 `:80` 평문이라 JWT가 그대로 흐른다. 위 "HTTPS 켜기"를 적용하면 해소된다
+- `system_logs` 테이블에는 WARN/ERROR만 쌓인다. 보존 기간(기본 7일)이 지난 행은 매일 새벽 4시(KST)에 지운다
+- `SITE_ADDRESS`를 비워두면 `:80` 평문이라 세션 쿠키가 그대로 흐른다. 위 "HTTPS 켜기"를 적용하면 해소된다
+- 로그인 세션은 redis 컨테이너에 있다. redis를 다시 만들면 전원 재로그인이 필요하다 (영속 볼륨을 두지 않음)

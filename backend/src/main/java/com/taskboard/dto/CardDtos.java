@@ -7,7 +7,6 @@ import lombok.Setter;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.List;
 
 /** 작업(카드) 요청/응답 */
 public class CardDtos {
@@ -19,7 +18,6 @@ public class CardDtos {
             String type,
             String priority,
             Long assigneeId,
-            List<String> labels,
             LocalDate startDate,
             LocalDate dueDate,
             Long statusId) {
@@ -37,7 +35,6 @@ public class CardDtos {
         private String description;
         private String type;
         private String priority;
-        private List<String> labels;
         private Long statusId;
 
         private Long assigneeId;
@@ -70,7 +67,7 @@ public class CardDtos {
     /** releaseId가 있으면 배포된(완료된) 작업 */
     public record CardResponse(
             Long id, Long workspaceId, Long statusId, String title, String description, String type, String priority,
-            Long assigneeId, List<String> labels, LocalDate startDate, LocalDate dueDate, Long releaseId,
+            Long assigneeId, LocalDate startDate, LocalDate dueDate, Long releaseId,
             long commentCount, LocalDateTime createdAt, LocalDateTime updatedAt) {
     }
 }

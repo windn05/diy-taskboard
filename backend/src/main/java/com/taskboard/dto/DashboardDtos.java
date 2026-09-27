@@ -13,7 +13,6 @@ public class DashboardDtos {
             Long workspaceId,
             String workspaceName,
             String title,
-            String statusName,
             String priority,
             LocalDate dueDate) {
     }

@@ -10,7 +10,6 @@ export type CreateCardInput = {
   type?: string
   priority?: CardPriority
   assigneeId?: number | null
-  labels?: string[]
   startDate?: string | null
   dueDate?: string | null
   statusId?: number

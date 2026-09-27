@@ -32,7 +32,6 @@ class NotificationServiceTest {
     @Autowired StatusRepository statusRepository;
     @Autowired CardRepository cardRepository;
     @Autowired CommentRepository commentRepository;
-    @Autowired ActivityLogRepository activityLogRepository;
     @Autowired UserRepository userRepository;
 
     private Long assigneeId;
@@ -42,7 +41,6 @@ class NotificationServiceTest {
     @BeforeEach
     void setUp() {
         notificationRepository.deleteAll();
-        activityLogRepository.deleteAll();
         commentRepository.deleteAll();
         cardRepository.deleteAll();
         memberRepository.deleteAll();

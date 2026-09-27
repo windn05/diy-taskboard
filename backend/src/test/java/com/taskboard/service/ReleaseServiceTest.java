@@ -30,7 +30,6 @@ class ReleaseServiceTest {
     @Autowired WorkspaceMemberRepository memberRepository;
     @Autowired StatusRepository statusRepository;
     @Autowired CardRepository cardRepository;
-    @Autowired ActivityLogRepository activityLogRepository;
 
     private static final Long USER_ID = 1L;
     private static final CurrentUser USER = new CurrentUser(USER_ID, "user", "USER");
@@ -44,7 +43,6 @@ class ReleaseServiceTest {
     @BeforeEach
     void setUp() {
         releaseRepository.deleteAll();
-        activityLogRepository.deleteAll();
         cardRepository.deleteAll();
         memberRepository.deleteAll();
         workspaceRepository.deleteAll();

@@ -1,7 +1,6 @@
 package com.taskboard.service;
 
 import com.taskboard.dto.MetricsDtos.MetricsResponse;
-import com.taskboard.dto.MetricsDtos.MinutePoint;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
@@ -51,15 +50,15 @@ class RequestMetricsServiceTest {
     }
 
     @Test
-    void 시계열은_항상_60분치를_돌려준다() {
+    void 합계는_최근_구간의_요청만_센다() {
         metricsService.record(10, 200);
+        metricsService.record(30, 500);
 
         MetricsResponse snapshot = metricsService.snapshot();
 
-        assertThat(snapshot.series()).hasSize(60);
-        assertThat(snapshot.series()).last().extracting(MinutePoint::requests).isEqualTo(1L);
-        // 트래픽이 없던 구간은 0으로 채워져 그래프가 끊기지 않음
-        assertThat(snapshot.series()).first().extracting(MinutePoint::requests).isEqualTo(0L);
+        assertThat(snapshot.totalRequests()).isEqualTo(2L);
+        assertThat(snapshot.totalErrors()).isEqualTo(1L);
+        assertThat(snapshot.avgResponseMs()).isEqualTo(20.0);
     }
 
     @Test

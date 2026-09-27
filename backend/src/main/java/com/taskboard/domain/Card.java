@@ -5,8 +5,6 @@ import lombok.*;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.List;
 
 /**
  * 작업(칸반 카드).
@@ -54,12 +52,6 @@ public class Card {
     /** 이 작업이 포함된 배포. 비어 있으면 미배포 */
     @Column(name = "release_id")
     private Long releaseId;
-
-    @ElementCollection
-    @CollectionTable(name = "card_labels", joinColumns = @JoinColumn(name = "card_id"))
-    @Column(name = "label")
-    @Builder.Default
-    private List<String> labels = new ArrayList<>();
 
     @Column(name = "start_date")
     private LocalDate startDate;

@@ -10,7 +10,6 @@ import com.taskboard.dto.WorkspaceDtos.*;
 import com.taskboard.security.CurrentUser;
 import com.taskboard.exception.AccessDeniedException;
 import com.taskboard.exception.EntityNotFoundException;
-import com.taskboard.repository.ActivityLogRepository;
 import com.taskboard.repository.CardRepository;
 import com.taskboard.repository.CommentRepository;
 import com.taskboard.repository.ReleaseRepository;
@@ -39,7 +38,6 @@ public class WorkspaceService {
     private final UserRepository userRepository;
     private final CardRepository cardRepository;
     private final CommentRepository commentRepository;
-    private final ActivityLogRepository activityLogRepository;
     private final ReleaseRepository releaseRepository;
     private final NotificationService notificationService;
 
@@ -53,7 +51,7 @@ public class WorkspaceService {
                 .userId(userId)
                 .role(WorkspaceRole.OWNER)
                 .build());
-        return new WorkspaceResponse(workspace.getId(), workspace.getName(), workspace.getOwnerId(), WorkspaceRole.OWNER.name());
+        return new WorkspaceResponse(workspace.getId(), workspace.getName(), WorkspaceRole.OWNER.name());
     }
 
     /**
@@ -68,7 +66,7 @@ public class WorkspaceService {
             return workspaceRepository.findAll().stream()
                     .filter(Workspace::isVisible)
                     .filter(w -> hasRealMember.contains(w.getId()))
-                    .map(w -> new WorkspaceResponse(w.getId(), w.getName(), w.getOwnerId(), SystemRole.GUEST.name()))
+                    .map(w -> new WorkspaceResponse(w.getId(), w.getName(), SystemRole.GUEST.name()))
                     .toList();
         }
         List<WorkspaceMember> memberships = memberRepository.findByUserId(user.getId());
@@ -80,7 +78,7 @@ public class WorkspaceService {
                     // 멤버는 게스트 공개 여부와 무관하게 자기 프로젝트 조회 가능
                     Workspace w = workspaces.get(m.getWorkspaceId());
                     return w != null
-                            ? new WorkspaceResponse(w.getId(), w.getName(), w.getOwnerId(), m.getRole().name())
+                            ? new WorkspaceResponse(w.getId(), w.getName(), m.getRole().name())
                             : null;
                 })
                 .filter(Objects::nonNull)
@@ -89,7 +87,7 @@ public class WorkspaceService {
 
     public List<AdminWorkspaceResponse> listAllForAdmin() {
         return workspaceRepository.findAll().stream()
-                .map(w -> new AdminWorkspaceResponse(w.getId(), w.getName(), w.getOwnerId(), w.isVisible()))
+                .map(w -> new AdminWorkspaceResponse(w.getId(), w.getName(), w.isVisible()))
                 .toList();
     }
 
@@ -99,7 +97,7 @@ public class WorkspaceService {
                 .orElseThrow(() -> new EntityNotFoundException("워크스페이스를 찾을 수 없습니다."));
         if (request.name() != null && !request.name().isBlank()) workspace.setName(request.name());
         if (request.visible() != null) workspace.setVisible(request.visible());
-        return new AdminWorkspaceResponse(workspace.getId(), workspace.getName(), workspace.getOwnerId(), workspace.isVisible());
+        return new AdminWorkspaceResponse(workspace.getId(), workspace.getName(), workspace.isVisible());
     }
 
     /** 연관관계 cascade가 없으므로 딸린 데이터를 참조 순서대로 직접 삭제 */
@@ -112,7 +110,6 @@ public class WorkspaceService {
         List<Long> cardIds = cards.stream().map(Card::getId).toList();
         if (!cardIds.isEmpty()) {
             notificationService.deleteByCardIds(cardIds);
-            activityLogRepository.deleteByCardIdIn(cardIds);
             commentRepository.deleteByCardIdIn(cardIds);
             cardRepository.deleteAll(cards);
         }
@@ -224,14 +221,5 @@ public class WorkspaceService {
     public WorkspaceMember requireMember(Long userId, Long workspaceId) {
         return memberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new AccessDeniedException("워크스페이스 멤버가 아닙니다."));
-    }
-
-    /** 멤버이면서 지정한 프로젝트 역할 중 하나여야 함 */
-    public void requireRole(Long userId, Long workspaceId, WorkspaceRole... allowed) {
-        WorkspaceMember member = requireMember(userId, workspaceId);
-        for (WorkspaceRole role : allowed) {
-            if (member.getRole() == role) return;
-        }
-        throw new AccessDeniedException("권한이 없습니다.");
     }
 }

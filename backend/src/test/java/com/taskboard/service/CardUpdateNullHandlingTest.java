@@ -31,14 +31,12 @@ class CardUpdateNullHandlingTest {
     @Autowired WorkspaceMemberRepository memberRepository;
     @Autowired StatusRepository statusRepository;
     @Autowired CardRepository cardRepository;
-    @Autowired ActivityLogRepository activityLogRepository;
 
     private static final Long USER_ID = 1L;
     private Long cardId;
 
     @BeforeEach
     void setUp() {
-        activityLogRepository.deleteAll();
         cardRepository.deleteAll();
         memberRepository.deleteAll();
         workspaceRepository.deleteAll();

@@ -5,9 +5,7 @@ import com.taskboard.dto.WorkspaceDtos.*;
 import com.taskboard.security.CurrentUser;
 import com.taskboard.service.PresenceService;
 import com.taskboard.service.WorkspaceService;
-import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 

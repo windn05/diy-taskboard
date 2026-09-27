@@ -50,7 +50,6 @@ class PermissionMatrixTest {
     @Autowired StatusRepository statusRepository;
     @Autowired CardRepository cardRepository;
     @Autowired CommentRepository commentRepository;
-    @Autowired ActivityLogRepository activityLogRepository;
 
     private MockHttpSession memberSession;
     private MockHttpSession outsiderSession;
@@ -64,7 +63,6 @@ class PermissionMatrixTest {
 
     @BeforeEach
     void setUp() throws Exception {
-        activityLogRepository.deleteAll();
         commentRepository.deleteAll();
         cardRepository.deleteAll();
         memberRepository.deleteAll();
@@ -95,7 +93,6 @@ class PermissionMatrixTest {
 
         cardId = cardRepository.save(Card.builder()
                 .workspaceId(visibleWorkspaceId).statusId(status.getId()).title("작업").type("Task")
-                .labels(List.of("label-1"))
                 .build()).getId();
     }
 
@@ -239,7 +236,7 @@ class PermissionMatrixTest {
         mockMvc.perform(auth(get("/admin/logs"), adminSession)).andExpect(status().isOk());
         mockMvc.perform(auth(get("/admin/metrics"), adminSession))
                 .andExpect(status().isOk())
-                .andExpect(jsonPath("$.series.length()").value(60));
+                .andExpect(jsonPath("$.totalRequests").exists());
     }
 
     // --- 미인증 ---

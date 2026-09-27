@@ -1,12 +1,10 @@
 package com.taskboard.service;
 
-import com.taskboard.domain.ActivityLog;
 import com.taskboard.domain.Card;
 import com.taskboard.domain.Comment;
 import com.taskboard.dto.CardDtos.*;
 import com.taskboard.dto.RealtimeDtos.CardEvent;
 import com.taskboard.exception.EntityNotFoundException;
-import com.taskboard.repository.ActivityLogRepository;
 import com.taskboard.repository.CardRepository;
 import com.taskboard.repository.CommentRepository;
 import com.taskboard.security.CurrentUser;
@@ -30,13 +28,11 @@ public class CardService {
 
     private final CardRepository cardRepository;
     private final StatusService statusService;
-    private final ActivityLogRepository activityLogRepository;
     private final CommentRepository commentRepository;
     private final WorkspaceService workspaceService;
     private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
-    // labels가 LAZY라 조회에도 트랜잭션 필요. 없으면 OSIV가 켜져 있을 때만 우연히 동작
     @Transactional(readOnly = true)
     public List<CardResponse> list(CurrentUser user, Long workspaceId) {
         workspaceService.requireReadAccess(user, workspaceId);
@@ -61,12 +57,10 @@ public class CardService {
                 .type(request.type() != null ? request.type() : "Task")
                 .priority(request.priority() != null ? Card.Priority.valueOf(request.priority().toUpperCase()) : Card.Priority.MEDIUM)
                 .assigneeId(request.assigneeId())
-                .labels(request.labels() != null ? request.labels() : List.of())
                 .startDate(request.startDate())
                 .dueDate(request.dueDate())
                 .build();
         cardRepository.save(card);
-        logActivity(card.getId(), userId, "CREATED");
         return publish("CREATED", toResponse(card));
     }
 
@@ -78,14 +72,12 @@ public class CardService {
         if (request.getDescription() != null) card.setDescription(request.getDescription());
         if (request.getType() != null) card.setType(request.getType());
         if (request.getPriority() != null) card.setPriority(Card.Priority.valueOf(request.getPriority().toUpperCase()));
-        if (request.getLabels() != null) card.setLabels(request.getLabels());
         // 아래 셋은 null이 "지우기"를 뜻하므로 전달 여부로 판단
         if (request.isAssigneeIdPresent()) card.setAssigneeId(request.getAssigneeId());
         if (request.isStartDatePresent()) card.setStartDate(request.getStartDate());
         if (request.isDueDatePresent()) card.setDueDate(request.getDueDate());
         boolean moved = request.getStatusId() != null && !Objects.equals(request.getStatusId(), card.getStatusId());
         if (moved) card.setStatusId(request.getStatusId());
-        logActivity(card.getId(), userId, moved ? "MOVED" : "UPDATED");
         return publish(moved ? "MOVED" : "UPDATED", toResponse(card));
     }
 
@@ -112,10 +104,6 @@ public class CardService {
                 .id();
     }
 
-    private void logActivity(Long cardId, Long userId, String action) {
-        activityLogRepository.save(ActivityLog.builder().cardId(cardId).userId(userId).action(action).build());
-    }
-
     private Card getCard(Long cardId) {
         return cardRepository.findById(cardId).orElseThrow(() -> new EntityNotFoundException("카드를 찾을 수 없습니다."));
     }
@@ -126,9 +114,8 @@ public class CardService {
     }
 
     private CardResponse toResponse(Card card, long commentCount) {
-        // labels는 LAZY 컬렉션이라 세션 밖(커밋 후 브로드캐스트 등)에서 직렬화하면 실패. 여기서 복사해 분리
         return new CardResponse(card.getId(), card.getWorkspaceId(), card.getStatusId(), card.getTitle(), card.getDescription(),
-                card.getType(), card.getPriority().name(), card.getAssigneeId(), List.copyOf(card.getLabels()),
+                card.getType(), card.getPriority().name(), card.getAssigneeId(),
                 card.getStartDate(), card.getDueDate(), card.getReleaseId(), commentCount,
                 card.getCreatedAt(), card.getUpdatedAt());
     }

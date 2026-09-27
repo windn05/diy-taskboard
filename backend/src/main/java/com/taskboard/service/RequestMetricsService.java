@@ -1,15 +1,9 @@
 package com.taskboard.service;
 
 import com.taskboard.dto.MetricsDtos.MetricsResponse;
-import com.taskboard.dto.MetricsDtos.MinutePoint;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
-import java.time.LocalDateTime;
-import java.time.ZoneId;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
@@ -19,7 +13,6 @@ import java.util.concurrent.atomic.LongAdder;
 public class RequestMetricsService {
 
     private static final int WINDOW_MINUTES = 60;
-    private static final DateTimeFormatter MINUTE_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm");
 
     private final Map<Long, Bucket> buckets = new ConcurrentHashMap<>();
     private final WebSocketSessionCounter sessionCounter;
@@ -44,26 +37,21 @@ public class RequestMetricsService {
         buckets.keySet().removeIf(key -> key < minute - WINDOW_MINUTES);
     }
 
+    /** 최근 WINDOW_MINUTES 분의 버킷만 합산 — 그보다 오래된 버킷은 record에서 이미 정리됨 */
     public MetricsResponse snapshot() {
-        long now = currentMinute();
-        List<MinutePoint> series = new ArrayList<>();
+        long oldest = currentMinute() - WINDOW_MINUTES + 1;
         long totalRequests = 0;
         long totalErrors = 0;
         long totalDuration = 0;
 
-        // 요청이 없던 분도 0으로 채워 차트의 x축이 끊기지 않게 함
-        for (long minute = now - WINDOW_MINUTES + 1; minute <= now; minute++) {
-            Bucket bucket = buckets.get(minute);
-            long requests = bucket != null ? bucket.requests.sum() : 0;
-            long errors = bucket != null ? bucket.errors.sum() : 0;
-            long duration = bucket != null ? bucket.totalDurationMs.sum() : 0;
-            series.add(new MinutePoint(formatMinute(minute), requests, errors, average(duration, requests)));
-            totalRequests += requests;
-            totalErrors += errors;
-            totalDuration += duration;
+        for (Map.Entry<Long, Bucket> entry : buckets.entrySet()) {
+            if (entry.getKey() < oldest) continue;
+            totalRequests += entry.getValue().requests.sum();
+            totalErrors += entry.getValue().errors.sum();
+            totalDuration += entry.getValue().totalDurationMs.sum();
         }
 
-        return new MetricsResponse(series, totalRequests, totalErrors,
+        return new MetricsResponse(totalRequests, totalErrors,
                 average(totalDuration, totalRequests), sessionCounter.active());
     }
 
@@ -74,9 +62,5 @@ public class RequestMetricsService {
     /** epoch 기준 분 번호. 버킷 키로 사용 */
     private long currentMinute() {
         return Instant.now().getEpochSecond() / 60;
-    }
-
-    private String formatMinute(long minute) {
-        return LocalDateTime.ofInstant(Instant.ofEpochSecond(minute * 60), ZoneId.systemDefault()).format(MINUTE_FORMAT);
     }
 }

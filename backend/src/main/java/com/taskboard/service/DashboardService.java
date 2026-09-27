@@ -2,7 +2,6 @@ package com.taskboard.service;
 
 import com.taskboard.config.TimeConfig;
 import com.taskboard.domain.Card;
-import com.taskboard.domain.Release;
 import com.taskboard.domain.Status;
 import com.taskboard.dto.DashboardDtos.*;
 import com.taskboard.dto.WorkspaceDtos.WorkspaceResponse;
@@ -76,8 +75,8 @@ public class DashboardService {
                 .toList();
 
         return new DashboardResponse(
-                toTasks(mine, workspaceNames, statusNames),
-                toTasks(dueSoon, workspaceNames, statusNames),
+                toTasks(mine, workspaceNames),
+                toTasks(dueSoon, workspaceNames),
                 recentCards(cards, workspaceNames, statusNames),
                 recentReleases(workspaceIds, workspaceNames, cards),
                 calendarTasks(cards, workspaceNames));
@@ -102,7 +101,7 @@ public class DashboardService {
         return Comparator.comparing(Card::getDueDate, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
-    private List<MyTask> toTasks(List<Card> cards, Map<Long, String> workspaceNames, Map<Long, String> statusNames) {
+    private List<MyTask> toTasks(List<Card> cards, Map<Long, String> workspaceNames) {
         return cards.stream()
                 .limit(LIST_LIMIT)
                 .map(card -> new MyTask(
@@ -110,7 +109,6 @@ public class DashboardService {
                         card.getWorkspaceId(),
                         workspaceNames.get(card.getWorkspaceId()),
                         card.getTitle(),
-                        statusNames.getOrDefault(card.getStatusId(), "-"),
                         card.getPriority().name(),
                         card.getDueDate()))
                 .toList();

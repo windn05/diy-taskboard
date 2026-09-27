@@ -5,9 +5,9 @@ export type User = { id: number; username: string; name: string; role: string }
 export type SessionUser = { userId: number; username: string; role: string }
 
 /** myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트는 GUEST */
-export type Workspace = { id: number; name: string; ownerId: number; myRole: string }
+export type Workspace = { id: number; name: string; myRole: string }
 
-export type AdminWorkspace = { id: number; name: string; ownerId: number; visible: boolean }
+export type AdminWorkspace = { id: number; name: string; visible: boolean }
 
 export type Member = { userId: number; username: string; name: string; role: string }
 
@@ -26,7 +26,6 @@ export type Card = {
   type: string
   priority: CardPriority
   assigneeId: number | null
-  labels: string[]
   startDate: string | null
   dueDate: string | null
   /** 값이 있으면 배포된(완료된) 작업 */
@@ -54,7 +53,6 @@ export type MyTask = {
   workspaceId: number
   workspaceName: string
   title: string
-  statusName: string
   priority: CardPriority
   dueDate: string | null
 }
@@ -140,10 +138,7 @@ export type LogEntry = {
   loggedAt: string
 }
 
-export type MinutePoint = { minute: string; requests: number; errors: number; avgResponseMs: number }
-
 export type MetricsResponse = {
-  series: MinutePoint[]
   totalRequests: number
   totalErrors: number
   avgResponseMs: number
