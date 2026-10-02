@@ -3,15 +3,9 @@ import { Link } from 'react-router-dom'
 import { getDashboard } from '../api/dashboard'
 import { useAuth } from '../auth/AuthContext'
 import { HomeCalendar } from '../components/HomeCalendar'
-import type { MyTask, RecentCard, RecentRelease } from '../api/types'
+import type { DueTask, RecentCard, RecentRelease } from '../api/types'
+import { TypeBadge } from '../components/TypeBadge'
 import { localDate, localDateOf } from '../time'
-
-const PRIORITY_COLOR: Record<string, string> = {
-  LOW: 'bg-slate-200 text-slate-700',
-  MEDIUM: 'bg-blue-100 text-blue-700',
-  HIGH: 'bg-orange-100 text-orange-700',
-  URGENT: 'bg-red-100 text-red-700',
-}
 
 /** 홈(대시보드). 왼쪽은 작업 목록 패널, 오른쪽은 달력과 최근 배포 */
 export function HomePage() {
@@ -34,18 +28,9 @@ export function HomePage() {
       */}
       <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto lg:grid-cols-[minmax(320px,1fr)_1.7fr] lg:overflow-hidden">
         <div className="flex min-h-0 flex-col gap-4 lg:overflow-y-auto lg:pr-1">
-          {/* 담당자를 지정해 쓰기 시작하면 그때부터 노출. 비어 있는 패널이 자리만 차지하지 않게 */}
-          {data.myTasks.length > 0 && (
-            <Panel title="내 작업" count={data.myTasks.length}>
-              {data.myTasks.map((task) => (
-                <TaskRow key={task.cardId} task={task} />
-              ))}
-            </Panel>
-          )}
-
           <Panel title="마감 임박·지난 작업" count={data.dueSoon.length} empty="마감이 임박한 작업이 없습니다.">
             {data.dueSoon.map((task) => (
-              <TaskRow key={task.cardId} task={task} showOverdue />
+              <TaskRow key={task.cardId} task={task} />
             ))}
           </Panel>
 
@@ -112,15 +97,15 @@ function Panel({
   )
 }
 
-function TaskRow({ task, showOverdue }: { task: MyTask; showOverdue?: boolean }) {
+function TaskRow({ task }: { task: DueTask }) {
   // 마감일(yyyy-MM-dd)과 오늘 날짜를 문자열로 비교
-  const overdue = showOverdue && task.dueDate !== null && task.dueDate < localDate()
+  const overdue = task.dueDate !== null && task.dueDate < localDate()
 
   return (
     <Link to={`/projects/${task.workspaceId}?card=${task.cardId}`} className="flex items-center gap-2 px-4 py-2.5 text-sm hover:bg-slate-50">
       <span className="min-w-0 flex-1 truncate">{task.title}</span>
-      <span className={`shrink-0 rounded px-1.5 py-0.5 text-[11px] font-medium ${PRIORITY_COLOR[task.priority]}`}>
-        {task.priority}
+      <span className="shrink-0">
+        <TypeBadge type={task.type} />
       </span>
       <span className="w-20 shrink-0 truncate text-right text-xs text-slate-500">{task.workspaceName}</span>
       <span className={`w-20 shrink-0 text-right text-xs ${overdue ? 'font-semibold text-red-600' : 'text-slate-500'}`}>

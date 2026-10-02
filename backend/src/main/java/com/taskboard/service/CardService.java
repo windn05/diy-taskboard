@@ -30,7 +30,6 @@ public class CardService {
     private final StatusService statusService;
     private final CommentRepository commentRepository;
     private final WorkspaceService workspaceService;
-    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -55,8 +54,6 @@ public class CardService {
                 .title(request.title())
                 .description(request.description())
                 .type(request.type() != null ? request.type() : "Task")
-                .priority(request.priority() != null ? Card.Priority.valueOf(request.priority().toUpperCase()) : Card.Priority.MEDIUM)
-                .assigneeId(request.assigneeId())
                 .startDate(request.startDate())
                 .dueDate(request.dueDate())
                 .build();
@@ -71,9 +68,7 @@ public class CardService {
         if (request.getTitle() != null) card.setTitle(request.getTitle());
         if (request.getDescription() != null) card.setDescription(request.getDescription());
         if (request.getType() != null) card.setType(request.getType());
-        if (request.getPriority() != null) card.setPriority(Card.Priority.valueOf(request.getPriority().toUpperCase()));
-        // 아래 셋은 null이 "지우기"를 뜻하므로 전달 여부로 판단
-        if (request.isAssigneeIdPresent()) card.setAssigneeId(request.getAssigneeId());
+        // 날짜는 null이 "지우기"를 뜻하므로 전달 여부로 판단
         if (request.isStartDatePresent()) card.setStartDate(request.getStartDate());
         if (request.isDueDatePresent()) card.setDueDate(request.getDueDate());
         boolean moved = request.getStatusId() != null && !Objects.equals(request.getStatusId(), card.getStatusId());
@@ -86,7 +81,6 @@ public class CardService {
         Card card = getCard(cardId);
         workspaceService.requireMember(userId, card.getWorkspaceId());
         CardResponse deleted = toResponse(card);
-        notificationService.deleteByCardIds(List.of(cardId));
         cardRepository.delete(card);
         publish("DELETED", deleted);
     }
@@ -115,7 +109,7 @@ public class CardService {
 
     private CardResponse toResponse(Card card, long commentCount) {
         return new CardResponse(card.getId(), card.getWorkspaceId(), card.getStatusId(), card.getTitle(), card.getDescription(),
-                card.getType(), card.getPriority().name(), card.getAssigneeId(),
+                card.getType(),
                 card.getStartDate(), card.getDueDate(), card.getReleaseId(), commentCount,
                 card.getCreatedAt(), card.getUpdatedAt());
     }

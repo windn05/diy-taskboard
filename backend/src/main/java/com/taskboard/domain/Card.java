@@ -41,14 +41,6 @@ public class Card {
     @Builder.Default
     private String type = "Task";
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    @Builder.Default
-    private Priority priority = Priority.MEDIUM;
-
-    @Column(name = "assignee_id")
-    private Long assigneeId;
-
     /** 이 작업이 포함된 배포. 비어 있으면 미배포 */
     @Column(name = "release_id")
     private Long releaseId;
@@ -76,7 +68,4 @@ public class Card {
         this.updatedAt = LocalDateTime.now();
     }
 
-    public enum Priority {
-        LOW, MEDIUM, HIGH, URGENT
-    }
 }

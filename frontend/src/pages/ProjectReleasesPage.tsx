@@ -6,6 +6,7 @@ import { listStatuses } from '../api/statuses'
 import { useAuth } from '../auth/AuthContext'
 import type { Card, Release, Status } from '../api/types'
 import { CheckIcon } from '../components/icons'
+import { TypeBadge } from '../components/TypeBadge'
 
 // 시작일 최신순. 시작일이 없는 작업은 뒤로 (작업 목록과 동일한 규칙)
 function byStartDateDesc(a: Card, b: Card) {
@@ -168,7 +169,7 @@ function NewReleaseForm({
             <label className="flex cursor-pointer items-center gap-2 px-3 py-2 text-sm hover:bg-slate-50">
               <input type="checkbox" checked={selected.includes(card.id)} onChange={() => toggle(card.id)} />
               <span className="flex-1">{card.title}</span>
-              <span className="text-xs text-slate-500">{card.type}</span>
+              <TypeBadge type={card.type} />
             </label>
           </li>
         ))}
@@ -315,7 +316,7 @@ function ReleaseCard({
           <li key={card.id} className="flex items-center gap-2 text-sm text-slate-600">
             <CheckIcon size={14} className="shrink-0 text-emerald-500" />
             <span className="flex-1">{card.title}</span>
-            <span className="text-xs text-slate-500">{card.type}</span>
+            <TypeBadge type={card.type} />
           </li>
         ))}
       </ul>

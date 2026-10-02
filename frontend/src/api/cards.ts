@@ -1,6 +1,6 @@
 // 작업(카드)과 댓글
 import { del, get, patch, post } from './axios'
-import type { Card, CardPriority, Comment } from './types'
+import type { Card, Comment } from './types'
 
 export const listCards = (workspaceId: number) => get<Card[]>(`/workspaces/${workspaceId}/cards`)
 
@@ -8,8 +8,6 @@ export type CreateCardInput = {
   title: string
   description?: string
   type?: string
-  priority?: CardPriority
-  assigneeId?: number | null
   startDate?: string | null
   dueDate?: string | null
   statusId?: number
@@ -18,7 +16,7 @@ export type CreateCardInput = {
 export const createCard = (workspaceId: number, input: CreateCardInput) =>
   post<Card>(`/workspaces/${workspaceId}/cards`, input)
 
-// 보낸 필드만 변경. assigneeId·startDate·dueDate는 null을 보내면 비움
+// 보낸 필드만 변경. startDate·dueDate는 null을 보내면 비움
 export const updateCard = (cardId: number, input: Partial<CreateCardInput>) =>
   patch<Card>(`/cards/${cardId}`, input)
 

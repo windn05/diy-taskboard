@@ -42,7 +42,7 @@ public class DashboardService {
     public DashboardResponse load(CurrentUser user) {
         List<WorkspaceResponse> workspaces = workspaceService.listMine(user);
         if (workspaces.isEmpty()) {
-            return new DashboardResponse(List.of(), List.of(), List.of(), List.of(), List.of());
+            return new DashboardResponse(List.of(), List.of(), List.of(), List.of());
         }
 
         List<Long> workspaceIds = workspaces.stream().map(WorkspaceResponse::id).toList();
@@ -62,11 +62,6 @@ public class DashboardService {
         List<Card> cards = cardRepository.findByWorkspaceIdIn(workspaceIds);
         List<Card> openCards = cards.stream().filter(card -> card.getReleaseId() == null).toList();
 
-        List<Card> mine = openCards.stream()
-                .filter(card -> user.getId().equals(card.getAssigneeId()))
-                .sorted(byDueDate())
-                .toList();
-
         LocalDate threshold = LocalDate.now(TimeConfig.BUSINESS_ZONE).plusDays(DUE_SOON_DAYS);
         List<Card> dueSoon = openCards.stream()
                 .filter(card -> card.getDueDate() != null && !card.getDueDate().isAfter(threshold))
@@ -75,7 +70,6 @@ public class DashboardService {
                 .toList();
 
         return new DashboardResponse(
-                toTasks(mine, workspaceNames),
                 toTasks(dueSoon, workspaceNames),
                 recentCards(cards, workspaceNames, statusNames),
                 recentReleases(workspaceIds, workspaceNames, cards),
@@ -91,7 +85,6 @@ public class DashboardService {
                         card.getWorkspaceId(),
                         workspaceNames.get(card.getWorkspaceId()),
                         card.getTitle(),
-                        card.getPriority().name(),
                         card.getStartDate(),
                         card.getDueDate()))
                 .toList();
@@ -101,15 +94,15 @@ public class DashboardService {
         return Comparator.comparing(Card::getDueDate, Comparator.nullsLast(Comparator.naturalOrder()));
     }
 
-    private List<MyTask> toTasks(List<Card> cards, Map<Long, String> workspaceNames) {
+    private List<DueTask> toTasks(List<Card> cards, Map<Long, String> workspaceNames) {
         return cards.stream()
                 .limit(LIST_LIMIT)
-                .map(card -> new MyTask(
+                .map(card -> new DueTask(
                         card.getId(),
                         card.getWorkspaceId(),
                         workspaceNames.get(card.getWorkspaceId()),
                         card.getTitle(),
-                        card.getPriority().name(),
+                        card.getType(),
                         card.getDueDate()))
                 .toList();
     }
@@ -126,7 +119,7 @@ public class DashboardService {
                         workspaceNames.get(card.getWorkspaceId()),
                         card.getTitle(),
                         statusNames.getOrDefault(card.getStatusId(), "-"),
-                        card.getPriority().name(),
+                        card.getType(),
                         card.getCreatedAt()))
                 .toList();
     }

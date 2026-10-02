@@ -1,9 +1,9 @@
 import { useEffect, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addComment, deleteCard, deleteComment, listComments, updateCard } from '../api/cards'
-import type { Card, CardTypeDef, Member, Status } from '../api/types'
+import type { Card, CardTypeDef, Status } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
-import { AssigneeSelect, DateField, LabeledField, PrioritySelect } from './fields'
+import { DateField, LabeledField } from './fields'
 import { Modal, SaveIndicator } from './Modal'
 
 /**
@@ -12,14 +12,12 @@ import { Modal, SaveIndicator } from './Modal'
  */
 export function CardModal({
   card,
-  members,
   statuses,
   cardTypes,
   onClose,
   readOnly,
 }: {
   card: Card
-  members: Member[]
   statuses: Status[]
   cardTypes: CardTypeDef[]
   onClose: () => void
@@ -119,7 +117,7 @@ export function CardModal({
 
   return (
     <Modal title={header} footer={footer} onClose={onClose} dismissible={false}>
-      <div className="mb-5 grid grid-cols-3 gap-3 text-sm">
+      <div className="mb-5 grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
         <LabeledField label="상태">
           <select
             value={card.statusId}
@@ -149,21 +147,6 @@ export function CardModal({
               </option>
             ))}
           </select>
-        </LabeledField>
-        <LabeledField label="우선순위">
-          <PrioritySelect
-            value={card.priority}
-            onChange={(priority) => updateMutation.mutate({ priority })}
-            disabled={locked}
-          />
-        </LabeledField>
-        <LabeledField label="담당자">
-          <AssigneeSelect
-            value={card.assigneeId}
-            members={members}
-            onChange={(assigneeId) => updateMutation.mutate({ assigneeId })}
-            disabled={locked}
-          />
         </LabeledField>
         <LabeledField label="시작일">
           <DateField

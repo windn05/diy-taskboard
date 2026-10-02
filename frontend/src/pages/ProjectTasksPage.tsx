@@ -2,22 +2,15 @@ import { useMemo, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { listCards } from '../api/cards'
-import { listMembers, listWorkspaces } from '../api/workspaces'
+import { listWorkspaces } from '../api/workspaces'
 import { listCardTypes } from '../api/cardTypes'
 import { listReleases } from '../api/releases'
 import { listStatuses } from '../api/statuses'
-import type { Card } from '../api/types'
 import { CardModal } from '../components/CardModal'
 import { NewTaskModal } from '../components/NewTaskModal'
 import { PlusIcon } from '../components/icons'
+import { TypeBadge } from '../components/TypeBadge'
 import { useAuth } from '../auth/AuthContext'
-
-const PRIORITY_COLOR: Record<Card['priority'], string> = {
-  LOW: 'bg-slate-200 text-slate-700',
-  MEDIUM: 'bg-blue-100 text-blue-700',
-  HIGH: 'bg-orange-100 text-orange-700',
-  URGENT: 'bg-red-100 text-red-700',
-}
 
 // 상태는 관리자가 정하므로 이름이 아닌 순서로 색을 순환 사용
 const STATUS_COLOR = ['bg-slate-100 text-slate-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700']
@@ -28,10 +21,10 @@ export function ProjectTasksPage() {
   const wsId = Number(workspaceId)
   const { isGuest } = useAuth()
   const [addingTask, setAddingTask] = useState(false)
-  // 알림에서 넘어올 때 ?card=123 으로 특정 작업을 바로 열기
+  // 홈·달력 등에서 넘어올 때 ?card=123 으로 특정 작업을 바로 열기
   const [searchParams, setSearchParams] = useSearchParams()
   const cardParam = searchParams.get('card')
-  // 열려 있는 작업은 URL이 유일한 기준. 알림에서 들어오든 행을 누르든 같은 경로를 타고,
+  // 열려 있는 작업은 URL이 유일한 기준. 다른 화면에서 들어오든 행을 누르든 같은 경로를 타고,
   // 덤으로 특정 작업 화면을 그대로 공유·북마크 가능
   const activeCardId = cardParam ? Number(cardParam) : null
 
@@ -43,7 +36,6 @@ export function ProjectTasksPage() {
   }
 
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
-  const { data: members } = useQuery({ queryKey: ['members', wsId], queryFn: () => listMembers(wsId) })
   const { data: cardTypes } = useQuery({ queryKey: ['card-types'], queryFn: listCardTypes })
   const { data: cards } = useQuery({ queryKey: ['cards', wsId], queryFn: () => listCards(wsId) })
   const { data: projects } = useQuery({ queryKey: ['workspaces'], queryFn: listWorkspaces })
@@ -90,10 +82,8 @@ export function ProjectTasksPage() {
               <th className="whitespace-nowrap px-4 py-2 font-medium">상태</th>
               <th className="px-4 py-2 font-medium">작업명</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium">타입</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium">우선순위</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium">시작일</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium">마감일</th>
-              <th className="whitespace-nowrap px-4 py-2 font-medium">담당자</th>
             </tr>
           </thead>
           <tbody>
@@ -125,23 +115,17 @@ export function ProjectTasksPage() {
                     </span>
                   )}
                 </td>
-                <td className="whitespace-nowrap px-4 py-2.5 text-slate-500">{card.type}</td>
                 <td className="whitespace-nowrap px-4 py-2.5">
-                  <span className={`rounded px-1.5 py-0.5 text-xs font-medium ${PRIORITY_COLOR[card.priority]}`}>
-                    {card.priority}
-                  </span>
+                  <TypeBadge type={card.type} />
                 </td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-slate-500">{card.startDate ?? '-'}</td>
                 <td className="whitespace-nowrap px-4 py-2.5 text-slate-500">{card.dueDate ?? '-'}</td>
-                <td className="whitespace-nowrap px-4 py-2.5 text-slate-500">
-                  {members?.find((m) => m.userId === card.assigneeId)?.name ?? '-'}
-                </td>
               </tr>
             ))}
 
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={7} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                   작업이 없습니다.
                 </td>
               </tr>
@@ -153,7 +137,6 @@ export function ProjectTasksPage() {
       {activeCard && (
         <CardModal
           card={activeCard}
-          members={members ?? []}
           statuses={statuses}
           cardTypes={cardTypes ?? []}
           onClose={() => setCardParam(null)}

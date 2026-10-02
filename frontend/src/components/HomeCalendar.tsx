@@ -4,7 +4,6 @@ import { listCards } from '../api/cards'
 import { listCardTypes } from '../api/cardTypes'
 import { createSchedule, deleteSchedule, listSchedules } from '../api/schedules'
 import { listStatuses } from '../api/statuses'
-import { listMembers } from '../api/workspaces'
 import type { CalendarTask } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
 import { CardModal } from './CardModal'
@@ -315,7 +314,6 @@ function CardPreviewModal({ workspaceId, cardId, onClose }: { workspaceId: numbe
   const { data: cards } = useQuery({ queryKey: ['cards', workspaceId], queryFn: () => listCards(workspaceId) })
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
   const { data: cardTypes } = useQuery({ queryKey: ['card-types'], queryFn: listCardTypes })
-  const { data: members } = useQuery({ queryKey: ['members', workspaceId], queryFn: () => listMembers(workspaceId) })
 
   const card = cards?.find((c) => c.id === cardId)
 
@@ -327,7 +325,7 @@ function CardPreviewModal({ workspaceId, cardId, onClose }: { workspaceId: numbe
     )
   }
 
-  return <CardModal card={card} members={members ?? []} statuses={statuses} cardTypes={cardTypes ?? []} onClose={onClose} readOnly />
+  return <CardModal card={card} statuses={statuses} cardTypes={cardTypes ?? []} onClose={onClose} readOnly />
 }
 
 /** 홈 화면 월간 달력. 내가 볼 수 있는 프로젝트의 작업과 내 개인 일정을 함께 표시 */

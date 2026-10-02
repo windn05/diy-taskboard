@@ -10,7 +10,7 @@ import java.util.List;
 public class ReleaseDtos {
 
     /** 배포에 포함된 작업의 요약 (패치노트 화면에 쓸 최소 정보) */
-    public record ReleasedCard(Long id, String title, String type, String priority) {
+    public record ReleasedCard(Long id, String title, String type) {
     }
 
     public record ReleaseResponse(

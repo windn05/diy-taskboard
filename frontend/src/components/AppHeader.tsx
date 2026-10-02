@@ -3,7 +3,6 @@ import { useNavigate } from 'react-router-dom'
 import { availableApps, type AppKey } from '../apps'
 import { useAuth } from '../auth/AuthContext'
 import { ChangePasswordModal } from './ChangePasswordModal'
-import { NotificationBell } from './NotificationBell'
 import { ChevronDownIcon } from './icons'
 import { PresenceBar } from './PresenceBar'
 import type { PresenceUser } from '../api/types'
@@ -83,7 +82,6 @@ export function AppHeader({
             <span className="h-4 w-px bg-slate-200" />
           </>
         )}
-        <NotificationBell />
         <span className="text-slate-600">{user?.username}</span>
         {isGuest ? (
           // 흰 배경이 아니라 slate-100 칩 위에 얹히므로 한 단계 더 진해야 4.5:1 대비 충족

@@ -2,7 +2,6 @@ package com.taskboard.config;
 
 import com.taskboard.dto.RealtimeDtos.CardEvent;
 import com.taskboard.dto.RealtimeDtos.CommentEvent;
-import com.taskboard.service.NotificationService.NotificationCreatedEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.messaging.simp.SimpMessagingTemplate;
 import org.springframework.stereotype.Component;
@@ -27,12 +26,6 @@ public class RealtimeEventBroadcaster {
     @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
     public void onCommentEvent(CommentEvent event) {
         messagingTemplate.convertAndSend(topic(event.workspaceId(), "comments"), event);
-    }
-
-    /** 알림은 받는 사람 개인 채널로만 전송. 구독 권한은 StompAuthChannelInterceptor에서 검사 */
-    @TransactionalEventListener(phase = TransactionPhase.AFTER_COMMIT)
-    public void onNotificationCreated(NotificationCreatedEvent event) {
-        messagingTemplate.convertAndSend("/topic/users/" + event.userId() + "/notifications", event.notification());
     }
 
     private String topic(Long workspaceId, String channel) {

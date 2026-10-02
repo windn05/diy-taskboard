@@ -15,8 +15,6 @@ export type Status = { id: number; name: string; order: number }
 
 export type CardTypeDef = { id: number; name: string }
 
-export type CardPriority = 'LOW' | 'MEDIUM' | 'HIGH' | 'URGENT'
-
 export type Card = {
   id: number
   workspaceId: number
@@ -24,8 +22,6 @@ export type Card = {
   title: string
   description: string | null
   type: string
-  priority: CardPriority
-  assigneeId: number | null
   startDate: string | null
   dueDate: string | null
   /** 값이 있으면 배포된(완료된) 작업 */
@@ -48,12 +44,13 @@ export type PresenceUser = { userId: number; username: string; guest: boolean }
 
 export type PresenceResponse = { users: PresenceUser[] }
 
-export type MyTask = {
+/** 마감 임박 작업 한 줄 */
+export type DueTask = {
   cardId: number
   workspaceId: number
   workspaceName: string
   title: string
-  priority: CardPriority
+  type: string
   dueDate: string | null
 }
 
@@ -71,7 +68,6 @@ export type CalendarTask = {
   workspaceId: number
   workspaceName: string
   title: string
-  priority: CardPriority
   startDate: string | null
   dueDate: string | null
 }
@@ -83,14 +79,12 @@ export type RecentCard = {
   workspaceName: string
   title: string
   statusName: string
-  priority: CardPriority
+  type: string
   createdAt: string | null
 }
 
 export type Dashboard = {
-  /** 담당자로 지정된 작업. 담당자를 쓰지 않는 동안에는 비어 있고, 그때는 화면에서 패널째 숨김 */
-  myTasks: MyTask[]
-  dueSoon: MyTask[]
+  dueSoon: DueTask[]
   recentCards: RecentCard[]
   recentReleases: RecentRelease[]
   calendarTasks: CalendarTask[]
@@ -103,7 +97,7 @@ export type Schedule = {
   dueDate: string
 }
 
-export type ReleasedCard = { id: number; title: string; type: string; priority: CardPriority }
+export type ReleasedCard = { id: number; title: string; type: string }
 
 export type Release = {
   id: number
@@ -113,19 +107,6 @@ export type Release = {
   releasedAt: string
   cards: ReleasedCard[]
 }
-
-export type Notification = {
-  id: number
-  type: 'COMMENT'
-  workspaceId: number
-  cardId: number
-  cardTitle: string
-  actorName: string
-  read: boolean
-  createdAt: string
-}
-
-export type NotificationList = { notifications: Notification[]; unreadCount: number }
 
 export type LogLevel = 'TRACE' | 'DEBUG' | 'INFO' | 'WARN' | 'ERROR'
 

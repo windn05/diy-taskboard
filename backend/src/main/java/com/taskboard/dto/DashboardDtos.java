@@ -7,13 +7,13 @@ import java.util.List;
 /** 홈 화면(대시보드) 응답 */
 public class DashboardDtos {
 
-    /** 내 담당 작업 한 줄 — 프로젝트 정보를 함께 담아 바로 이동 가능 */
-    public record MyTask(
+    /** 마감 임박 작업 한 줄 — 프로젝트 정보를 함께 담아 바로 이동 가능 */
+    public record DueTask(
             Long cardId,
             Long workspaceId,
             String workspaceName,
             String title,
-            String priority,
+            String type,
             LocalDate dueDate) {
     }
 
@@ -23,7 +23,6 @@ public class DashboardDtos {
             Long workspaceId,
             String workspaceName,
             String title,
-            String priority,
             LocalDate startDate,
             LocalDate dueDate) {
     }
@@ -35,7 +34,7 @@ public class DashboardDtos {
             String workspaceName,
             String title,
             String statusName,
-            String priority,
+            String type,
             LocalDateTime createdAt) {
     }
 
@@ -53,8 +52,7 @@ public class DashboardDtos {
      * 화면에서 쓰지 않는 집계 수치는 제외
      */
     public record DashboardResponse(
-            List<MyTask> myTasks,
-            List<MyTask> dueSoon,
+            List<DueTask> dueSoon,
             List<RecentCard> recentCards,
             List<RecentRelease> recentReleases,
             List<CalendarTask> calendarTasks) {

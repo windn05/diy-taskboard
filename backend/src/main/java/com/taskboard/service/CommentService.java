@@ -20,7 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** 댓글. 작성은 프로젝트 멤버, 삭제는 작성자 본인만 가능. 작성 시 담당자에게 알림 */
+/** 댓글. 작성은 프로젝트 멤버, 삭제는 작성자 본인만 가능 */
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -29,7 +29,6 @@ public class CommentService {
     private final CardRepository cardRepository;
     private final UserRepository userRepository;
     private final WorkspaceService workspaceService;
-    private final NotificationService notificationService;
     private final ApplicationEventPublisher eventPublisher;
 
     @Transactional(readOnly = true)
@@ -54,7 +53,6 @@ public class CommentService {
         commentRepository.save(comment);
         CommentResponse response = toResponse(comment, userRepository.findById(userId).map(User::getName).orElse(null));
         eventPublisher.publishEvent(new CommentEvent("CREATED", card.getWorkspaceId(), cardId, response));
-        notificationService.notifyComment(card, userId);
         return response;
     }
 

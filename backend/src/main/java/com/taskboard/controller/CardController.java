@@ -36,7 +36,7 @@ public class CardController {
         return cardService.create(user.getId(), workspaceId, request);
     }
 
-    /** 부분 수정. 보내지 않은 필드는 유지 (담당자·날짜는 null로 비우기 가능) */
+    /** 부분 수정. 보내지 않은 필드는 유지 (날짜는 null로 비우기 가능) */
     @PatchMapping("/cards/{cardId}")
     public CardResponse update(@AuthenticationPrincipal CurrentUser user, @PathVariable Long cardId,
                                 @RequestBody UpdateCardRequest request) {

@@ -2,11 +2,10 @@ import { useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { useNavigate } from 'react-router-dom'
 import { createCard } from '../api/cards'
-import { listMembers } from '../api/workspaces'
 import { listCardTypes } from '../api/cardTypes'
 import { listStatuses } from '../api/statuses'
-import type { Card, Workspace } from '../api/types'
-import { AssigneeSelect, DateField, LabeledField, PrioritySelect } from './fields'
+import type { Workspace } from '../api/types'
+import { DateField, LabeledField } from './fields'
 import { Modal } from './Modal'
 
 /** 새 작업 만들기. 사이드바의 + 버튼에서 열고, 생성 후 해당 프로젝트로 이동 */
@@ -27,18 +26,11 @@ export function NewTaskModal({
   const [description, setDescription] = useState('')
   const [statusId, setStatusId] = useState<number | ''>('')
   const [type, setType] = useState('')
-  const [priority, setPriority] = useState<Card['priority']>('MEDIUM')
-  const [assigneeId, setAssigneeId] = useState<number | null>(null)
   const [startDate, setStartDate] = useState<string | null>(null)
   const [dueDate, setDueDate] = useState<string | null>(null)
 
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
   const { data: cardTypes } = useQuery({ queryKey: ['card-types'], queryFn: listCardTypes })
-  const { data: members } = useQuery({
-    queryKey: ['members', workspaceId],
-    queryFn: () => listMembers(workspaceId),
-    enabled: !!workspaceId,
-  })
 
   // 고르지 않았으면 첫 번째 상태·유형을 기본값으로 사용
   const selectedStatusId = statusId || statuses?.[0]?.id || ''
@@ -50,8 +42,6 @@ export function NewTaskModal({
         title,
         description: description || undefined,
         type: selectedType || undefined,
-        priority,
-        assigneeId,
         startDate,
         dueDate,
         statusId: selectedStatusId || undefined,
@@ -96,10 +86,7 @@ export function NewTaskModal({
             <span className="block text-xs text-slate-500">프로젝트</span>
             <select
               value={workspaceId}
-              onChange={(e) => {
-                setWorkspaceId(Number(e.target.value))
-                setAssigneeId(null) // 담당자는 프로젝트 멤버 중에서만 선택 가능
-              }}
+              onChange={(e) => setWorkspaceId(Number(e.target.value))}
               className="block w-40 rounded border px-3 py-2 text-sm"
             >
               {projects.map((p) => (
@@ -122,7 +109,7 @@ export function NewTaskModal({
           </label>
         </div>
 
-        <div className="grid grid-cols-3 gap-3 text-sm">
+        <div className="grid grid-cols-2 gap-3 text-sm sm:grid-cols-4">
           <label className="space-y-1">
             <span className="text-xs text-slate-500">상태</span>
             <select
@@ -147,12 +134,6 @@ export function NewTaskModal({
               ))}
             </select>
           </label>
-          <LabeledField label="우선순위">
-            <PrioritySelect value={priority} onChange={setPriority} />
-          </LabeledField>
-          <LabeledField label="담당자">
-            <AssigneeSelect value={assigneeId} members={members ?? []} onChange={setAssigneeId} />
-          </LabeledField>
           <LabeledField label="시작일">
             <DateField value={startDate} onChange={setStartDate} />
           </LabeledField>

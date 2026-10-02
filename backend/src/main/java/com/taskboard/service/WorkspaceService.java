@@ -39,7 +39,6 @@ public class WorkspaceService {
     private final CardRepository cardRepository;
     private final CommentRepository commentRepository;
     private final ReleaseRepository releaseRepository;
-    private final NotificationService notificationService;
 
     /** 만든 사람은 OWNER 멤버로 자동 등록 */
     @Transactional
@@ -109,29 +108,12 @@ public class WorkspaceService {
         List<Card> cards = cardRepository.findByWorkspaceIdOrderByCreatedAtAsc(workspaceId);
         List<Long> cardIds = cards.stream().map(Card::getId).toList();
         if (!cardIds.isEmpty()) {
-            notificationService.deleteByCardIds(cardIds);
             commentRepository.deleteByCardIdIn(cardIds);
             cardRepository.deleteAll(cards);
         }
         releaseRepository.deleteByWorkspaceId(workspaceId);
         memberRepository.deleteByWorkspaceId(workspaceId);
         workspaceRepository.deleteById(workspaceId);
-    }
-
-    @Transactional(readOnly = true)
-    public List<MemberResponse> listMembers(CurrentUser user, Long workspaceId) {
-        requireReadAccess(user, workspaceId);
-        List<WorkspaceMember> members = memberRepository.findByWorkspaceId(workspaceId);
-        Map<Long, User> users = findAllByIdAsMap(
-                userRepository, members.stream().map(WorkspaceMember::getUserId).toList(), User::getId);
-
-        return members.stream()
-                .map(m -> {
-                    User u = users.get(m.getUserId());
-                    return u != null ? new MemberResponse(u.getId(), u.getUsername(), u.getName(), m.getRole().name()) : null;
-                })
-                .filter(Objects::nonNull)
-                .toList();
     }
 
     /** 연관 엔티티를 한 번에 조회해 id로 찾을 수 있게 변환 (건별 findById로 인한 N+1 방지) */

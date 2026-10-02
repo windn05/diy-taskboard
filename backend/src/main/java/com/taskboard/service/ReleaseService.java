@@ -150,7 +150,7 @@ public class ReleaseService {
     }
 
     private ReleasedCard toReleasedCard(Card card) {
-        return new ReleasedCard(card.getId(), card.getTitle(), card.getType(), card.getPriority().name());
+        return new ReleasedCard(card.getId(), card.getTitle(), card.getType());
     }
 
     private ReleaseResponse toResponse(Release release, List<ReleasedCard> cards) {

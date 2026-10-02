@@ -28,11 +28,6 @@ public class WorkspaceController {
         return workspaceService.listMine(user);
     }
 
-    @GetMapping("/{workspaceId}/members")
-    public List<MemberResponse> listMembers(@AuthenticationPrincipal CurrentUser user, @PathVariable Long workspaceId) {
-        return workspaceService.listMembers(user, workspaceId);
-    }
-
     /** 구독 직후 초기 목록 조회용. 이후 변경은 WebSocket으로 푸시 */
     @GetMapping("/{workspaceId}/presence")
     public PresenceResponse presence(@AuthenticationPrincipal CurrentUser user, @PathVariable Long workspaceId) {
