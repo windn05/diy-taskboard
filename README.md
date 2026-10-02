@@ -79,24 +79,7 @@
 | 실시간 | Spring WebSocket · STOMP 내장 브로커 | |
 | **데이터** | PostgreSQL 16 · Redis 7 | Redis는 세션 저장 전용 |
 | **인프라** | Docker Compose · Caddy · GitHub Actions · GHCR | Oracle Cloud 무료 VM, Let's Encrypt 자동 HTTPS |
-| **테스트** | JUnit 5 · Mockito · MockMvc · H2 | 백엔드 102건 |
-
-<br>
-
-## 쓰지 않기로 한 것들
-
-라이브러리는 "이게 없으면 몇 줄을 써야 하나"를 먼저 따져서 정했다.
-
-| 안 쓴 것 | 대신 | 이유 |
-|---|---|---|
-| 외부 메시지 브로커 | STOMP 내장 브로커 | 단일 서버라 필요 없다. 서버를 늘릴 때 도입하면 된다 |
-| Actuator · Micrometer | 인터셉터로 직접 집계 | 필요한 지표가 몇 개뿐이라 직접 세는 쪽이 짧았다 |
-| 캘린더 라이브러리 | 날짜 계산 + CSS Grid | 월 그리드와 여러 날짜 막대 배치를 직접 구현 |
-| 아이콘 라이브러리 | 직접 그린 SVG 10개 | `currentColor`로 글자 색·크기를 그대로 따라간다 |
-| 상태관리 라이브러리 | TanStack Query + `useState` | 서버 상태는 Query, 나머지는 지역 상태로 충분 |
-| UI 킷 | Tailwind 직접 스타일링 | |
-| SockJS | 네이티브 WebSocket | 대상 브라우저가 모두 WebSocket을 지원한다 |
-| Testcontainers | H2 (`MODE=PostgreSQL`) | 개발 PC에 Docker가 없었다. 네이티브 쿼리가 없어 호환성 위험이 낮다 |
+| **테스트** | JUnit 5 · Mockito · MockMvc · H2 | 백엔드 104건 |
 
 <br>
 

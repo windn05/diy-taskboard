@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** 개인 일정. 본인에게만 보이며 프로젝트와 무관 */
+/** 개인 일정. 프로젝트와 무관. 사용자는 본인 것만, 게스트는 관리자를 뺀 사용자들의 것을 읽기 전용으로 조회 */
 @RestController
 @RequestMapping("/schedules")
 @RequiredArgsConstructor
@@ -21,7 +21,7 @@ public class ScheduleController {
 
     @GetMapping
     public List<ScheduleResponse> list(@AuthenticationPrincipal CurrentUser user) {
-        return scheduleService.list(user.getId());
+        return scheduleService.list(user);
     }
 
     @PostMapping

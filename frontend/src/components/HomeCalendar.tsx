@@ -369,10 +369,11 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
       start: s.startDate,
       end: s.dueDate,
       color: SCHEDULE_COLOR,
-      onDelete: () => confirm(`"${s.title}" 일정을 삭제할까요?`) && deleteMutation.mutate(s.id),
+      // 게스트가 보는 일정은 남의 것이라 삭제 불가
+      onDelete: isGuest ? undefined : () => confirm(`"${s.title}" 일정을 삭제할까요?`) && deleteMutation.mutate(s.id),
     }))
     return [...taskBars, ...scheduleBars]
-  }, [tasks, schedules, deleteMutation])
+  }, [tasks, schedules, deleteMutation, isGuest])
 
   const monthLabel = `${cursor.year}.${pad(cursor.month + 1)}`
   const todayIso = toISO(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())

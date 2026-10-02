@@ -1,4 +1,4 @@
-// 개인 일정 (본인에게만 보임)
+// 개인 일정. 게스트는 다른 사용자들의 일정을 읽기 전용으로 받음
 import { del, get, post } from './axios'
 import type { Schedule } from './types'
 

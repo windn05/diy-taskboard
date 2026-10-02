@@ -50,6 +50,7 @@ class PermissionMatrixTest {
     @Autowired StatusRepository statusRepository;
     @Autowired CardRepository cardRepository;
     @Autowired CommentRepository commentRepository;
+    @Autowired PersonalScheduleRepository scheduleRepository;
 
     private MockHttpSession memberSession;
     private MockHttpSession outsiderSession;
@@ -63,6 +64,7 @@ class PermissionMatrixTest {
 
     @BeforeEach
     void setUp() throws Exception {
+        scheduleRepository.deleteAll();
         commentRepository.deleteAll();
         cardRepository.deleteAll();
         memberRepository.deleteAll();
@@ -195,6 +197,27 @@ class PermissionMatrixTest {
         mockMvc.perform(auth(get("/admin/workspaces"), guestSession)).andExpect(status().isForbidden());
         mockMvc.perform(auth(get("/admin/logs"), guestSession)).andExpect(status().isForbidden());
         mockMvc.perform(auth(get("/admin/metrics"), guestSession)).andExpect(status().isForbidden());
+    }
+
+    @Test
+    void 게스트는_관리자를_뺀_사용자들의_일정을_본다() throws Exception {
+        createSchedule(memberSession, "멤버 일정");
+        createSchedule(adminSession, "관리자 일정");
+
+        mockMvc.perform(auth(get("/schedules"), guestSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(1))
+                .andExpect(jsonPath("$[0].title").value("멤버 일정"));
+    }
+
+    @Test
+    void 사용자는_여전히_본인_일정만_본다() throws Exception {
+        createSchedule(memberSession, "멤버 일정");
+        createSchedule(adminSession, "관리자 일정");
+
+        mockMvc.perform(auth(get("/schedules"), outsiderSession))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.length()").value(0));
     }
 
     // --- 일반 사용자 ---
@@ -346,6 +369,12 @@ class PermissionMatrixTest {
         return (MockHttpSession) mockMvc.perform(request)
                 .andExpect(status().isOk())
                 .andReturn().getRequest().getSession(false);
+    }
+
+    private void createSchedule(MockHttpSession session, String title) throws Exception {
+        String body = "{\"title\":\"" + title + "\",\"startDate\":\"2026-09-01\",\"dueDate\":\"2026-09-02\"}";
+        mockMvc.perform(auth(post("/schedules"), session).contentType(MediaType.APPLICATION_JSON).content(body))
+                .andExpect(status().isCreated());
     }
 
     private Long createWorkspace(String name, Long ownerId, boolean visible) {

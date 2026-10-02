@@ -1,29 +1,33 @@
 package com.taskboard.service;
 
 import com.taskboard.domain.PersonalSchedule;
+import com.taskboard.domain.User.SystemRole;
 import com.taskboard.dto.ScheduleDtos.CreateScheduleRequest;
 import com.taskboard.dto.ScheduleDtos.ScheduleResponse;
 import com.taskboard.exception.AccessDeniedException;
 import com.taskboard.exception.EntityNotFoundException;
 import com.taskboard.repository.PersonalScheduleRepository;
+import com.taskboard.security.CurrentUser;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** 개인 일정. 조회·삭제 모두 본인 것만 대상 */
+/** 개인 일정. 사용자는 본인 것만 조회·삭제, 게스트는 관리자를 뺀 사용자들의 일정을 읽기 전용으로 조회 */
 @Service
 @RequiredArgsConstructor
 public class PersonalScheduleService {
 
     private final PersonalScheduleRepository scheduleRepository;
 
+    /** 게스트는 자기 일정이 없으므로 둘러보기용으로 다른 사용자들의 일정을 보여줌 */
     @Transactional(readOnly = true)
-    public List<ScheduleResponse> list(Long userId) {
-        return scheduleRepository.findByUserIdOrderByStartDateAsc(userId).stream()
-                .map(this::toResponse)
-                .toList();
+    public List<ScheduleResponse> list(CurrentUser user) {
+        List<PersonalSchedule> schedules = user.isGuest()
+                ? scheduleRepository.findOwnedByRoleOtherThan(SystemRole.ADMIN)
+                : scheduleRepository.findByUserIdOrderByStartDateAsc(user.getId());
+        return schedules.stream().map(this::toResponse).toList();
     }
 
     @Transactional
