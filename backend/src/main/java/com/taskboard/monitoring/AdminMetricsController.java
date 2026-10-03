@@ -3,6 +3,7 @@ package com.taskboard.monitoring;
 import com.taskboard.monitoring.MetricsDtos.MetricsResponse;
 import com.taskboard.monitoring.MetricsDtos.SystemStatsResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
@@ -19,8 +20,8 @@ public class AdminMetricsController {
 
     /** HTTP 요청 수·응답 시간·에러율 */
     @GetMapping
-    public MetricsResponse metrics() {
-        return requestMetricsService.snapshot();
+    public ResponseEntity<MetricsResponse> metrics() {
+        return ResponseEntity.ok(requestMetricsService.snapshot());
     }
 
     /**
@@ -28,8 +29,8 @@ public class AdminMetricsController {
      * 화면은 한 번에 그리므로 여기서 합쳐서 응답
      */
     @GetMapping("/system")
-    public SystemStatsResponse system() {
+    public ResponseEntity<SystemStatsResponse> system() {
         SystemStatsResponse base = systemStatsService.snapshot();
-        return new SystemStatsResponse(base.host(), base.backend(), dbStatsService.snapshot());
+        return ResponseEntity.ok(new SystemStatsResponse(base.host(), base.backend(), dbStatsService.snapshot()));
     }
 }

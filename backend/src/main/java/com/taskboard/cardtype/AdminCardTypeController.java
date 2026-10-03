@@ -4,6 +4,7 @@ import com.taskboard.cardtype.CardTypeDtos.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 /** 작업 유형(Task/Bug 등) 관리. 전역 설정이라 관리자 전용. 조회는 CardTypeController */
@@ -15,19 +16,20 @@ public class AdminCardTypeController {
     private final CardTypeService cardTypeService;
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public CardTypeResponse create(@Valid @RequestBody CardTypeRequest request) {
-        return cardTypeService.create(request);
+    public ResponseEntity<CardTypeResponse> create(@Valid @RequestBody CardTypeRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(cardTypeService.create(request));
     }
 
     @PatchMapping("/{typeId}")
-    public CardTypeResponse update(@PathVariable Long typeId, @Valid @RequestBody CardTypeRequest request) {
-        return cardTypeService.update(typeId, request);
+    public ResponseEntity<CardTypeResponse> update(@PathVariable Long typeId,
+                                                   @Valid @RequestBody CardTypeRequest request) {
+        return ResponseEntity.ok(cardTypeService.update(typeId, request));
     }
 
     @DeleteMapping("/{typeId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long typeId) {
+    public ResponseEntity<Void> delete(@PathVariable Long typeId) {
         cardTypeService.delete(typeId);
+        return ResponseEntity.noContent().build();
     }
 }

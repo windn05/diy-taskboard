@@ -6,6 +6,7 @@ import com.taskboard.auth.AuthService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -20,15 +21,15 @@ public class AdminUserController {
     private final AuthService authService;
 
     @GetMapping
-    public List<UserResponse> list() {
-        return userRepository.findAll().stream()
+    public ResponseEntity<List<UserResponse>> list() {
+        return ResponseEntity.ok(userRepository.findAll().stream()
                 .map(user -> new UserResponse(user.getId(), user.getUsername(), user.getName(), user.getRole().name()))
-                .toList();
+                .toList());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserResponse create(@Valid @RequestBody CreateUserRequest request) {
-        return authService.createUser(request);
+    public ResponseEntity<UserResponse> create(@Valid @RequestBody CreateUserRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(authService.createUser(request));
     }
 }

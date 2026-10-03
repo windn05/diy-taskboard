@@ -2,6 +2,7 @@ package com.taskboard.status;
 
 import com.taskboard.status.StatusDtos.*;
 import lombok.RequiredArgsConstructor;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RestController;
 
@@ -15,7 +16,7 @@ public class StatusController {
     private final StatusService statusService;
 
     @GetMapping("/statuses")
-    public List<StatusResponse> list() {
-        return statusService.list();
+    public ResponseEntity<List<StatusResponse>> list() {
+        return ResponseEntity.ok(statusService.list());
     }
 }

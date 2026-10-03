@@ -5,6 +5,7 @@ import com.taskboard.workspace.WorkspaceDtos.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,41 +21,44 @@ public class AdminWorkspaceController {
 
     /** 멤버가 아닌 프로젝트와 비공개 프로젝트까지 모두 포함 */
     @GetMapping
-    public List<AdminWorkspaceResponse> list() {
-        return workspaceService.listAllForAdmin();
+    public ResponseEntity<List<AdminWorkspaceResponse>> list() {
+        return ResponseEntity.ok(workspaceService.listAllForAdmin());
     }
 
     @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public WorkspaceResponse create(@AuthenticationPrincipal CurrentUser user, @Valid @RequestBody CreateWorkspaceRequest request) {
-        return workspaceService.create(user.getId(), request);
+    public ResponseEntity<WorkspaceResponse> create(@AuthenticationPrincipal CurrentUser user,
+                                                    @Valid @RequestBody CreateWorkspaceRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(workspaceService.create(user.getId(), request));
     }
 
     @PatchMapping("/{workspaceId}")
-    public AdminWorkspaceResponse update(@PathVariable Long workspaceId, @RequestBody UpdateWorkspaceRequest request) {
-        return workspaceService.updateAsAdmin(workspaceId, request);
+    public ResponseEntity<AdminWorkspaceResponse> update(@PathVariable Long workspaceId,
+                                                         @RequestBody UpdateWorkspaceRequest request) {
+        return ResponseEntity.ok(workspaceService.updateAsAdmin(workspaceId, request));
     }
 
     @DeleteMapping("/{workspaceId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void delete(@PathVariable Long workspaceId) {
+    public ResponseEntity<Void> delete(@PathVariable Long workspaceId) {
         workspaceService.deleteAsAdmin(workspaceId);
+        return ResponseEntity.noContent().build();
     }
 
     @GetMapping("/{workspaceId}/members")
-    public List<MemberResponse> listMembers(@PathVariable Long workspaceId) {
-        return workspaceService.listMembersAsAdmin(workspaceId);
+    public ResponseEntity<List<MemberResponse>> listMembers(@PathVariable Long workspaceId) {
+        return ResponseEntity.ok(workspaceService.listMembersAsAdmin(workspaceId));
     }
 
     @PostMapping("/{workspaceId}/members")
-    @ResponseStatus(HttpStatus.CREATED)
-    public MemberResponse addMember(@PathVariable Long workspaceId, @Valid @RequestBody AddMemberRequest request) {
-        return workspaceService.addMemberAsAdmin(workspaceId, request);
+    public ResponseEntity<MemberResponse> addMember(@PathVariable Long workspaceId,
+                                                    @Valid @RequestBody AddMemberRequest request) {
+        return ResponseEntity.status(HttpStatus.CREATED)
+                .body(workspaceService.addMemberAsAdmin(workspaceId, request));
     }
 
     @DeleteMapping("/{workspaceId}/members/{userId}")
-    @ResponseStatus(HttpStatus.NO_CONTENT)
-    public void removeMember(@PathVariable Long workspaceId, @PathVariable Long userId) {
+    public ResponseEntity<Void> removeMember(@PathVariable Long workspaceId, @PathVariable Long userId) {
         workspaceService.removeMemberAsAdmin(workspaceId, userId);
+        return ResponseEntity.noContent().build();
     }
 }
