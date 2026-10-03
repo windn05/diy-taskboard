@@ -18,10 +18,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.stream.Collectors;
 
-/**
- * 작업(카드) CRUD. 조회는 읽기 권한, 변경은 프로젝트 멤버만 가능.
- * 변경마다 활동 이력을 남기고, 커밋 후 같은 프로젝트 접속자에게 이벤트 전송
- */
+/** 작업 생성·조회·수정·삭제 */
 @Service
 @RequiredArgsConstructor
 public class CardService {
@@ -85,13 +82,28 @@ public class CardService {
         publish("DELETED", deleted);
     }
 
-    /** 실제 전송은 커밋 이후 RealtimeEventBroadcaster가 처리 */
+    /*************************************************************************
+     * 목적 : 작업 변경 이벤트 발행 (실제 전송은 커밋 이후 RealtimeEventBroadcaster가 처리)
+     * 이유 : 커밋 전에 보내면 롤백된 변경이 다른 사람 화면에 퍼질 수 있음
+     * 파라미터
+     * - type : CREATED | UPDATED | MOVED | DELETED
+     * - card : 변경된 작업
+     * 반환
+     * - 전달받은 작업 응답 그대로
+     *************************************************************************/
     private CardResponse publish(String type, CardResponse card) {
         eventPublisher.publishEvent(new CardEvent(type, card));
         return card;
     }
 
-    /** 상태를 지정하지 않은 새 작업은 첫 번째 컬럼에 배치 */
+    /*************************************************************************
+     * 목적 : 새 작업의 기본 상태(첫 번째 컬럼) 조회
+     * 이유 : -
+     * 파라미터
+     * -
+     * 반환
+     * - 첫 번째 상태 id
+     *************************************************************************/
     private Long defaultStatusId() {
         return statusService.list().stream().findFirst()
                 .orElseThrow(() -> new EntityNotFoundException("상태가 존재하지 않습니다."))
@@ -102,7 +114,14 @@ public class CardService {
         return cardRepository.findById(cardId).orElseThrow(() -> new EntityNotFoundException("카드를 찾을 수 없습니다."));
     }
 
-    /** 같은 패키지의 ReleaseService도 사용. 단건이라 댓글 수를 그때그때 조회(N+1 걱정 없는 범위) */
+    /*************************************************************************
+     * 목적 : 작업 엔티티를 응답 형태로 변환 (ReleaseService도 사용)
+     * 이유 : 단건 변환이라 댓글 수를 그때그때 세도 N+1 부담 없음
+     * 파라미터
+     * - card : 작업 엔티티
+     * 반환
+     * - 작업 응답
+     *************************************************************************/
     public CardResponse toResponse(Card card) {
         return toResponse(card, commentRepository.countByCardId(card.getId()));
     }

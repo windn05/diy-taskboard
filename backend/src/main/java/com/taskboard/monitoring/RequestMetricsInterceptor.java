@@ -7,7 +7,7 @@ import org.springframework.lang.NonNull;
 import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.HandlerInterceptor;
 
-/** 요청별 처리 시간과 응답 코드를 모니터링 집계(RequestMetricsService)에 전달 */
+/** 요청별 처리 시간과 응답 코드를 요청 지표 집계에 전달 */
 @Component
 @RequiredArgsConstructor
 public class RequestMetricsInterceptor implements HandlerInterceptor {

@@ -10,7 +10,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** 모니터링 화면의 로그 조회. 실시간 스트림은 /topic/admin/logs WebSocket으로 별도 푸시 */
+/** 모니터링 로그 조회 API */
 @RestController
 @RequestMapping("/admin/logs")
 @RequiredArgsConstructor
@@ -18,14 +18,30 @@ public class AdminLogController {
 
     private final LogService logService;
 
-    /** 메모리 버퍼의 최근 로그. 실시간 뷰어가 구독 직후 초기 화면을 채우는 용도 */
+    /*************************************************************************
+     * 목적 : 메모리 버퍼의 최근 로그 조회
+     * 이유 : 실시간 로그 화면이 구독 직후 초기 내용을 채우는 용도
+     * 파라미터
+     * - level : 최소 레벨 (기본 TRACE)
+     * - limit : 최대 건수 (기본 200)
+     * 반환
+     * - 200 + 로그 목록 (최신순)
+     *************************************************************************/
     @GetMapping
     public ResponseEntity<List<LogEntry>> recent(@RequestParam(defaultValue = "TRACE") String level,
                                                  @RequestParam(defaultValue = "200") int limit) {
         return ResponseEntity.ok(logService.recent(level, limit));
     }
 
-    /** 재시작 이후에도 남아 있는 영속 로그 (WARN/ERROR) */
+    /*************************************************************************
+     * 목적 : DB에 저장된 WARN/ERROR 로그 조회
+     * 이유 : 메모리 로그는 재시작하면 사라지므로 이전 오류는 DB에서 확인
+     * 파라미터
+     * - level : 최소 레벨 (기본 WARN)
+     * - limit : 최대 건수 (기본 100)
+     * 반환
+     * - 200 + 로그 목록 (최신순)
+     *************************************************************************/
     @GetMapping("/history")
     public ResponseEntity<List<LogEntry>> history(@RequestParam(defaultValue = "WARN") String level,
                                                   @RequestParam(defaultValue = "100") int limit) {

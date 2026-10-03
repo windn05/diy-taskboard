@@ -50,10 +50,14 @@ public class LogService {
         this.retentionDays = retentionDays;
     }
 
-    /**
-     * 보존 기간이 지난 DB 로그 삭제. 매일 새벽 4시 실행.
-     * 장애 때 ERROR가 폭증해 디스크를 채우면 DB까지 멈추는 2차 장애가 되므로 상한 필요
-     */
+    /*************************************************************************
+     * 목적 : 보존 기간이 지난 DB 로그 삭제 (매일 새벽 4시)
+     * 이유 : 장애 때 ERROR가 폭증해 디스크를 채우면 DB까지 멈추는 2차 장애가 되므로 보관량에 상한 필요
+     * 파라미터
+     * -
+     * 반환
+     * -
+     *************************************************************************/
     @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     @Transactional
     public void purgeOldLogs() {
@@ -78,7 +82,15 @@ public class LogService {
         }
     }
 
-    /** 메모리 버퍼의 최근 로그 (최신순) */
+    /*************************************************************************
+     * 목적 : 메모리 버퍼의 최근 로그 조회 (최신순)
+     * 이유 : -
+     * 파라미터
+     * - minLevel : 최소 레벨
+     * - limit : 최대 건수
+     * 반환
+     * - 로그 목록 (최신순)
+     *************************************************************************/
     public List<LogEntry> recent(String minLevel, int limit) {
         List<LogEntry> snapshot;
         synchronized (buffer) {
@@ -91,7 +103,15 @@ public class LogService {
                 .toList();
     }
 
-    /** DB에 영속된 로그 (WARN/ERROR만 저장되므로 그 범위 안에서 조회) */
+    /*************************************************************************
+     * 목적 : DB에 저장된 로그 조회 (WARN/ERROR만 저장, 최신순)
+     * 이유 : -
+     * 파라미터
+     * - minLevel : 최소 레벨
+     * - limit : 최대 건수
+     * 반환
+     * - 로그 목록 (최신순)
+     *************************************************************************/
     public List<LogEntry> history(String minLevel, int limit) {
         List<String> levels = PERSISTED_LEVELS.stream().filter(level -> meetsLevel(level, minLevel)).toList();
         if (levels.isEmpty()) return List.of();

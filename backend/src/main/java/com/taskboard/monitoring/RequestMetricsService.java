@@ -8,7 +8,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.atomic.LongAdder;
 
-/** 최근 WINDOW_MINUTES 분의 요청 지표를 분 단위 버킷으로 메모리에 집계. 단일 서버 전제 */
+/** 최근 60분 요청 지표를 분 단위로 메모리에 집계 */
 @Service
 public class RequestMetricsService {
 
@@ -37,7 +37,14 @@ public class RequestMetricsService {
         buckets.keySet().removeIf(key -> key < minute - WINDOW_MINUTES);
     }
 
-    /** 최근 WINDOW_MINUTES 분의 버킷만 합산 — 그보다 오래된 버킷은 record에서 이미 정리됨 */
+    /*************************************************************************
+     * 목적 : 최근 60분 버킷을 합산해 요청 지표 생성
+     * 이유 : -
+     * 파라미터
+     * -
+     * 반환
+     * - 요청 수·에러 수·평균 응답 시간·WebSocket 세션 수
+     *************************************************************************/
     public MetricsResponse snapshot() {
         long oldest = currentMinute() - WINDOW_MINUTES + 1;
         long totalRequests = 0;
@@ -59,7 +66,14 @@ public class RequestMetricsService {
         return count == 0 ? 0 : Math.round((double) total / count * 10) / 10.0;
     }
 
-    /** epoch 기준 분 번호. 버킷 키로 사용 */
+    /*************************************************************************
+     * 목적 : 현재 시각의 분 번호 계산 (버킷 키)
+     * 이유 : -
+     * 파라미터
+     * -
+     * 반환
+     * - epoch 기준 분 번호
+     *************************************************************************/
     private long currentMinute() {
         return Instant.now().getEpochSecond() / 60;
     }

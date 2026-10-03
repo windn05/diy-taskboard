@@ -8,10 +8,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionPhase;
 import org.springframework.transaction.event.TransactionalEventListener;
 
-/**
- * 트랜잭션 커밋 후에만 브로드캐스트.
- * 서비스 안에서 바로 보내면 롤백된 변경까지 다른 접속자에게 전파될 수 있음
- */
+/** 작업·댓글 변경을 커밋 후 같은 프로젝트 접속자에게 전송 */
 @Component
 @RequiredArgsConstructor
 public class RealtimeEventBroadcaster {

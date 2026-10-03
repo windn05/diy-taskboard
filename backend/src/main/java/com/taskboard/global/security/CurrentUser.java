@@ -10,10 +10,7 @@ import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import java.io.Serializable;
 import java.util.List;
 
-/**
- * 인증된 요청의 사용자. 컨트롤러에서 {@code @AuthenticationPrincipal}로 주입.
- * Redis에 세션으로 직렬화되어 저장되므로 Serializable이어야 한다.
- */
+/** 인증된 요청의 사용자 (세션에 저장되므로 Serializable) */
 @Getter
 @AllArgsConstructor
 public class CurrentUser implements Serializable {

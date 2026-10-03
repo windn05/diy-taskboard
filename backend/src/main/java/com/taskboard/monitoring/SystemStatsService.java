@@ -16,17 +16,7 @@ import java.nio.file.Path;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicReference;
 
-/**
- * 모니터링 화면의 자원 지표. "서버(VM) 전체"와 "백엔드(컨테이너·JVM)"를 나눠 조회.
- *
- * <p>컨테이너 안의 MXBean은 컨테이너 한도 기준 값을 주므로 출처를 구분.
- * <ul>
- *   <li>서버 전체 — {@code /proc/meminfo}, {@code /proc/stat} (컨테이너 안에서도 호스트 값)</li>
- *   <li>컨테이너 — cgroup v2 {@code memory.current}, {@code memory.max}</li>
- *   <li>JVM — MXBean</li>
- * </ul>
- * {@code /proc}가 없는 환경(로컬 윈도우)에서는 MXBean 값으로 대체
- */
+/** 모니터링 자원 지표 조회 (서버 전체와 백엔드 컨테이너·JVM을 구분) */
 @Service
 public class SystemStatsService {
 
@@ -45,16 +35,28 @@ public class SystemStatsService {
     /** {@code /proc/stat}의 CPU 사용률은 두 시점의 차이로만 구할 수 있어 직전 샘플을 보관 */
     private final AtomicReference<CpuTimes> previousCpu = new AtomicReference<>();
 
-    /** DB 지표는 DataSource가 필요해 여기서 다루지 않음 — 컨트롤러가 DbStatsService 값을 채움 */
+    /*************************************************************************
+     * 목적 : 서버·백엔드 자원 지표 조회 (DB 항목은 비워 둠)
+     * 이유 : DB 지표는 DataSource가 필요해 DbStatsService가 따로 채움
+     * 파라미터
+     * -
+     * 반환
+     * - 서버·백엔드 지표 (DB 항목은 비어 있음)
+     *************************************************************************/
     public SystemStatsResponse snapshot() {
         var os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
         return new SystemStatsResponse(hostStats(os), backendStats(os), null);
     }
 
-    /**
-     * MXBean CPU 사용률은 직전 호출과의 차이라 첫 호출은 0. 기동 시 한 번 읽어 기준 생성
-     * (윈도우는 카운터가 약 1초 단위로 갱신돼, 요청 안에서 두 번 읽는 방식으로는 0만 나옴)
-     */
+    /*************************************************************************
+     * 목적 : 기동 시 CPU 사용률을 한 번 읽어 기준값 생성
+     * 이유 : MXBean CPU 사용률은 직전 호출과의 차이라 첫 호출은 항상 0. 윈도우는 카운터가 약 1초 단위로 갱신돼
+     *        요청 안에서 두 번 읽는 방식도 통하지 않음
+     * 파라미터
+     * -
+     * 반환
+     * -
+     *************************************************************************/
     @PostConstruct
     void primeMxbeanCpu() {
         var os = (OperatingSystemMXBean) ManagementFactory.getOperatingSystemMXBean();
@@ -126,10 +128,15 @@ public class SystemStatsService {
     record MemInfo(long totalBytes, long availableBytes) {
     }
 
-    /**
-     * {@code cpu  user nice system idle iowait irq softirq steal ...} 한 줄 파싱.
-     * iowait도 CPU가 일하지 않은 시간이라 idle에 포함. guest 계열은 user에 이미 포함돼 있어 합산하지 않음
-     */
+    /*************************************************************************
+     * 목적 : /proc/stat의 cpu 한 줄을 전체·유휴 시간으로 파싱
+     * 이유 : iowait도 CPU가 일하지 않은 시간이라 유휴에 포함. guest 계열은 user에 이미 포함돼 중복
+     *        합산하지 않음
+     * 파라미터
+     * - line : "cpu  user nice system idle ..." 형식의 한 줄
+     * 반환
+     * - 전체·유휴 시간 (형식이 다르면 null)
+     *************************************************************************/
     static CpuTimes parseCpuLine(String line) {
         String[] f = line.trim().split("\\s+");
         long user = Long.parseLong(f[1]);
@@ -151,7 +158,14 @@ public class SystemStatsService {
         return Math.max(0, Math.min(100, percent));
     }
 
-    /** {@code cpu0}, {@code cpu1}… 줄 수. 맨 앞의 합계 줄 {@code cpu}는 제외 */
+    /*************************************************************************
+     * 목적 : /proc/stat의 cpu0, cpu1… 줄 수로 코어 수 계산 (합계 줄 cpu는 제외)
+     * 이유 : -
+     * 파라미터
+     * - procStat : /proc/stat 전체 내용
+     * 반환
+     * - 코어 수
+     *************************************************************************/
     static int countCores(List<String> procStat) {
         return (int) procStat.stream().filter(line -> line.matches("^cpu\\d+\\s.*")).count();
     }
@@ -167,7 +181,14 @@ public class SystemStatsService {
         return total != null && available != null ? new MemInfo(total, available) : null;
     }
 
-    /** cgroup v2의 {@code memory.max}. 한도가 없으면 {@code max}로 기록됨 */
+    /*************************************************************************
+     * 목적 : cgroup v2 memory.max 값을 바이트로 해석 (한도 없음 "max"는 null)
+     * 이유 : -
+     * 파라미터
+     * - raw : memory.max 파일 내용
+     * 반환
+     * - 한도 바이트 (한도 없음·형식 오류면 null)
+     *************************************************************************/
     static Long parseCgroupLimit(String raw) {
         if (raw == null || raw.isBlank() || raw.trim().equals("max")) return null;
         try {
@@ -181,7 +202,14 @@ public class SystemStatsService {
         return Long.parseLong(line.replaceAll("[^0-9]", "")) * KB;
     }
 
-    /** 인터럽트되면 false. */
+    /*************************************************************************
+     * 목적 : 지정 시간만큼 대기
+     * 이유 : -
+     * 파라미터
+     * - millis : 대기 시간(ms)
+     * 반환
+     * - 정상 대기면 true, 인터럽트되면 false
+     *************************************************************************/
     private static boolean sleepQuietly(long millis) {
         try {
             Thread.sleep(millis);

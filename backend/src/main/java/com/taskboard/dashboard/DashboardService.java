@@ -20,12 +20,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * 홈 화면 데이터. 프로젝트별로 나눠 요청하지 않도록 한 번에 모아서 응답.
- *
- * <p>완료 여부는 상태 이름이 아니라 <b>배포 여부</b>(releaseId)로 판단 — 상태 이름은 관리자가 바꿀 수 있음.
- * 예외로 "마감 임박"에서는 "개발완료" 상태(와 그 뒤 순서)도 제외. 이름 매칭이라 해당 상태가 없으면 미적용
- */
+/** 홈 화면 데이터 조회 */
 @Service
 @RequiredArgsConstructor
 public class DashboardService {
@@ -77,7 +72,15 @@ public class DashboardService {
                 calendarTasks(cards, workspaceNames));
     }
 
-    /** 달력용. 한 달 치를 모두 보여야 해서 개수 제한 없음, 배포된 작업도 포함 */
+    /*************************************************************************
+     * 목적 : 달력에 그릴 작업 목록 생성 (배포된 작업 포함)
+     * 이유 : 한 달 치를 모두 보여야 해서 다른 목록과 달리 개수 제한 없음
+     * 파라미터
+     * - cards : 볼 수 있는 프로젝트의 작업
+     * - workspaceNames : 프로젝트 id → 이름
+     * 반환
+     * - 달력용 작업 목록
+     *************************************************************************/
     private List<CalendarTask> calendarTasks(List<Card> cards, Map<Long, String> workspaceNames) {
         return cards.stream()
                 .filter(card -> card.getStartDate() != null || card.getDueDate() != null)
@@ -108,7 +111,16 @@ public class DashboardService {
                 .toList();
     }
 
-    /** 최근 등록 순. 배포된 작업도 포함 — 빼면 오래된 프로젝트에서는 목록이 비어버림 */
+    /*************************************************************************
+     * 목적 : 최근 등록한 작업 목록 생성 (배포된 작업 포함)
+     * 이유 : 배포된 작업을 빼면 오래된 프로젝트에서는 목록이 비어버림
+     * 파라미터
+     * - cards : 볼 수 있는 프로젝트의 작업
+     * - workspaceNames : 프로젝트 id → 이름
+     * - statusNames : 상태 id → 이름
+     * 반환
+     * - 최근 등록순 작업 목록
+     *************************************************************************/
     private List<RecentCard> recentCards(List<Card> cards, Map<Long, String> workspaceNames,
                                           Map<Long, String> statusNames) {
         return cards.stream()

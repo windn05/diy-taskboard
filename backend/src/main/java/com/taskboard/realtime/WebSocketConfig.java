@@ -9,10 +9,7 @@ import org.springframework.web.socket.config.annotation.StompEndpointRegistry;
 import org.springframework.web.socket.config.annotation.WebSocketMessageBrokerConfigurer;
 import org.springframework.web.socket.server.support.HttpSessionHandshakeInterceptor;
 
-/**
- * STOMP over WebSocket 설정. 단일 인스턴스라 외부 브로커 없이 내장 SimpleBroker 사용.
- * 서버를 여러 대로 늘리면 인스턴스 간 메시지가 공유되지 않으므로 외부 브로커로 교체 필요
- */
+/** STOMP over WebSocket 설정 (내장 브로커) */
 @Configuration
 @EnableWebSocketMessageBroker
 @RequiredArgsConstructor

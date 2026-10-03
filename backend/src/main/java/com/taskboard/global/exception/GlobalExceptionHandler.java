@@ -9,11 +9,18 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.Map;
 
-/** 예외를 HTTP 상태로 변환. 응답 본문은 모두 {@code {"message": ...}} 형식 */
+/** 예외를 HTTP 상태와 {"message": ...} 응답으로 변환 */
 @RestControllerAdvice
 public class GlobalExceptionHandler {
 
-    /** 서비스의 입력·상태 검증 실패(중복 이름, 잘못된 비밀번호 등) */
+    /*************************************************************************
+     * 목적 : 서비스의 입력·상태 검증 실패를 400으로 변환 (중복 이름, 잘못된 비밀번호 등)
+     * 이유 : -
+     * 파라미터
+     * - e : 발생한 예외
+     * 반환
+     * - 400 + 오류 메시지
+     *************************************************************************/
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<Map<String, String>> handleIllegalArgument(IllegalArgumentException e) {
         return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
@@ -34,7 +41,14 @@ public class GlobalExceptionHandler {
         return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).body(Map.of("message", e.getMessage()));
     }
 
-    /** @Valid 검증 실패. 첫 번째 오류만 응답 */
+    /*************************************************************************
+     * 목적 : @Valid 검증 실패를 400으로 변환 (첫 번째 오류만 응답)
+     * 이유 : -
+     * 파라미터
+     * - e : 검증 예외
+     * 반환
+     * - 400 + "필드: 메시지"
+     *************************************************************************/
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<Map<String, String>> handleValidation(MethodArgumentNotValidException e) {
         String message = e.getBindingResult().getFieldErrors().stream()

@@ -17,10 +17,7 @@ import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 
-/**
- * Logback appender를 Spring 빈으로 만들어 루트 로거에 직접 연결.
- * logback.xml에 선언하면 LogService를 주입할 수 없어 코드로 등록
- */
+/** 로그를 수집해 LogService로 넘기는 Logback appender */
 @Component
 @RequiredArgsConstructor
 public class LogCaptureAppender extends AppenderBase<ILoggingEvent> implements InitializingBean, DisposableBean {

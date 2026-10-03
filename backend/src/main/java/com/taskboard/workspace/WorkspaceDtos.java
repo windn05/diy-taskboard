@@ -8,14 +8,14 @@ public class WorkspaceDtos {
     public record CreateWorkspaceRequest(@NotBlank String name) {
     }
 
-    /** myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트가 볼 때는 GUEST */
+    /** 프로젝트 응답 (myRole: 내 프로젝트 역할, 게스트는 GUEST) */
     public record WorkspaceResponse(Long id, String name, String myRole) {
     }
 
     public record AdminWorkspaceResponse(Long id, String name, boolean visible) {
     }
 
-    /** null(이름은 빈 값 포함)인 필드는 변경하지 않음 */
+    /** 프로젝트 수정 요청 (null인 필드는 변경하지 않음) */
     public record UpdateWorkspaceRequest(String name, Boolean visible) {
     }
 

@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** 작업 유형(Task/Bug 등) 관리. 전역 설정이라 관리자 전용. 조회는 CardTypeController */
+/** 작업 유형 관리 API (관리자 전용) */
 @RestController
 @RequestMapping("/admin/card-types")
 @RequiredArgsConstructor

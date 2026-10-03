@@ -8,7 +8,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import java.util.List;
 
-/** 작업 상태 조회. 변경은 AdminStatusController */
+/** 작업 상태 조회 API */
 @RestController
 @RequiredArgsConstructor
 public class StatusController {

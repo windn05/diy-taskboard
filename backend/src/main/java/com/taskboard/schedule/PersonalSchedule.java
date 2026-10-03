@@ -6,7 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/** 홈 화면 달력에 뜨는 개인 일정. 본인만 생성·삭제 가능 — 팀 일정 아님 */
+/** 홈 달력에 뜨는 개인 일정 */
 @Entity
 @Table(name = "personal_schedules", indexes = @Index(name = "idx_personal_schedules_user", columnList = "user_id"))
 @Getter

@@ -10,7 +10,7 @@ public class CommentDtos {
     public record CreateCommentRequest(@NotBlank String content) {
     }
 
-    /** authorName은 저장하지 않고 조회 시 첨부 — 사용자가 이름을 바꾸면 댓글에도 반영되도록 */
+    /** 댓글 응답 (작성자 이름은 조회 시점 값) */
     public record CommentResponse(
             Long id, Long cardId, Long userId, String authorName, String content, LocalDateTime createdAt) {
     }

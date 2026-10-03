@@ -9,7 +9,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** 작업 상태(칸반 컬럼) 관리. 전역 설정이라 모든 프로젝트에 공통 적용 */
+/** 작업 상태 관리 */
 @Service
 @RequiredArgsConstructor
 public class StatusService {
@@ -38,7 +38,14 @@ public class StatusService {
         return toResponse(status);
     }
 
-    /** 작업이 남아 있으면 삭제 불가 — 작업이 갈 곳 없는 상태가 됨 */
+    /*************************************************************************
+     * 목적 : 작업 상태 삭제 (작업이 남아 있으면 거부)
+     * 이유 : 남은 작업이 갈 곳 없는 상태가 되지 않게 함
+     * 파라미터
+     * - statusId : 상태 id
+     * 반환
+     * -
+     *************************************************************************/
     @Transactional
     public void delete(Long statusId) {
         getStatus(statusId);

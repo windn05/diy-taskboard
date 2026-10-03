@@ -7,7 +7,7 @@ import org.springframework.web.socket.messaging.SessionDisconnectEvent;
 
 import java.util.concurrent.atomic.AtomicInteger;
 
-/** 현재 WebSocket 연결 수. 모니터링 지표용 */
+/** 현재 WebSocket 연결 수 집계 */
 @Service
 public class WebSocketSessionCounter {
 

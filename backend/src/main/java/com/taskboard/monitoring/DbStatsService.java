@@ -9,12 +9,7 @@ import org.springframework.stereotype.Service;
 import java.util.concurrent.atomic.AtomicReference;
 import javax.sql.DataSource;
 
-/**
- * 모니터링 화면의 DB 지표 (커넥션 풀 상태, DB 용량).
- *
- * <p>DB 용량 조회는 데이터 디렉터리를 훑는 쿼리라 {@link #SIZE_TTL_MS} 동안 캐시.
- * 풀 상태는 MXBean 조회라 매번 조회
- */
+/** 모니터링 DB 지표 (커넥션 풀 상태, DB 용량) */
 @Service
 public class DbStatsService {
 
@@ -45,7 +40,14 @@ public class DbStatsService {
                 databaseSizeMb());
     }
 
-    /** 풀 구현이 HikariCP가 아니면 이 지표들은 의미 없음 */
+    /*************************************************************************
+     * 목적 : 커넥션 풀(HikariCP) 상태 조회용 MXBean 얻기 (HikariCP가 아니면 null)
+     * 이유 : -
+     * 파라미터
+     * -
+     * 반환
+     * - 풀 MXBean (HikariCP가 아니면 null)
+     *************************************************************************/
     private HikariPoolMXBean hikariPool() {
         return dataSource instanceof HikariDataSource hikari ? hikari.getHikariPoolMXBean() : null;
     }
@@ -54,7 +56,14 @@ public class DbStatsService {
         return dataSource instanceof HikariDataSource hikari ? hikari.getMaximumPoolSize() : null;
     }
 
-    /** Postgres 전용. 다른 DB(테스트의 H2)에서는 실패하므로 null을 돌려 화면 전체가 깨지지 않게 함 */
+    /*************************************************************************
+     * 목적 : DB 용량(MB) 조회 (Postgres 전용, 실패하면 null)
+     * 이유 : 다른 DB(테스트의 H2)에서 실패해도 모니터링 화면 전체가 깨지지 않게 함
+     * 파라미터
+     * -
+     * 반환
+     * - 용량 MB (조회 불가 시 null)
+     *************************************************************************/
     private Long databaseSizeMb() {
         CachedSize cached = cachedSize.get();
         long now = System.currentTimeMillis();

@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** 개인 일정. 프로젝트와 무관. 사용자는 본인 것만, 게스트는 관리자를 뺀 사용자들의 것을 읽기 전용으로 조회 */
+/** 개인 일정 API */
 @RestController
 @RequestMapping("/schedules")
 @RequiredArgsConstructor

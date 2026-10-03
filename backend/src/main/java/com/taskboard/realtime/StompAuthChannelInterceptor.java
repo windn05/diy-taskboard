@@ -22,11 +22,7 @@ import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * WebSocket 핸드셰이크(HttpSessionHandshakeInterceptor, WebSocketConfig)가 HTTP 세션을
- * 복사해 둔 것에서 로그인 정보를 그대로 꺼내 쓴다 — REST와 같은 세션을 공유하는 것뿐이라
- * 토큰을 따로 검증할 필요가 없다. 이후 SUBSCRIBE/DISCONNECT에서 쓸 수 있도록 세션 Principal 설정
- */
+/** STOMP 연결 시 세션의 로그인 정보 연결, 구독 시 권한 검사 */
 @Component
 @RequiredArgsConstructor
 public class StompAuthChannelInterceptor implements ChannelInterceptor {
@@ -58,7 +54,14 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         return message;
     }
 
-    /** HttpSessionHandshakeInterceptor가 복사해 둔 세션 속성에서 Spring Security의 SecurityContext를 꺼낸다 */
+    /*************************************************************************
+     * 목적 : WebSocket 세션 속성에서 로그인 정보 추출
+     * 이유 : 핸드셰이크 때 HTTP 세션 속성이 복사되므로 REST와 같은 로그인 정보를 그대로 사용
+     * 파라미터
+     * - sessionAttributes : 핸드셰이크 때 복사된 세션 속성
+     * 반환
+     * - 인증 정보 (비로그인이면 빈 값)
+     *************************************************************************/
     private Optional<Authentication> resolveFromSession(Map<String, Object> sessionAttributes) {
         if (sessionAttributes == null) return Optional.empty();
         Object attribute = sessionAttributes.get(HttpSessionSecurityContextRepository.SPRING_SECURITY_CONTEXT_KEY);
@@ -87,10 +90,15 @@ public class StompAuthChannelInterceptor implements ChannelInterceptor {
         }
     }
 
-    /**
-     * REST와 같은 조회 권한을 구독에도 적용. 없으면 목록에서 숨긴 프로젝트라도
-     * 주소만 알면 실시간 이벤트(작업·댓글·접속자)를 그대로 받아볼 수 있음
-     */
+    /*************************************************************************
+     * 목적 : 프로젝트 토픽 구독 권한 검사 (REST 조회 권한과 동일)
+     * 이유 : 없으면 목록에서 숨긴 프로젝트라도 주소만 알면 실시간 이벤트를 받아볼 수 있음
+     * 파라미터
+     * - principal : 구독한 사용자
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * -
+     *************************************************************************/
     private void requireWorkspaceReadAccess(Principal principal, Long workspaceId) {
         CurrentUser user = currentUser(principal);
         if (user == null) {

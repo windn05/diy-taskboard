@@ -14,11 +14,7 @@ import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
 import org.springframework.security.web.context.SecurityContextRepository;
 
-/**
- * 세션 기반 인증(로그인 성공 시 서버가 세션을 만들고, 브라우저는 세션 쿠키만 들고 다님).
- * 세션은 Redis에 저장(application.yml의 spring.session.*)해 백엔드 재시작에도 유지된다.
- * 역할별 허용 범위는 URL 단위로만 거르고, 프로젝트 멤버 여부 같은 리소스 단위 권한은 각 서비스에서 검사
- */
+/** 인증·인가 설정 (세션 기반, 세션은 Redis에 저장) */
 @Configuration
 @EnableWebSecurity
 public class SecurityConfig {
@@ -28,7 +24,14 @@ public class SecurityConfig {
         return new BCryptPasswordEncoder();
     }
 
-    /** 로그인 성공 시 AuthController가 이 저장소로 SecurityContext를 세션에 직접 저장한다 */
+    /*************************************************************************
+     * 목적 : 로그인 정보를 HTTP 세션에 저장하는 저장소 등록
+     * 이유 : 폼 로그인 대신 AuthController가 직접 로그인을 처리하므로 세션 저장도 명시적으로 수행
+     * 파라미터
+     * -
+     * 반환
+     * - 세션 기반 SecurityContext 저장소
+     *************************************************************************/
     @Bean
     public SecurityContextRepository securityContextRepository() {
         return new HttpSessionSecurityContextRepository();

@@ -7,7 +7,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-/** 작업 상태(칸반 컬럼) 관리. 모든 프로젝트가 공유하는 전역 설정이라 관리자 전용. 조회는 StatusController */
+/** 작업 상태 관리 API (관리자 전용) */
 @RestController
 @RequestMapping("/admin/statuses")
 @RequiredArgsConstructor

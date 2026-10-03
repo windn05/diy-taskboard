@@ -3,7 +3,7 @@ package com.taskboard.status;
 import jakarta.persistence.*;
 import lombok.*;
 
-/** 작업 상태(칸반 컬럼). 모든 프로젝트가 공유하는 전역 설정 */
+/** 작업 상태 (칸반 컬럼) */
 @Entity
 @Table(name = "statuses")
 @Getter

@@ -16,10 +16,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-/**
- * 프로젝트별 접속자를 메모리에 집계. 단일 서버 기준이며,
- * 다중 서버로 확장하면 Redis 등 공유 저장소로 이전 필요
- */
+/** 프로젝트별 접속자를 메모리에 집계 (단일 서버 전제) */
 @Service
 @RequiredArgsConstructor
 public class PresenceService {
@@ -34,7 +31,14 @@ public class PresenceService {
     private record Registration(Long workspaceId, String sessionId, PresenceUser user) {
     }
 
-    /** 접속자 토픽(/topic/workspaces/{id}/presence)을 구독한 경우에만 프로젝트 id 반환 */
+    /*************************************************************************
+     * 목적 : 접속자 토픽 구독 주소(/topic/workspaces/{id}/presence)에서 프로젝트 id 추출
+     * 이유 : -
+     * 파라미터
+     * - destination : STOMP 구독 주소
+     * 반환
+     * - 프로젝트 id (접속자 토픽이 아니면 빈 값)
+     *************************************************************************/
     public static Optional<Long> parseWorkspaceId(String destination) {
         if (destination == null) return Optional.empty();
         Matcher matcher = PRESENCE_DESTINATION.matcher(destination);
@@ -62,7 +66,14 @@ public class PresenceService {
         affected.forEach(this::broadcast);
     }
 
-    /** 여러 탭으로 들어온 같은 사용자는 한 명으로 합침(distinct) */
+    /*************************************************************************
+     * 목적 : 프로젝트의 현재 접속자 목록 조회 (같은 사용자는 한 명으로, 이름순)
+     * 이유 : -
+     * 파라미터
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * - 접속자 목록 (이름순)
+     *************************************************************************/
     public PresenceResponse snapshot(Long workspaceId) {
         return new PresenceResponse(registrations.values().stream()
                 .filter(registration -> registration.workspaceId().equals(workspaceId))

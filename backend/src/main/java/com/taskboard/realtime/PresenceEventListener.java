@@ -12,10 +12,7 @@ import org.springframework.web.socket.messaging.SessionUnsubscribeEvent;
 
 import java.security.Principal;
 
-/**
- * STOMP 구독/해제/연결 종료 이벤트를 접속자 현황(PresenceService)에 반영.
- * 프로젝트 토픽 구독은 입장, 해제·끊김은 퇴장으로 처리
- */
+/** STOMP 구독·해제·연결 종료를 접속자 현황에 반영 */
 @Component
 @RequiredArgsConstructor
 public class PresenceEventListener {
@@ -37,7 +34,14 @@ public class PresenceEventListener {
         presenceService.leave(accessor.getSessionId(), accessor.getSubscriptionId());
     }
 
-    /** 탭을 닫는 등 UNSUBSCRIBE 없이 끊긴 경우. 세션에 딸린 구독을 한꺼번에 정리 */
+    /*************************************************************************
+     * 목적 : 연결이 끊기면 그 세션의 구독을 한꺼번에 정리
+     * 이유 : 탭을 닫는 등 UNSUBSCRIBE 없이 끊기는 경우에도 퇴장 처리가 되도록 함
+     * 파라미터
+     * - event : 연결 종료 이벤트
+     * 반환
+     * -
+     *************************************************************************/
     @EventListener
     public void onDisconnect(SessionDisconnectEvent event) {
         presenceService.disconnect(event.getSessionId());

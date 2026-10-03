@@ -12,7 +12,7 @@ import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
-/** 배포(버전) 기록. 배포에 묶인 작업은 완료로 간주 */
+/** 배포 기록 API */
 @RestController
 @RequiredArgsConstructor
 public class ReleaseController {
@@ -25,7 +25,16 @@ public class ReleaseController {
         return ResponseEntity.ok(releaseService.list(user, workspaceId));
     }
 
-    /** 아직 배포되지 않은 작업 목록. statusId를 주면 해당 상태만 조회 */
+    /*************************************************************************
+     * 목적 : 아직 배포되지 않은 작업 목록 조회 (상태로 거르기 가능)
+     * 이유 : -
+     * 파라미터
+     * - user : 로그인 사용자
+     * - workspaceId : 프로젝트 id
+     * - statusId : 이 상태만 조회 (선택)
+     * 반환
+     * - 200 + 배포 후보 작업 목록
+     *************************************************************************/
     @GetMapping("/workspaces/{workspaceId}/releases/candidates")
     public ResponseEntity<List<CardResponse>> candidates(@AuthenticationPrincipal CurrentUser user,
                                                          @PathVariable Long workspaceId,
@@ -48,7 +57,15 @@ public class ReleaseController {
         return ResponseEntity.ok(releaseService.update(user.getId(), releaseId, request));
     }
 
-    /** 묶여 있던 작업은 삭제되지 않고 미배포 상태로 복귀 */
+    /*************************************************************************
+     * 목적 : 배포 취소 (묶여 있던 작업은 미배포 상태로 복귀)
+     * 이유 : -
+     * 파라미터
+     * - user : 로그인 사용자
+     * - releaseId : 배포 id
+     * 반환
+     * - 204 (본문 없음)
+     *************************************************************************/
     @DeleteMapping("/releases/{releaseId}")
     public ResponseEntity<Void> delete(@AuthenticationPrincipal CurrentUser user, @PathVariable Long releaseId) {
         releaseService.delete(user.getId(), releaseId);

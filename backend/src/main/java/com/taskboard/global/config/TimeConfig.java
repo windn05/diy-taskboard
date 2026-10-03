@@ -13,14 +13,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 
-/**
- * 시각 처리 규칙. DB·서버는 UTC, 화면 표시는 브라우저(KST)가 변환.
- * <ul>
- *   <li>엔티티의 LocalDateTime은 UTC 기준 값 (JVM 기본 시간대를 UTC로 고정 — TaskboardApplication)</li>
- *   <li>응답에는 끝에 Z를 붙여 UTC임을 명시 — 없으면 브라우저가 로컬 시각으로 해석</li>
- *   <li>"오늘"처럼 날짜 경계가 필요한 계산은 {@link #BUSINESS_ZONE} 기준</li>
- * </ul>
- */
+/** 시각 처리 설정 (DB·서버는 UTC, 화면 표시는 브라우저가 현지 시각으로 변환) */
 @Configuration
 public class TimeConfig {
 
@@ -29,7 +22,14 @@ public class TimeConfig {
 
     private static final DateTimeFormatter UTC_FORMAT = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS'Z'");
 
-    /** Spring Boot가 Module 빈을 ObjectMapper에 자동 등록 — REST 응답과 STOMP 메시지 모두 적용 */
+    /*************************************************************************
+     * 목적 : 날짜·시각을 끝에 Z를 붙인 UTC 표기로 내보내는 모듈 등록 (REST·STOMP 공통)
+     * 이유 : Z가 없으면 브라우저가 로컬 시각으로 해석해 9시간 어긋남
+     * 파라미터
+     * -
+     * 반환
+     * - Jackson 모듈
+     *************************************************************************/
     @Bean
     public Module utcLocalDateTimeModule() {
         return utcModule();

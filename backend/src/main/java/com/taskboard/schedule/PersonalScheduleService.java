@@ -12,14 +12,21 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 
-/** 개인 일정. 사용자는 본인 것만 조회·삭제, 게스트는 관리자를 뺀 사용자들의 일정을 읽기 전용으로 조회 */
+/** 개인 일정 관리 */
 @Service
 @RequiredArgsConstructor
 public class PersonalScheduleService {
 
     private final PersonalScheduleRepository scheduleRepository;
 
-    /** 게스트는 자기 일정이 없으므로 둘러보기용으로 다른 사용자들의 일정을 보여줌 */
+    /*************************************************************************
+     * 목적 : 일정 목록 조회 (사용자는 본인 것, 게스트는 관리자를 뺀 사용자들 것)
+     * 이유 : 게스트는 자기 일정이 없어 그대로면 달력이 비어 보임
+     * 파라미터
+     * - user : 로그인 사용자
+     * 반환
+     * - 일정 목록 (시작일순)
+     *************************************************************************/
     @Transactional(readOnly = true)
     public List<ScheduleResponse> list(CurrentUser user) {
         List<PersonalSchedule> schedules = user.isGuest()

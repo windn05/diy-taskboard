@@ -8,13 +8,7 @@ import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 
-/**
- * 아이디별 로그인 실패 횟수를 세어, 한도를 넘으면 잠시 잠금 (무차별 대입 방지).
- *
- * <p>IP 기준은 프록시(Caddy) 뒤라 X-Forwarded-For 신뢰 설정이 필요해 미사용.
- * 아이디 기준은 남의 계정을 일부러 잠글 수 있으므로 잠금 시간을 짧게 설정.
- * 메모리에만 저장하므로 재기동하면 초기화(단일 인스턴스 전제)
- */
+/** 아이디별 로그인 실패를 세어 한도를 넘으면 잠시 잠금 (무차별 대입 방지) */
 @Service
 public class LoginAttemptService {
 
@@ -49,7 +43,14 @@ public class LoginAttemptService {
         failuresByUsername.remove(key(username));
     }
 
-    /** Admin과 admin을 따로 세면 잠금 우회 가능 */
+    /*************************************************************************
+     * 목적 : 실패 횟수 집계용 키 생성 (아이디를 소문자로 통일)
+     * 이유 : Admin과 admin을 따로 세면 잠금을 우회할 수 있음
+     * 파라미터
+     * - username : 입력된 아이디
+     * 반환
+     * - 소문자 아이디
+     *************************************************************************/
     private String key(String username) {
         return username == null ? "" : username.toLowerCase(Locale.ROOT);
     }

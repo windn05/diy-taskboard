@@ -16,13 +16,7 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
-/**
- * 전역 상태·타입의 초기값을 기동 시점에 한 번만 생성.
- * 조회 메서드에서 만들면 GET 요청이 쓰기를 유발해, 읽기 전용인 게스트도 데이터를 만들게 됨.
- *
- * <p>최초 관리자도 여기서 생성. 공개 회원가입이 없어 계정을 만들려면 관리자가 필요한데,
- * 새 DB에는 관리자가 없음. 그 순환을 끊는 유일한 통로
- */
+/** 기동 시 기본 상태·유형과 최초 관리자 생성 */
 @Slf4j
 @Component
 @RequiredArgsConstructor
@@ -58,7 +52,14 @@ public class DefaultDataInitializer implements ApplicationRunner {
         createBootstrapAdminIfNeeded();
     }
 
-    /** 계정이 하나도 없을 때만 생성. 계정이 있으면 환경변수가 남아 있어도 무시 */
+    /*************************************************************************
+     * 목적 : 계정이 하나도 없을 때 환경변수 값으로 최초 관리자 생성
+     * 이유 : 공개 회원가입이 없어 새 DB에는 계정을 만들 관리자도 없음 — 그 순환을 끊는 유일한 통로
+     * 파라미터
+     * -
+     * 반환
+     * -
+     *************************************************************************/
     private void createBootstrapAdminIfNeeded() {
         if (userRepository.count() > 0) return;
 

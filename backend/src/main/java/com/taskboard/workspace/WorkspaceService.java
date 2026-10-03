@@ -24,7 +24,7 @@ import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-/** 프로젝트·멤버 관리와 프로젝트 단위 권한 검사. 다른 서비스는 여기의 require* 메서드로 권한 확인 */
+/** 프로젝트·멤버 관리와 프로젝트 단위 권한 검사 */
 @Service
 @RequiredArgsConstructor
 public class WorkspaceService {
@@ -36,7 +36,15 @@ public class WorkspaceService {
     private final CommentRepository commentRepository;
     private final ReleaseRepository releaseRepository;
 
-    /** 만든 사람은 OWNER 멤버로 자동 등록 */
+    /*************************************************************************
+     * 목적 : 프로젝트 생성 (만든 사람은 OWNER 멤버로 자동 등록)
+     * 이유 : -
+     * 파라미터
+     * - userId : 만드는 관리자 id
+     * - request : 프로젝트 이름
+     * 반환
+     * - 생성된 프로젝트
+     *************************************************************************/
     @Transactional
     public WorkspaceResponse create(Long userId, CreateWorkspaceRequest request) {
         Workspace workspace = Workspace.builder().name(request.name()).ownerId(userId).build();
@@ -49,10 +57,14 @@ public class WorkspaceService {
         return new WorkspaceResponse(workspace.getId(), workspace.getName(), WorkspaceRole.OWNER.name());
     }
 
-    /**
-     * 프로젝트 접근은 멤버십 기준. 관리자도 예외가 아니며, 전체 목록은 관리자 앱에서만 조회.
-     * 게스트는 멤버가 될 수 없으므로 {@link #openToGuest} 조건을 만족하는 프로젝트만 조회 가능
-     */
+    /*************************************************************************
+     * 목적 : 내가 볼 수 있는 프로젝트 조회 (멤버십 기준, 게스트는 openToGuest 조건)
+     * 이유 : 관리자도 멤버십 기준을 따름 — 전체 목록은 관리자 앱에서만 조회
+     * 파라미터
+     * - user : 로그인 사용자
+     * 반환
+     * - 프로젝트 목록
+     *************************************************************************/
     @Transactional(readOnly = true)
     public List<WorkspaceResponse> listMine(CurrentUser user) {
         if (user.isGuest()) {
@@ -95,7 +107,14 @@ public class WorkspaceService {
         return new AdminWorkspaceResponse(workspace.getId(), workspace.getName(), workspace.isVisible());
     }
 
-    /** 연관관계 cascade가 없으므로 딸린 데이터를 참조 순서대로 직접 삭제 */
+    /*************************************************************************
+     * 목적 : 프로젝트와 딸린 작업·댓글·배포·멤버 삭제
+     * 이유 : 엔티티 간 연관관계(cascade)가 없어 참조 순서대로 직접 삭제
+     * 파라미터
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * -
+     *************************************************************************/
     @Transactional
     public void deleteAsAdmin(Long workspaceId) {
         if (!workspaceRepository.existsById(workspaceId)) {
@@ -112,16 +131,29 @@ public class WorkspaceService {
         workspaceRepository.deleteById(workspaceId);
     }
 
-    /** 연관 엔티티를 한 번에 조회해 id로 찾을 수 있게 변환 (건별 findById로 인한 N+1 방지) */
+    /*************************************************************************
+     * 목적 : id 목록으로 엔티티를 한 번에 조회해 Map으로 변환
+     * 이유 : 건별 findById로 인한 N+1 방지
+     * 파라미터
+     * - repository : 조회할 저장소
+     * - ids : id 목록
+     * - idOf : 엔티티에서 id를 꺼내는 함수
+     * 반환
+     * - id → 엔티티
+     *************************************************************************/
     private <T> Map<Long, T> findAllByIdAsMap(JpaRepository<T, Long> repository, List<Long> ids, Function<T, Long> idOf) {
         if (ids.isEmpty()) return Map.of();
         return repository.findAllById(ids).stream().collect(Collectors.toMap(idOf, entity -> entity));
     }
 
-    /**
-     * 멤버 관리는 시스템 관리자 전용. 워크스페이스 역할(OWNER/ADMIN)이 아니라 시스템 ADMIN 기준이므로,
-     * 관리자는 자신이 만들지 않은 프로젝트의 멤버도 관리 가능
-     */
+    /*************************************************************************
+     * 목적 : 프로젝트 멤버 조회 (관리자용)
+     * 이유 : 멤버 관리는 프로젝트 역할이 아니라 시스템 ADMIN 기준 — 자신이 만들지 않은 프로젝트도 관리 가능
+     * 파라미터
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * - 멤버 목록
+     *************************************************************************/
     @Transactional(readOnly = true)
     public List<MemberResponse> listMembersAsAdmin(Long workspaceId) {
         requireWorkspace(workspaceId);
@@ -168,7 +200,15 @@ public class WorkspaceService {
         }
     }
 
-    /** 조회 권한. 멤버는 멤버십으로, 게스트는 {@link #openToGuest} 조건으로 판단 */
+    /*************************************************************************
+     * 목적 : 프로젝트 조회 권한 검사 (멤버는 멤버십, 게스트는 openToGuest 조건)
+     * 이유 : -
+     * 파라미터
+     * - user : 로그인 사용자
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * -
+     *************************************************************************/
     public void requireReadAccess(CurrentUser user, Long workspaceId) {
         if (!user.isGuest()) {
             requireMember(user.getId(), workspaceId);
@@ -177,13 +217,14 @@ public class WorkspaceService {
         openToGuest(workspaceId);
     }
 
-    /**
-     * 게스트가 볼 수 있는 프로젝트의 조건. 둘 다 만족해야 함
-     * <ol>
-     *   <li>관리자가 "게스트 공개"로 지정했을 것({@code visible})</li>
-     *   <li>관리자 외의 멤버가 한 명이라도 있을 것 — 관리자 혼자 쓰는 프로젝트는 아직 공개할 단계가 아님</li>
-     * </ol>
-     */
+    /*************************************************************************
+     * 목적 : 게스트가 볼 수 있는 프로젝트인지 검사 (게스트 공개 + 관리자 외 멤버 한 명 이상)
+     * 이유 : 관리자 혼자 쓰는 프로젝트는 아직 남에게 보일 단계가 아님
+     * 파라미터
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * -
+     *************************************************************************/
     private void openToGuest(Long workspaceId) {
         Workspace workspace = workspaceRepository.findById(workspaceId)
                 .orElseThrow(() -> new EntityNotFoundException("워크스페이스를 찾을 수 없습니다."));
@@ -195,7 +236,15 @@ public class WorkspaceService {
         }
     }
 
-    /** 쓰기 권한. 게스트는 멤버가 될 수 없으므로 항상 거부 */
+    /*************************************************************************
+     * 목적 : 프로젝트 쓰기 권한 검사 (멤버가 아니면 403, 게스트는 항상 거부)
+     * 이유 : -
+     * 파라미터
+     * - userId : 요청한 사용자 id
+     * - workspaceId : 프로젝트 id
+     * 반환
+     * - 멤버십 (멤버가 아니면 403)
+     *************************************************************************/
     public WorkspaceMember requireMember(Long userId, Long workspaceId) {
         return memberRepository.findByWorkspaceIdAndUserId(workspaceId, userId)
                 .orElseThrow(() -> new AccessDeniedException("워크스페이스 멤버가 아닙니다."));

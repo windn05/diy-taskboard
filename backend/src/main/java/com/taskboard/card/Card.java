@@ -6,11 +6,7 @@ import lombok.*;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 
-/**
- * 작업(칸반 카드).
- * 다른 엔티티는 {@code @ManyToOne} 대신 id 값으로 참조 — 지연 로딩·N+1 걱정 없이
- * 필요한 것만 명시적으로 조회하기 위함. 모든 엔티티에 공통인 규칙
- */
+/** 작업(칸반 카드). 다른 엔티티는 연관관계 대신 id 값으로 참조 */
 @Entity
 @Table(name = "cards")
 @Getter

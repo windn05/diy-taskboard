@@ -19,7 +19,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/** 댓글. 작성은 프로젝트 멤버, 삭제는 작성자 본인만 가능 */
+/** 댓글 작성·조회·삭제 */
 @Service
 @RequiredArgsConstructor
 public class CommentService {
@@ -55,7 +55,15 @@ public class CommentService {
         return response;
     }
 
-    /** 본인이 쓴 댓글만 삭제 가능 */
+    /*************************************************************************
+     * 목적 : 댓글 삭제 (본인 댓글만)
+     * 이유 : -
+     * 파라미터
+     * - userId : 요청한 사용자 id
+     * - commentId : 댓글 id
+     * 반환
+     * -
+     *************************************************************************/
     @Transactional
     public void delete(Long userId, Long commentId) {
         Comment comment = commentRepository.findById(commentId)

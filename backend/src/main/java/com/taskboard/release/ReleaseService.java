@@ -16,10 +16,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.stream.Collectors;
 
-/**
- * 배포(버전) 관리. 작업을 배포에 묶으면 releaseId가 채워지고, 이후로는 완료된 작업으로 취급.
- * 한 작업은 한 배포에만 속할 수 있음
- */
+/** 배포 생성·수정·취소 */
 @Service
 @RequiredArgsConstructor
 public class ReleaseService {
@@ -46,7 +43,16 @@ public class ReleaseService {
                 .toList();
     }
 
-    /** 아직 배포되지 않은 작업. 상태 필터는 화면에서 전달 */
+    /*************************************************************************
+     * 목적 : 아직 배포되지 않은 작업 조회 (statusId로 거르기 가능)
+     * 이유 : -
+     * 파라미터
+     * - user : 로그인 사용자
+     * - workspaceId : 프로젝트 id
+     * - statusId : 이 상태만 조회 (null이면 전체)
+     * 반환
+     * - 배포 후보 작업 목록
+     *************************************************************************/
     @Transactional(readOnly = true)
     public List<CardResponse> candidates(CurrentUser user, Long workspaceId, Long statusId) {
         workspaceService.requireReadAccess(user, workspaceId);
@@ -56,7 +62,16 @@ public class ReleaseService {
                 .toList();
     }
 
-    /** 지정한 작업을 새 배포에 연결. completedStatusId가 있으면 작업 상태도 함께 변경 */
+    /*************************************************************************
+     * 목적 : 지정한 작업을 묶어 새 배포 생성 (completedStatusId가 있으면 작업 상태도 변경)
+     * 이유 : -
+     * 파라미터
+     * - userId : 요청한 사용자 id
+     * - workspaceId : 프로젝트 id
+     * - request : 버전·패치노트·작업 id 목록
+     * 반환
+     * - 생성된 배포
+     *************************************************************************/
     @Transactional
     public ReleaseResponse create(Long userId, Long workspaceId, CreateReleaseRequest request) {
         workspaceService.requireMember(userId, workspaceId);
@@ -92,7 +107,16 @@ public class ReleaseService {
         return toResponse(release, cards.stream().map(this::toReleasedCard).toList());
     }
 
-    /** 버전·패치노트 수정과 작업 추가. 이미 묶인 작업을 빼는 기능은 없음 */
+    /*************************************************************************
+     * 목적 : 배포의 버전·패치노트 수정과 작업 추가 (이미 묶인 작업 빼기는 미지원)
+     * 이유 : -
+     * 파라미터
+     * - userId : 요청한 사용자 id
+     * - releaseId : 배포 id
+     * - request : 바꿀 내용
+     * 반환
+     * - 수정된 배포
+     *************************************************************************/
     @Transactional
     public ReleaseResponse update(Long userId, Long releaseId, UpdateReleaseRequest request) {
         Release release = getRelease(releaseId);
@@ -134,7 +158,15 @@ public class ReleaseService {
         return toResponse(release, cards);
     }
 
-    /** 배포를 취소하면 포함됐던 작업은 미배포 상태로 복귀. 작업 상태는 되돌리지 않음 */
+    /*************************************************************************
+     * 목적 : 배포 취소 (포함됐던 작업은 미배포로 복귀, 작업 상태는 유지)
+     * 이유 : -
+     * 파라미터
+     * - userId : 요청한 사용자 id
+     * - releaseId : 배포 id
+     * 반환
+     * -
+     *************************************************************************/
     @Transactional
     public void delete(Long userId, Long releaseId) {
         Release release = getRelease(releaseId);
