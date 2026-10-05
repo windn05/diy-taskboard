@@ -28,7 +28,7 @@ export function HomePage() {
       */}
       <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto lg:grid-cols-[minmax(320px,1fr)_1.7fr] lg:overflow-hidden">
         <div className="flex min-h-0 flex-col gap-4 lg:overflow-y-auto lg:pr-1">
-          <Panel title="마감 임박·지난 작업" count={data.dueSoon.length} empty="마감이 임박한 작업이 없습니다.">
+          <Panel title="남은 작업" count={data.dueSoon.length} empty="남은 작업이 없습니다.">
             {data.dueSoon.map((task) => (
               <TaskRow key={task.cardId} task={task} />
             ))}

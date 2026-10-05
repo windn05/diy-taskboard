@@ -53,22 +53,16 @@ export function AppHeader({
             {apps.map((app) => (
               <button
                 key={app.key}
-                disabled={app.comingSoon}
                 onClick={() => {
                   setOpen(false)
                   navigate(app.path)
                 }}
                 className={`flex w-full items-center gap-2 rounded px-3 py-2 text-left text-sm ${
-                  app.comingSoon
-                    ? 'cursor-not-allowed text-slate-300'
-                    : app.key === currentApp
-                      ? 'bg-slate-900 text-white'
-                      : 'text-slate-600 hover:bg-slate-100'
+                  app.key === currentApp ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'
                 }`}
               >
                 <app.Icon size={16} />
                 <span className="flex-1">{app.label}</span>
-                {app.comingSoon && <span className="text-[9px]">준비중</span>}
               </button>
             ))}
           </div>
