@@ -1,9 +1,10 @@
 import { Fragment, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { adminCreateWorkspace, adminDeleteWorkspace, adminListWorkspaces, adminUpdateWorkspace } from '../../api/admin'
+import { ARCHIVE_GROUP } from '../../components/ProjectNav'
 import { WorkspaceMembersPanel } from './WorkspaceMembersPanel'
 
-/** 전체 프로젝트 관리: 생성·이름 변경·게스트 공개·멤버 관리·삭제 */
+/** 전체 프로젝트 관리: 생성·이름 변경·그룹 지정·게스트 공개·멤버 관리·삭제 */
 export function AdminProjectsTab() {
   const queryClient = useQueryClient()
   const [newProjectName, setNewProjectName] = useState('')
@@ -26,7 +27,7 @@ export function AdminProjectsTab() {
   })
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, input }: { id: number; input: { name?: string; visible?: boolean } }) =>
+    mutationFn: ({ id, input }: { id: number; input: Parameters<typeof adminUpdateWorkspace>[1] }) =>
       adminUpdateWorkspace(id, input),
     onSuccess: invalidate,
   })
@@ -67,6 +68,7 @@ export function AdminProjectsTab() {
           <thead className="border-b bg-slate-50 text-left text-xs text-slate-500">
             <tr>
               <th className="px-4 py-2 font-medium">프로젝트명</th>
+              <th className="w-40 px-4 py-2 font-medium">그룹</th>
               <th className="w-32 px-4 py-2 font-medium">게스트 공개</th>
               <th className="w-20 px-4 py-2 font-medium"></th>
               <th className="w-16 px-4 py-2 font-medium"></th>
@@ -86,6 +88,21 @@ export function AdminProjectsTab() {
                       updateMutation.mutate({ id: p.id, input: { name: e.target.value } })
                     }
                     className="w-full rounded border-transparent px-2 py-1 hover:border-slate-200 focus:border-slate-300"
+                  />
+                </td>
+                <td className="px-4 py-2">
+                  {/* 비우면 그룹 해제 ("기타"로 표시) */}
+                  <input
+                    defaultValue={p.groupName ?? ''}
+                    key={`${p.id}-${p.groupName ?? ''}`}
+                    list="project-groups"
+                    maxLength={50}
+                    placeholder="기타"
+                    onBlur={(e) =>
+                      e.target.value.trim() !== (p.groupName ?? '') &&
+                      updateMutation.mutate({ id: p.id, input: { groupName: e.target.value.trim() } })
+                    }
+                    className="w-full rounded border px-2 py-1 text-sm"
                   />
                 </td>
                 <td className="px-4 py-2">
@@ -114,7 +131,7 @@ export function AdminProjectsTab() {
               </tr>
               {openMembersFor === p.id && (
                 <tr className="border-b last:border-0">
-                  <td colSpan={4} className="px-4 pb-3">
+                  <td colSpan={5} className="px-4 pb-3">
                     <WorkspaceMembersPanel workspaceId={p.id} />
                   </td>
                 </tr>
@@ -124,7 +141,7 @@ export function AdminProjectsTab() {
 
             {projects?.length === 0 && (
               <tr>
-                <td colSpan={4} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
                   프로젝트가 없습니다.
                 </td>
               </tr>
@@ -132,6 +149,19 @@ export function AdminProjectsTab() {
           </tbody>
         </table>
       </div>
+
+      {/* 이미 쓰는 그룹 이름을 골라 오타로 그룹이 갈라지지 않게 함 */}
+      <datalist id="project-groups">
+        {[...new Set([...(projects ?? []).map((p) => p.groupName).filter((g): g is string => !!g), ARCHIVE_GROUP])].map(
+          (g) => (
+            <option key={g} value={g} />
+          ),
+        )}
+      </datalist>
+      <p className="mt-3 text-xs text-slate-500">
+        그룹은 사이드바에서 묶어 보여줄 이름입니다. 비우면 "기타"로, "{ARCHIVE_GROUP}"으로 지정하면 맨 아래에 접힌 채로
+        표시됩니다.
+      </p>
     </div>
   )
 }

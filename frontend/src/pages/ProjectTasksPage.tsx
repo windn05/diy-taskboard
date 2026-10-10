@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useRef, useState } from 'react'
 import { useQuery } from '@tanstack/react-query'
 import { useParams, useSearchParams } from 'react-router-dom'
 import { listCards } from '../api/cards'
@@ -8,12 +8,14 @@ import { listReleases } from '../api/releases'
 import { listStatuses } from '../api/statuses'
 import { CardModal } from '../components/CardModal'
 import { NewTaskModal } from '../components/NewTaskModal'
+import { Pagination } from '../components/Pagination'
 import { PlusIcon } from '../components/icons'
 import { TypeBadge } from '../components/TypeBadge'
 import { useAuth } from '../auth/AuthContext'
 
 // 상태는 관리자가 정하므로 이름이 아닌 순서로 색을 순환 사용
 const STATUS_COLOR = ['bg-slate-100 text-slate-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700']
+const PAGE_SIZE = 30
 
 /** 프로젝트의 작업 목록(표). 행을 누르면 작업 상세 팝업 열림 */
 export function ProjectTasksPage() {
@@ -68,6 +70,20 @@ export function ProjectTasksPage() {
       })
   }, [cards, titleSearch, periodStart, periodEnd, statusFilter, typeFilter])
 
+  // 프로젝트나 검색 조건이 바뀌면 1쪽부터. 쪽 번호를 조건과 묶어 저장해 effect 없이 초기화
+  const filterKey = [wsId, titleSearch, periodStart, periodEnd, statusFilter, typeFilter].join('|')
+  const [pageState, setPageState] = useState({ key: filterKey, page: 1 })
+  const pageCount = Math.max(1, Math.ceil(tasks.length / PAGE_SIZE))
+  // 작업 삭제 등으로 쪽 수가 줄면 마지막 쪽으로
+  const page = Math.min(pageState.key === filterKey ? pageState.page : 1, pageCount)
+  const pageTasks = tasks.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE)
+  const tableRef = useRef<HTMLDivElement>(null)
+
+  function changePage(next: number) {
+    setPageState({ key: filterKey, page: next })
+    tableRef.current?.scrollIntoView({ block: 'start' })
+  }
+
   const activeCard = cards?.find((c) => c.id === activeCardId) ?? null
 
   if (!statuses || !cards) {
@@ -118,7 +134,7 @@ export function ProjectTasksPage() {
         )}
       </div>
 
-      <div className="overflow-hidden rounded-lg border bg-white">
+      <div ref={tableRef} className="scroll-mt-4 overflow-hidden rounded-lg border bg-white">
         <table className="w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs text-slate-500">
             <tr>
@@ -158,7 +174,7 @@ export function ProjectTasksPage() {
             </tr>
           </thead>
           <tbody>
-            {tasks.map((card) => (
+            {pageTasks.map((card) => (
               <tr
                 key={card.id}
                 onClick={() => setCardParam(card.id)}
@@ -206,6 +222,15 @@ export function ProjectTasksPage() {
           </tbody>
         </table>
       </div>
+
+      {tasks.length > 0 && (
+        <div className="mt-3 flex items-center justify-between">
+          <span className="text-xs text-slate-500">
+            {tasks.length}건 중 {(page - 1) * PAGE_SIZE + 1}–{Math.min(page * PAGE_SIZE, tasks.length)}
+          </span>
+          <Pagination page={page} pageCount={pageCount} onChange={changePage} />
+        </div>
+      )}
 
       {activeCard && (
         <CardModal

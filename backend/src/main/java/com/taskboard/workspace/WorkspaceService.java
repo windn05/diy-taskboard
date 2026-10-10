@@ -54,7 +54,8 @@ public class WorkspaceService {
                 .userId(userId)
                 .role(WorkspaceRole.OWNER)
                 .build());
-        return new WorkspaceResponse(workspace.getId(), workspace.getName(), WorkspaceRole.OWNER.name());
+        return new WorkspaceResponse(workspace.getId(), workspace.getName(), WorkspaceRole.OWNER.name(),
+                workspace.getGroupName());
     }
 
     /*************************************************************************
@@ -73,7 +74,7 @@ public class WorkspaceService {
             return workspaceRepository.findAll().stream()
                     .filter(Workspace::isVisible)
                     .filter(w -> hasRealMember.contains(w.getId()))
-                    .map(w -> new WorkspaceResponse(w.getId(), w.getName(), SystemRole.GUEST.name()))
+                    .map(w -> new WorkspaceResponse(w.getId(), w.getName(), SystemRole.GUEST.name(), w.getGroupName()))
                     .toList();
         }
         List<WorkspaceMember> memberships = memberRepository.findByUserId(user.getId());
@@ -85,7 +86,7 @@ public class WorkspaceService {
                     // 멤버는 게스트 공개 여부와 무관하게 자기 프로젝트 조회 가능
                     Workspace w = workspaces.get(m.getWorkspaceId());
                     return w != null
-                            ? new WorkspaceResponse(w.getId(), w.getName(), m.getRole().name())
+                            ? new WorkspaceResponse(w.getId(), w.getName(), m.getRole().name(), w.getGroupName())
                             : null;
                 })
                 .filter(Objects::nonNull)
@@ -94,7 +95,7 @@ public class WorkspaceService {
 
     public List<AdminWorkspaceResponse> listAllForAdmin() {
         return workspaceRepository.findAll().stream()
-                .map(w -> new AdminWorkspaceResponse(w.getId(), w.getName(), w.isVisible()))
+                .map(WorkspaceService::toAdminResponse)
                 .toList();
     }
 
@@ -104,7 +105,15 @@ public class WorkspaceService {
                 .orElseThrow(() -> new EntityNotFoundException("워크스페이스를 찾을 수 없습니다."));
         if (request.name() != null && !request.name().isBlank()) workspace.setName(request.name());
         if (request.visible() != null) workspace.setVisible(request.visible());
-        return new AdminWorkspaceResponse(workspace.getId(), workspace.getName(), workspace.isVisible());
+        if (request.groupName() != null) {
+            String group = request.groupName().strip();
+            workspace.setGroupName(group.isEmpty() ? null : group);
+        }
+        return toAdminResponse(workspace);
+    }
+
+    private static AdminWorkspaceResponse toAdminResponse(Workspace w) {
+        return new AdminWorkspaceResponse(w.getId(), w.getName(), w.isVisible(), w.getGroupName());
     }
 
     /*************************************************************************

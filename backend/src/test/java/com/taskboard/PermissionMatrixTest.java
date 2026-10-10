@@ -333,6 +333,32 @@ class PermissionMatrixTest {
     }
 
     @Test
+    void 관리자가_지정한_프로젝트_그룹이_사용자_목록에_보이고_빈_값이면_해제된다() throws Exception {
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"groupName\":\" 회사 \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.groupName").value("회사"));
+        mockMvc.perform(auth(get("/workspaces"), memberSession))
+                .andExpect(jsonPath("$[0].groupName").value("회사"));
+
+        // 이름만 바꾸는 요청은 그룹을 건드리지 않음
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"name\":\"공개 프로젝트\"}"))
+                .andExpect(jsonPath("$.groupName").value("회사"));
+
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"groupName\":\"\"}"))
+                .andExpect(jsonPath("$.groupName").doesNotExist());
+    }
+
+    @Test
+    void 일반_사용자는_프로젝트_그룹을_바꿀_수_없다() throws Exception {
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), memberSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"groupName\":\"회사\"}"))
+                .andExpect(status().isForbidden());
+    }
+
+    @Test
     void 게스트의_조회는_데이터를_만들지_않는다() throws Exception {
         // 전역 상태/타입 초기화가 조회 안에 있으면 게스트의 GET이 INSERT를 유발
         statusRepository.deleteAll();

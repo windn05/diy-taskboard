@@ -30,6 +30,10 @@ public class Workspace {
     @Builder.Default
     private boolean visible = true;
 
+    /** 사이드바 분류 그룹. 없으면 "기타"로 표시 */
+    @Column(length = 50)
+    private String groupName;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

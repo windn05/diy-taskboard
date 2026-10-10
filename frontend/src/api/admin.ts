@@ -6,7 +6,8 @@ export const adminListWorkspaces = () => get<AdminWorkspace[]>('/admin/workspace
 
 export const adminCreateWorkspace = (name: string) => post<Workspace>('/admin/workspaces', { name })
 
-export const adminUpdateWorkspace = (id: number, input: { name?: string; visible?: boolean }) =>
+// groupName은 빈 문자열이면 그룹 해제
+export const adminUpdateWorkspace = (id: number, input: { name?: string; visible?: boolean; groupName?: string }) =>
   patch<AdminWorkspace>(`/admin/workspaces/${id}`, input)
 
 export const adminDeleteWorkspace = (id: number) => del<void>(`/admin/workspaces/${id}`)

@@ -41,7 +41,7 @@ public class AdminWorkspaceController {
 
     @PatchMapping("/{workspaceId}")
     public ResponseEntity<AdminWorkspaceResponse> update(@PathVariable Long workspaceId,
-                                                         @RequestBody UpdateWorkspaceRequest request) {
+                                                         @Valid @RequestBody UpdateWorkspaceRequest request) {
         return ResponseEntity.ok(workspaceService.updateAsAdmin(workspaceId, request));
     }
 

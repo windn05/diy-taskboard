@@ -5,6 +5,7 @@ import { listWorkspaces } from '../api/workspaces'
 import { useAuth } from '../auth/AuthContext'
 import { AppHeader } from '../components/AppHeader'
 import { NewTaskModal } from '../components/NewTaskModal'
+import { ProjectNav } from '../components/ProjectNav'
 import { HomeIcon, PlusIcon } from '../components/icons'
 import { useProjectSocket } from '../hooks/useProjectSocket'
 
@@ -52,19 +53,7 @@ export function AppLayout() {
             <span className="text-xs font-semibold text-slate-500">프로젝트</span>
           </div>
 
-          <nav className="space-y-0.5">
-            {projects?.map((p) => (
-              <NavLink
-                key={p.id}
-                to={`/projects/${p.id}`}
-                className={({ isActive }) =>
-                  `block rounded px-2 py-1.5 text-sm ${isActive ? 'bg-slate-900 text-white' : 'text-slate-600 hover:bg-slate-100'}`
-                }
-              >
-                {p.name}
-              </NavLink>
-            ))}
-          </nav>
+          {projects && <ProjectNav projects={projects} activeId={openWorkspaceId} />}
         </div>
       </aside>
 
