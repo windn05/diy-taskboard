@@ -48,6 +48,8 @@ export function NewTaskModal({
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['cards', workspaceId] })
+      // 홈에서 사이드바 +로 만들 때도 홈 달력에 바로 보이도록
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       onClose()
       navigate(`/projects/${workspaceId}`)
     },

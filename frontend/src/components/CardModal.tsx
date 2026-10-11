@@ -3,7 +3,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { addComment, deleteCard, deleteComment, listComments, updateCard } from '../api/cards'
 import type { Card, CardTypeDef, Status } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
-import { DateField, LabeledField } from './fields'
+import { AutoSaveDateField, LabeledField } from './fields'
 import { Modal, SaveIndicator } from './Modal'
 
 /**
@@ -37,13 +37,28 @@ export function CardModal({
     queryFn: () => listComments(card.id),
   })
 
+  const cardsKey = ['cards', card.workspaceId]
   const updateMutation = useMutation({
     mutationFn: (input: Parameters<typeof updateCard>[1]) => updateCard(card.id, input),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cards', card.workspaceId] })
-      setSavedAt(Date.now())
+    // 응답 전에 화면부터 바꿔, 저장 직후 잠깐 예전 값이 보였다 바뀌는 깜빡임 방지. 실패하면 되돌림
+    onMutate: async (input) => {
+      await queryClient.cancelQueries({ queryKey: cardsKey })
+      const previous = queryClient.getQueryData<Card[]>(cardsKey)
+      queryClient.setQueryData<Card[]>(cardsKey, (cards) =>
+        cards?.map((c) => (c.id === card.id ? { ...c, ...input } : c)),
+      )
+      return { previous }
     },
-    onError: (error: Error) => alert(error.message),
+    onSuccess: () => setSavedAt(Date.now()),
+    onError: (error: Error, _input, context) => {
+      if (context?.previous) queryClient.setQueryData(cardsKey, context.previous)
+      alert(error.message)
+    },
+    // 홈 달력·남은 작업도 이 작업의 날짜·상태를 쓰므로 함께 갱신
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: cardsKey })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
+    },
   })
 
   // 저장 표시는 잠깐만 노출. 계속 남아 있으면 방금 저장한 건지 예전 것인지 헷갈림
@@ -56,7 +71,8 @@ export function CardModal({
   const deleteMutation = useMutation({
     mutationFn: () => deleteCard(card.id),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['cards', card.workspaceId] })
+      queryClient.invalidateQueries({ queryKey: cardsKey })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
       onClose()
     },
     onError: (error: Error) => alert(error.message),
@@ -149,16 +165,16 @@ export function CardModal({
           </select>
         </LabeledField>
         <LabeledField label="시작일">
-          <DateField
+          <AutoSaveDateField
             value={card.startDate}
-            onChange={(startDate) => updateMutation.mutate({ startDate })}
+            onSave={(startDate) => updateMutation.mutate({ startDate })}
             disabled={locked}
           />
         </LabeledField>
         <LabeledField label="마감일">
-          <DateField
+          <AutoSaveDateField
             value={card.dueDate}
-            onChange={(dueDate) => updateMutation.mutate({ dueDate })}
+            onSave={(dueDate) => updateMutation.mutate({ dueDate })}
             disabled={locked}
           />
         </LabeledField>

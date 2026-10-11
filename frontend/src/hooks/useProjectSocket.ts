@@ -16,6 +16,8 @@ function applyCardEvent(queryClient: QueryClient, workspaceId: number, event: Ca
     if (index === -1) return [...cards, event.card]
     return cards.map((c) => (c.id === event.card.id ? event.card : c))
   })
+  // 홈 데이터는 여러 프로젝트를 모은 것이라 직접 고치지 않고 다음에 볼 때 다시 받도록 표시
+  queryClient.invalidateQueries({ queryKey: ['dashboard'] })
 }
 
 /** 댓글 이벤트를 열려 있는 댓글 목록과 작업의 댓글 수에 반영 */

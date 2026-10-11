@@ -93,6 +93,7 @@ function NewReleaseForm({
       queryClient.invalidateQueries({ queryKey: ['releases', workspaceId] })
       queryClient.invalidateQueries({ queryKey: ['release-candidates', workspaceId] })
       queryClient.invalidateQueries({ queryKey: ['cards', workspaceId] })
+      queryClient.invalidateQueries({ queryKey: ['dashboard'] })
     },
     onError: (error: Error) => alert(error.message),
   })
@@ -239,11 +240,12 @@ function ReleaseCard({
   const [editing, setEditing] = useState(false)
   const [notes, setNotes] = useState(release.notes ?? '')
 
-  // 배포가 바뀌면 후보 목록과 작업 목록(버전 표시)도 갱신 필요
+  // 배포가 바뀌면 후보 목록과 작업 목록(버전 표시), 홈의 최근 배포도 갱신 필요
   function invalidate() {
     queryClient.invalidateQueries({ queryKey: ['releases', workspaceId] })
     queryClient.invalidateQueries({ queryKey: ['release-candidates', workspaceId] })
     queryClient.invalidateQueries({ queryKey: ['cards', workspaceId] })
+    queryClient.invalidateQueries({ queryKey: ['dashboard'] })
   }
 
   const updateMutation = useMutation({
