@@ -15,7 +15,7 @@ import { useAuth } from '../auth/AuthContext'
 
 // 상태는 관리자가 정하므로 이름이 아닌 순서로 색을 순환 사용
 const STATUS_COLOR = ['bg-slate-100 text-slate-700', 'bg-blue-100 text-blue-700', 'bg-amber-100 text-amber-700', 'bg-emerald-100 text-emerald-700']
-const PAGE_SIZE = 30
+const PAGE_SIZE = 15
 
 /** 프로젝트의 작업 목록(표). 행을 누르면 작업 상세 팝업 열림 */
 export function ProjectTasksPage() {
@@ -138,6 +138,7 @@ export function ProjectTasksPage() {
         <table className="w-full text-sm">
           <thead className="border-b bg-slate-50 text-left text-xs text-slate-500">
             <tr>
+              <th className="w-14 whitespace-nowrap px-4 py-2 text-center font-medium">번호</th>
               <th className="whitespace-nowrap px-4 py-2 font-medium">
                 <select
                   value={statusFilter}
@@ -174,12 +175,16 @@ export function ProjectTasksPage() {
             </tr>
           </thead>
           <tbody>
-            {pageTasks.map((card) => (
+            {pageTasks.map((card, index) => (
               <tr
                 key={card.id}
                 onClick={() => setCardParam(card.id)}
                 className="cursor-pointer border-b last:border-0 hover:bg-slate-50"
               >
+                {/* 현재 검색 결과 안에서의 순번 (쪽을 넘겨도 이어짐) */}
+                <td className="whitespace-nowrap px-4 py-2.5 text-center text-xs tabular-nums text-slate-400">
+                  {(page - 1) * PAGE_SIZE + index + 1}
+                </td>
                 <td className="whitespace-nowrap px-4 py-2.5">
                   <span
                     className={`rounded px-2 py-0.5 text-xs font-medium ${
@@ -212,7 +217,7 @@ export function ProjectTasksPage() {
 
             {tasks.length === 0 && (
               <tr>
-                <td colSpan={5} className="px-4 py-8 text-center text-slate-500">
+                <td colSpan={6} className="px-4 py-8 text-center text-slate-500">
                   {titleSearch.trim() || periodStart || periodEnd || statusFilter || typeFilter
                     ? '검색 결과가 없습니다.'
                     : '작업이 없습니다.'}
