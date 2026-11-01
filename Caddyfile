@@ -28,9 +28,13 @@
 		root * /srv/frontend
 
 		# Vite가 파일명에 해시를 붙이므로 /assets 아래는 영구 캐시해도 안전하다.
-		# index.html은 캐시하지 않아야 새 배포가 바로 반영된다(Caddy 기본값이 재검증이라 그대로 둔다).
 		@assets path /assets/*
 		header @assets Cache-Control "public, max-age=31536000, immutable"
+
+		# index.html 등 나머지는 매번 재검증. Caddy는 기본으로 Cache-Control을 붙이지 않아
+		# 브라우저가 수정 시각을 보고 임의로 캐시하면서, 배포 후에도 예전 화면이 뜬다.
+		@others not path /assets/*
+		header @others Cache-Control "no-cache"
 
 		try_files {path} /index.html
 		file_server
