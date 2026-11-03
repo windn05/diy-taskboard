@@ -32,4 +32,6 @@ export const post = <T,>(path: string, data?: unknown) => client.post<T>(path, d
 
 export const patch = <T,>(path: string, data?: unknown) => client.patch<T>(path, data).then((res) => res.data)
 
+export const put = <T,>(path: string, data?: unknown) => client.put<T>(path, data).then((res) => res.data)
+
 export const del = <T,>(path: string) => client.delete<T>(path).then((res) => res.data)

@@ -436,6 +436,31 @@ class PermissionMatrixTest {
                 .andReturn().getRequest().getSession(false);
     }
 
+    @Test
+    void 본인_일정만_수정할_수_있고_종료일이_시작일보다_빠르면_거절된다() throws Exception {
+        createSchedule(memberSession, "멤버 일정");
+        Long scheduleId = scheduleRepository.findAll().get(0).getId();
+        String changed = "{\"title\":\"바뀐 일정\",\"startDate\":\"2026-09-10\",\"dueDate\":\"2026-09-12\"}";
+
+        mockMvc.perform(auth(put("/schedules/" + scheduleId), memberSession)
+                        .contentType(MediaType.APPLICATION_JSON).content(changed))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.title").value("바뀐 일정"))
+                .andExpect(jsonPath("$.dueDate").value("2026-09-12"));
+
+        mockMvc.perform(auth(put("/schedules/" + scheduleId), outsiderSession)
+                        .contentType(MediaType.APPLICATION_JSON).content(changed))
+                .andExpect(status().isForbidden());
+        mockMvc.perform(auth(put("/schedules/" + scheduleId), guestSession)
+                        .contentType(MediaType.APPLICATION_JSON).content(changed))
+                .andExpect(status().isForbidden());
+
+        String reversed = "{\"title\":\"바뀐 일정\",\"startDate\":\"2026-09-12\",\"dueDate\":\"2026-09-10\"}";
+        mockMvc.perform(auth(put("/schedules/" + scheduleId), memberSession)
+                        .contentType(MediaType.APPLICATION_JSON).content(reversed))
+                .andExpect(status().isBadRequest());
+    }
+
     private void createSchedule(MockHttpSession session, String title) throws Exception {
         String body = "{\"title\":\"" + title + "\",\"startDate\":\"2026-09-01\",\"dueDate\":\"2026-09-02\"}";
         mockMvc.perform(auth(post("/schedules"), session).contentType(MediaType.APPLICATION_JSON).content(body))

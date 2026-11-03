@@ -26,9 +26,16 @@ public class ScheduleController {
 
     @PostMapping
     public ResponseEntity<ScheduleResponse> create(@AuthenticationPrincipal CurrentUser user,
-                                                   @Valid @RequestBody CreateScheduleRequest request) {
+                                                   @Valid @RequestBody ScheduleRequest request) {
         return ResponseEntity.status(HttpStatus.CREATED)
                 .body(scheduleService.create(user.getId(), request));
+    }
+
+    @PutMapping("/{scheduleId}")
+    public ResponseEntity<ScheduleResponse> update(@AuthenticationPrincipal CurrentUser user,
+                                                   @PathVariable Long scheduleId,
+                                                   @Valid @RequestBody ScheduleRequest request) {
+        return ResponseEntity.ok(scheduleService.update(user.getId(), scheduleId, request));
     }
 
     @DeleteMapping("/{scheduleId}")

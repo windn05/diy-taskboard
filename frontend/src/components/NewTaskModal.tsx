@@ -5,28 +5,31 @@ import { createCard } from '../api/cards'
 import { listCardTypes } from '../api/cardTypes'
 import { listStatuses } from '../api/statuses'
 import type { Workspace } from '../api/types'
+import { localDate } from '../time'
 import { DateField, LabeledField } from './fields'
 import { Modal } from './Modal'
 
-/** 새 작업 만들기. 사이드바의 + 버튼에서 열고, 생성 후 해당 프로젝트로 이동 */
+/** 새 작업 만들기. 사이드바의 + 버튼과 프로젝트 화면에서 열고, 생성 후 해당 프로젝트로 이동 */
 export function NewTaskModal({
   projects,
   defaultWorkspaceId,
   onClose,
 }: {
   projects: Workspace[]
-  /** 프로젝트 안에서 열었다면 그 프로젝트를 미리 선택 */
+  /** 프로젝트 화면의 "새 작업"에서 열었다면 그 프로젝트를 미리 선택 */
   defaultWorkspaceId?: number
   onClose: () => void
 }) {
   const queryClient = useQueryClient()
   const navigate = useNavigate()
-  const [workspaceId, setWorkspaceId] = useState<number>(defaultWorkspaceId ?? projects[0]?.id ?? 0)
+  // 사이드바 +로 열면 미선택("프로젝트 선택")으로 시작해, 엉뚱한 프로젝트에 등록되지 않게 직접 고르게 함
+  const [workspaceId, setWorkspaceId] = useState<number | ''>(defaultWorkspaceId ?? '')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [statusId, setStatusId] = useState<number | ''>('')
   const [type, setType] = useState('')
-  const [startDate, setStartDate] = useState<string | null>(null)
+  // 대부분 당일 시작하는 작업이라 오늘로 미리 채움 (지우면 시작일 없음)
+  const [startDate, setStartDate] = useState<string | null>(() => localDate())
   const [dueDate, setDueDate] = useState<string | null>(null)
 
   const { data: statuses } = useQuery({ queryKey: ['statuses'], queryFn: listStatuses })
@@ -38,7 +41,7 @@ export function NewTaskModal({
 
   const createMutation = useMutation({
     mutationFn: () =>
-      createCard(workspaceId, {
+      createCard(Number(workspaceId), {
         title,
         description: description || undefined,
         type: selectedType || undefined,
@@ -74,7 +77,14 @@ export function NewTaskModal({
   )
 
   return (
-    <Modal title={<h2 className="text-lg font-semibold">새 작업</h2>} footer={footer} onClose={onClose} dismissible={false}>
+    <Modal
+      title={<h2 className="text-lg font-semibold">새 작업</h2>}
+      footer={footer}
+      onClose={onClose}
+      dismissible={false}
+      // Esc는 실수로 누르기 쉬워, 입력한 내용이 있으면 한 번 확인
+      escapeConfirm={title.trim() || description.trim() ? '작성 중인 내용이 사라집니다. 닫을까요?' : undefined}
+    >
       <form
         id="new-task-form"
         onSubmit={(e) => {
@@ -89,10 +99,14 @@ export function NewTaskModal({
             <select
               value={workspaceId}
               onChange={(e) => setWorkspaceId(Number(e.target.value))}
-              className="block w-40 rounded border px-3 py-2 text-sm"
+              className={`block w-40 rounded border px-3 py-2 text-sm ${workspaceId === '' ? 'text-slate-400' : ''}`}
             >
+              {/* 고르기 전 자리 표시. 한 번 고르면 다시 선택할 수 없음 */}
+              <option value="" disabled>
+                프로젝트 선택
+              </option>
               {projects.map((p) => (
-                <option key={p.id} value={p.id}>
+                <option key={p.id} value={p.id} className="text-slate-900">
                   {p.name}
                 </option>
               ))}

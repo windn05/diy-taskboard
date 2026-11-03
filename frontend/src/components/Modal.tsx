@@ -10,8 +10,10 @@ export function Modal({
   onClose,
   footer,
   width = 'max-w-2xl',
-  /** 입력 중 실수로 바깥 클릭/Esc로 닫히면 안 되는 폼(예: 새 작업 추가)은 false */
+  /** 입력 중 실수로 바깥을 클릭해 닫히면 안 되는 폼(예: 새 작업 추가)은 false. Esc는 항상 닫힘 */
   dismissible = true,
+  /** 값이 있으면 Esc로 닫기 전에 이 문구로 확인 (작성 중인 내용이 사라지는 폼용) */
+  escapeConfirm,
   children,
 }: {
   title: ReactNode
@@ -19,16 +21,20 @@ export function Modal({
   footer?: ReactNode
   width?: string
   dismissible?: boolean
+  escapeConfirm?: string
   children: ReactNode
 }) {
   useEffect(() => {
-    if (!dismissible) return
     function onKeyDown(event: KeyboardEvent) {
-      if (event.key === 'Escape') onClose()
+      if (event.key !== 'Escape') return
+      // 입력 중인 칸을 먼저 벗어나, "칸을 벗어나면 저장"되는 제목·설명·날짜가 닫히기 전에 저장되게 함
+      if (document.activeElement instanceof HTMLElement) document.activeElement.blur()
+      if (escapeConfirm && !confirm(escapeConfirm)) return
+      onClose()
     }
     document.addEventListener('keydown', onKeyDown)
     return () => document.removeEventListener('keydown', onKeyDown)
-  }, [onClose, dismissible])
+  }, [onClose, escapeConfirm])
 
   return (
     <div
@@ -44,7 +50,7 @@ export function Modal({
           <button
             onClick={onClose}
             className="shrink-0 rounded p-1 text-slate-500 hover:bg-slate-100 hover:text-slate-700"
-            title={dismissible ? '닫기 (Esc)' : '닫기'}
+            title="닫기 (Esc)"
           >
             <CloseIcon size={18} />
           </button>

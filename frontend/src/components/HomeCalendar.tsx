@@ -2,10 +2,11 @@ import { useMemo, useState } from 'react'
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { listCards } from '../api/cards'
 import { listCardTypes } from '../api/cardTypes'
-import { createSchedule, deleteSchedule, listSchedules } from '../api/schedules'
+import { createSchedule, deleteSchedule, listSchedules, updateSchedule } from '../api/schedules'
 import { listStatuses } from '../api/statuses'
-import type { CalendarTask } from '../api/types'
+import type { CalendarTask, Schedule } from '../api/types'
 import { useAuth } from '../auth/AuthContext'
+import { holidayName } from '../holidays'
 import { CardModal } from './CardModal'
 import { Modal } from './Modal'
 import { PlusIcon } from './icons'
@@ -106,47 +107,73 @@ function placeBars(week: string[], bars: Bar[]) {
   })
 }
 
-/** 개인 일정 추가 폼 */
-function NewScheduleForm({ onClose }: { onClose: () => void }) {
+/** 개인 일정 추가·수정 폼. schedule을 넘기면 수정 모드(삭제 버튼 포함) */
+function ScheduleForm({ schedule, onClose }: { schedule?: Schedule; onClose: () => void }) {
   const queryClient = useQueryClient()
   const today = toISO(new Date().getFullYear(), new Date().getMonth(), new Date().getDate())
-  const [title, setTitle] = useState('')
-  const [startDate, setStartDate] = useState(today)
-  const [dueDate, setDueDate] = useState(today)
+  const [title, setTitle] = useState(schedule?.title ?? '')
+  const [startDate, setStartDate] = useState(schedule?.startDate ?? today)
+  const [dueDate, setDueDate] = useState(schedule?.dueDate ?? today)
+  const editing = !!schedule
 
-  const createMutation = useMutation({
-    mutationFn: () => createSchedule({ title, startDate, dueDate }),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['schedules'] })
-      onClose()
-    },
+  const done = () => {
+    queryClient.invalidateQueries({ queryKey: ['schedules'] })
+    onClose()
+  }
+
+  const saveMutation = useMutation({
+    mutationFn: () =>
+      schedule ? updateSchedule(schedule.id, { title, startDate, dueDate }) : createSchedule({ title, startDate, dueDate }),
+    onSuccess: done,
+    onError: (error: Error) => alert(error.message),
+  })
+
+  const deleteMutation = useMutation({
+    mutationFn: () => deleteSchedule(schedule!.id),
+    onSuccess: done,
+    onError: (error: Error) => alert(error.message),
   })
 
   const canSubmit = title.trim().length > 0 && dueDate >= startDate
 
   const footer = (
-    <div className="flex justify-end gap-2">
-      <button type="button" onClick={onClose} className="rounded px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100">
+    <div className="flex items-center gap-2">
+      {editing && (
+        <button
+          type="button"
+          onClick={() => confirm(`"${schedule.title}" 일정을 삭제할까요?`) && deleteMutation.mutate()}
+          className="text-sm text-red-600 hover:underline"
+        >
+          삭제
+        </button>
+      )}
+      <button type="button" onClick={onClose} className="ml-auto rounded px-3 py-1.5 text-sm text-slate-500 hover:bg-slate-100">
         취소
       </button>
       <button
         type="submit"
-        form="new-schedule-form"
-        disabled={!canSubmit || createMutation.isPending}
+        form="schedule-form"
+        disabled={!canSubmit || saveMutation.isPending}
         className="rounded bg-slate-900 px-4 py-1.5 text-sm font-medium text-white disabled:opacity-40"
       >
-        추가
+        {editing ? '저장' : '추가'}
       </button>
     </div>
   )
 
   return (
-    <Modal title={<h2 className="text-lg font-semibold">새 일정</h2>} footer={footer} onClose={onClose} dismissible={false} width="max-w-sm">
+    <Modal
+      title={<h2 className="text-lg font-semibold">{editing ? '일정 수정' : '새 일정'}</h2>}
+      footer={footer}
+      onClose={onClose}
+      dismissible={false}
+      width="max-w-sm"
+    >
       <form
-        id="new-schedule-form"
+        id="schedule-form"
         onSubmit={(e) => {
           e.preventDefault()
-          if (canSubmit) createMutation.mutate()
+          if (canSubmit) saveMutation.mutate()
         }}
         className="space-y-4"
       >
@@ -222,20 +249,26 @@ function WeekRow({
         {week.map((dateIso, i) => {
           const inMonth = parseISO(dateIso).getMonth() === monthIndex
           const isToday = dateIso === todayIso
+          const holiday = holidayName(dateIso)
           return (
-            <div key={dateIso} className="px-1.5 pt-1 text-right text-xs">
+            <div key={dateIso} className="flex items-baseline justify-end gap-1 px-1.5 pt-1 text-xs">
+              {holiday && (
+                <span className={`min-w-0 truncate text-[10px] ${inMonth ? 'text-red-500' : 'text-red-300'}`} title={holiday}>
+                  {holiday}
+                </span>
+              )}
               <span
-                className={
+                className={`shrink-0 ${
                   isToday
                     ? 'rounded-full bg-slate-900 px-1.5 py-0.5 text-white'
                     : !inMonth
-                      ? 'text-slate-300'
-                      : i === 0
+                      ? holiday ? 'text-red-300' : 'text-slate-300'
+                      : i === 0 || holiday
                         ? 'text-red-600'
                         : i === 6
                           ? 'text-blue-600'
                           : 'text-slate-600'
-                }
+                }`}
               >
                 {parseISO(dateIso).getDate()}
               </span>
@@ -337,6 +370,7 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
     return { year: now.getFullYear(), month: now.getMonth() }
   })
   const [addingSchedule, setAddingSchedule] = useState(false)
+  const [editingSchedule, setEditingSchedule] = useState<Schedule | null>(null)
   const [preview, setPreview] = useState<{ workspaceId: number; cardId: number } | null>(null)
 
   const { data: schedules } = useQuery({ queryKey: ['schedules'], queryFn: listSchedules })
@@ -367,7 +401,8 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
       start: s.startDate,
       end: s.dueDate,
       color: SCHEDULE_COLOR,
-      // 게스트가 보는 일정은 남의 것이라 삭제 불가
+      // 게스트가 보는 일정은 남의 것이라 수정·삭제 불가
+      onClick: isGuest ? undefined : () => setEditingSchedule(s),
       onDelete: isGuest ? undefined : () => confirm(`"${s.title}" 일정을 삭제할까요?`) && deleteMutation.mutate(s.id),
     }))
     return [...taskBars, ...scheduleBars]
@@ -430,7 +465,8 @@ export function HomeCalendar({ tasks }: { tasks: CalendarTask[] }) {
         ))}
       </div>
 
-      {addingSchedule && <NewScheduleForm onClose={() => setAddingSchedule(false)} />}
+      {addingSchedule && <ScheduleForm onClose={() => setAddingSchedule(false)} />}
+      {editingSchedule && <ScheduleForm schedule={editingSchedule} onClose={() => setEditingSchedule(null)} />}
       {preview && <CardPreviewModal workspaceId={preview.workspaceId} cardId={preview.cardId} onClose={() => setPreview(null)} />}
     </section>
   )

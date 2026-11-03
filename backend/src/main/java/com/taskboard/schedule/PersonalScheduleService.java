@@ -3,7 +3,7 @@ package com.taskboard.schedule;
 import com.taskboard.global.exception.AccessDeniedException;
 import com.taskboard.global.exception.EntityNotFoundException;
 import com.taskboard.global.security.CurrentUser;
-import com.taskboard.schedule.ScheduleDtos.CreateScheduleRequest;
+import com.taskboard.schedule.ScheduleDtos.ScheduleRequest;
 import com.taskboard.schedule.ScheduleDtos.ScheduleResponse;
 import com.taskboard.user.User.SystemRole;
 import lombok.RequiredArgsConstructor;
@@ -36,10 +36,8 @@ public class PersonalScheduleService {
     }
 
     @Transactional
-    public ScheduleResponse create(Long userId, CreateScheduleRequest request) {
-        if (request.dueDate().isBefore(request.startDate())) {
-            throw new IllegalArgumentException("종료일은 시작일보다 빠를 수 없습니다.");
-        }
+    public ScheduleResponse create(Long userId, ScheduleRequest request) {
+        validateDates(request);
         PersonalSchedule schedule = scheduleRepository.save(PersonalSchedule.builder()
                 .userId(userId)
                 .title(request.title())
@@ -49,14 +47,44 @@ public class PersonalScheduleService {
         return toResponse(schedule);
     }
 
+    /*************************************************************************
+     * 목적 : 본인 일정의 제목·기간 수정
+     * 이유 : -
+     * 파라미터
+     * - userId : 수정하는 사용자 id
+     * - scheduleId : 일정 id
+     * - request : 바꿀 제목·시작일·종료일 (전체 값)
+     * 반환
+     * - 수정된 일정
+     *************************************************************************/
+    @Transactional
+    public ScheduleResponse update(Long userId, Long scheduleId, ScheduleRequest request) {
+        validateDates(request);
+        PersonalSchedule schedule = getOwned(userId, scheduleId, "본인 일정만 수정할 수 있습니다.");
+        schedule.setTitle(request.title());
+        schedule.setStartDate(request.startDate());
+        schedule.setDueDate(request.dueDate());
+        return toResponse(schedule);
+    }
+
     @Transactional
     public void delete(Long userId, Long scheduleId) {
+        scheduleRepository.delete(getOwned(userId, scheduleId, "본인 일정만 삭제할 수 있습니다."));
+    }
+
+    private void validateDates(ScheduleRequest request) {
+        if (request.dueDate().isBefore(request.startDate())) {
+            throw new IllegalArgumentException("종료일은 시작일보다 빠를 수 없습니다.");
+        }
+    }
+
+    private PersonalSchedule getOwned(Long userId, Long scheduleId, String deniedMessage) {
         PersonalSchedule schedule = scheduleRepository.findById(scheduleId)
                 .orElseThrow(() -> new EntityNotFoundException("일정을 찾을 수 없습니다."));
         if (!schedule.getUserId().equals(userId)) {
-            throw new AccessDeniedException("본인 일정만 삭제할 수 있습니다.");
+            throw new AccessDeniedException(deniedMessage);
         }
-        scheduleRepository.delete(schedule);
+        return schedule;
     }
 
     private ScheduleResponse toResponse(PersonalSchedule schedule) {
