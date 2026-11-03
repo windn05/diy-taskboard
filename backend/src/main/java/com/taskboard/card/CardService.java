@@ -73,11 +73,21 @@ public class CardService {
         return publish(moved ? "MOVED" : "UPDATED", toResponse(card));
     }
 
+    /*************************************************************************
+     * 목적 : 작업과 딸린 댓글 삭제
+     * 이유 : 작업↔댓글 외래키(연쇄 삭제)가 없어 댓글을 직접 지우지 않으면 주인 없는 댓글이 남음
+     * 파라미터
+     * - userId : 삭제하는 사용자 id
+     * - cardId : 작업 id
+     * 반환
+     * - -
+     *************************************************************************/
     @Transactional
     public void delete(Long userId, Long cardId) {
         Card card = getCard(cardId);
         workspaceService.requireMember(userId, card.getWorkspaceId());
         CardResponse deleted = toResponse(card);
+        commentRepository.deleteByCardIdIn(List.of(cardId));
         cardRepository.delete(card);
         publish("DELETED", deleted);
     }

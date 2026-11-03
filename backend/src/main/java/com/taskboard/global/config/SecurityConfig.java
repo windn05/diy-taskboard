@@ -51,6 +51,9 @@ public class SecurityConfig {
                         .requestMatchers("/error").permitAll()
                         // /auth 전체를 열면 비밀번호 변경까지 인증 없이 열림. 필요한 것만 허용
                         .requestMatchers("/auth/login", "/auth/guest").permitAll()
+                        // 로그아웃은 POST라 아래 규칙에서 게스트가 403으로 막혀 세션이 Redis에 남음.
+                        // 세션이 없거나 만료돼도 지울 것만 없으니 누구에게나 허용
+                        .requestMatchers(HttpMethod.POST, "/auth/logout").permitAll()
                         // WebSocket은 핸드셰이크가 아닌 STOMP CONNECT에서 인증 (StompAuthChannelInterceptor)
                         .requestMatchers("/ws/**", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                         .requestMatchers("/admin/**").hasRole("ADMIN")

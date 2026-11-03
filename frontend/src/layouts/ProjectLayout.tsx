@@ -16,7 +16,15 @@ export function ProjectLayout() {
   return (
     <div className="flex h-full flex-col">
       <div className="shrink-0 border-b bg-white px-8 pt-5">
-        <h1 className="mb-4 text-xl font-semibold">{project?.name ?? '프로젝트'}</h1>
+        <div className="mb-4 flex min-w-0 items-baseline gap-3">
+          <h1 className="shrink-0 text-xl font-semibold">{project?.name ?? '프로젝트'}</h1>
+          {/* 길면 한 줄로 자르고 전체 문구는 마우스를 올리면 표시 */}
+          {project?.description && (
+            <p className="truncate text-sm text-slate-500" title={project.description}>
+              {project.description}
+            </p>
+          )}
+        </div>
         <nav className="flex gap-6">
           {tabs.map((tab) => (
             <NavLink

@@ -34,6 +34,10 @@ public class Workspace {
     @Column(length = 50)
     private String groupName;
 
+    /** 프로젝트 화면 제목 옆에 표시하는 한 줄 설명 */
+    @Column(length = 200)
+    private String description;
+
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
 

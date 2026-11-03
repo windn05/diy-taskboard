@@ -4,10 +4,19 @@ export type User = { id: number; username: string; name: string; role: string }
 /** 로그인 성공·세션 조회(GET /auth/me) 응답. 세션 쿠키는 JS가 못 읽으므로 서버가 내려주는 이 값으로 로그인 상태를 판단 */
 export type SessionUser = { userId: number; username: string; role: string }
 
-/** myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트는 GUEST. groupName: 사이드바 분류, 없으면 null */
-export type Workspace = { id: number; name: string; myRole: string; groupName: string | null }
+/**
+ * myRole: 내 프로젝트 역할(OWNER/ADMIN/MEMBER). 게스트는 GUEST.
+ * groupName: 사이드바 분류, description: 프로젝트 제목 옆 한 줄 설명 (없으면 null)
+ */
+export type Workspace = { id: number; name: string; myRole: string; groupName: string | null; description: string | null }
 
-export type AdminWorkspace = { id: number; name: string; visible: boolean; groupName: string | null }
+export type AdminWorkspace = {
+  id: number
+  name: string
+  visible: boolean
+  groupName: string | null
+  description: string | null
+}
 
 export type Member = { userId: number; username: string; name: string; role: string }
 

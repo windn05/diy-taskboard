@@ -54,8 +54,7 @@ public class WorkspaceService {
                 .userId(userId)
                 .role(WorkspaceRole.OWNER)
                 .build());
-        return new WorkspaceResponse(workspace.getId(), workspace.getName(), WorkspaceRole.OWNER.name(),
-                workspace.getGroupName());
+        return toResponse(workspace, WorkspaceRole.OWNER.name());
     }
 
     /*************************************************************************
@@ -74,7 +73,7 @@ public class WorkspaceService {
             return workspaceRepository.findAll().stream()
                     .filter(Workspace::isVisible)
                     .filter(w -> hasRealMember.contains(w.getId()))
-                    .map(w -> new WorkspaceResponse(w.getId(), w.getName(), SystemRole.GUEST.name(), w.getGroupName()))
+                    .map(w -> toResponse(w, SystemRole.GUEST.name()))
                     .toList();
         }
         List<WorkspaceMember> memberships = memberRepository.findByUserId(user.getId());
@@ -85,9 +84,7 @@ public class WorkspaceService {
                 .map(m -> {
                     // 멤버는 게스트 공개 여부와 무관하게 자기 프로젝트 조회 가능
                     Workspace w = workspaces.get(m.getWorkspaceId());
-                    return w != null
-                            ? new WorkspaceResponse(w.getId(), w.getName(), m.getRole().name(), w.getGroupName())
-                            : null;
+                    return w != null ? toResponse(w, m.getRole().name()) : null;
                 })
                 .filter(Objects::nonNull)
                 .toList();
@@ -105,15 +102,23 @@ public class WorkspaceService {
                 .orElseThrow(() -> new EntityNotFoundException("워크스페이스를 찾을 수 없습니다."));
         if (request.name() != null && !request.name().isBlank()) workspace.setName(request.name());
         if (request.visible() != null) workspace.setVisible(request.visible());
-        if (request.groupName() != null) {
-            String group = request.groupName().strip();
-            workspace.setGroupName(group.isEmpty() ? null : group);
-        }
+        if (request.groupName() != null) workspace.setGroupName(blankToNull(request.groupName()));
+        if (request.description() != null) workspace.setDescription(blankToNull(request.description()));
         return toAdminResponse(workspace);
     }
 
+    // 빈 문자열은 "비우기" 요청이라 null로 저장
+    private static String blankToNull(String value) {
+        String stripped = value.strip();
+        return stripped.isEmpty() ? null : stripped;
+    }
+
+    private static WorkspaceResponse toResponse(Workspace w, String myRole) {
+        return new WorkspaceResponse(w.getId(), w.getName(), myRole, w.getGroupName(), w.getDescription());
+    }
+
     private static AdminWorkspaceResponse toAdminResponse(Workspace w) {
-        return new AdminWorkspaceResponse(w.getId(), w.getName(), w.isVisible(), w.getGroupName());
+        return new AdminWorkspaceResponse(w.getId(), w.getName(), w.isVisible(), w.getGroupName(), w.getDescription());
     }
 
     /*************************************************************************

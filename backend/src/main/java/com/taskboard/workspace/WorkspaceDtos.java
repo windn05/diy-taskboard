@@ -9,15 +9,18 @@ public class WorkspaceDtos {
     public record CreateWorkspaceRequest(@NotBlank String name) {
     }
 
-    /** 프로젝트 응답 (myRole: 내 프로젝트 역할, 게스트는 GUEST / groupName: 사이드바 분류, 없으면 null) */
-    public record WorkspaceResponse(Long id, String name, String myRole, String groupName) {
+    /** 프로젝트 응답 (myRole: 내 프로젝트 역할, 게스트는 GUEST / groupName·description: 없으면 null) */
+    public record WorkspaceResponse(Long id, String name, String myRole, String groupName, String description) {
     }
 
-    public record AdminWorkspaceResponse(Long id, String name, boolean visible, String groupName) {
+    public record AdminWorkspaceResponse(Long id, String name, boolean visible, String groupName, String description) {
     }
 
-    /** 프로젝트 수정 요청 (null인 필드는 변경하지 않음, groupName은 빈 문자열이면 그룹 해제) */
-    public record UpdateWorkspaceRequest(String name, Boolean visible, @Size(max = 50) String groupName) {
+    /** 프로젝트 수정 요청 (null인 필드는 변경하지 않음, groupName·description은 빈 문자열이면 비움) */
+    public record UpdateWorkspaceRequest(String name,
+                                         Boolean visible,
+                                         @Size(max = 50) String groupName,
+                                         @Size(max = 200) String description) {
     }
 
     public record MemberResponse(Long userId, String username, String name, String role) {

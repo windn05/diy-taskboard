@@ -89,6 +89,18 @@ export function AdminProjectsTab() {
                     }
                     className="w-full rounded border-transparent px-2 py-1 hover:border-slate-200 focus:border-slate-300"
                   />
+                  {/* 프로젝트 화면 제목 옆에 표시. 비우면 설명 없음 */}
+                  <input
+                    defaultValue={p.description ?? ''}
+                    key={`${p.id}-${p.description ?? ''}`}
+                    maxLength={200}
+                    placeholder="설명 (프로젝트 화면 제목 옆에 표시)"
+                    onBlur={(e) =>
+                      e.target.value.trim() !== (p.description ?? '') &&
+                      updateMutation.mutate({ id: p.id, input: { description: e.target.value.trim() } })
+                    }
+                    className="mt-1 w-full rounded border-transparent px-2 py-1 text-xs text-slate-500 hover:border-slate-200 focus:border-slate-300"
+                  />
                 </td>
                 <td className="px-4 py-2">
                   {/* 비우면 그룹 해제 ("기타"로 표시) */}

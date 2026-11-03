@@ -199,6 +199,25 @@ class PermissionMatrixTest {
     }
 
     @Test
+    void 게스트도_로그아웃하면_세션이_끝난다() throws Exception {
+        // 쓰기 요청은 게스트 차단이지만 로그아웃까지 막히면 세션이 만료 때까지 남음
+        mockMvc.perform(auth(post("/auth/logout"), guestSession)).andExpect(status().isNoContent());
+        mockMvc.perform(auth(get("/auth/me"), guestSession)).andExpect(status().isUnauthorized());
+    }
+
+    @Test
+    void 작업을_삭제하면_댓글도_함께_삭제된다() throws Exception {
+        mockMvc.perform(auth(post("/cards/" + cardId + "/comments"), memberSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"content\":\"댓글\"}"))
+                .andExpect(status().isCreated());
+        assertThat(commentRepository.findByCardIdOrderByCreatedAtAsc(cardId)).hasSize(1);
+
+        mockMvc.perform(auth(delete("/cards/" + cardId), memberSession)).andExpect(status().isNoContent());
+
+        assertThat(commentRepository.findByCardIdOrderByCreatedAtAsc(cardId)).isEmpty();
+    }
+
+    @Test
     void 게스트는_관리자_API에_접근할_수_없다() throws Exception {
         mockMvc.perform(auth(get("/admin/workspaces"), guestSession)).andExpect(status().isForbidden());
         mockMvc.perform(auth(get("/admin/logs"), guestSession)).andExpect(status().isForbidden());
@@ -349,6 +368,20 @@ class PermissionMatrixTest {
         mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
                         .contentType(MediaType.APPLICATION_JSON).content("{\"groupName\":\"\"}"))
                 .andExpect(jsonPath("$.groupName").doesNotExist());
+    }
+
+    @Test
+    void 관리자가_입력한_프로젝트_설명이_사용자_목록에_보이고_빈_값이면_지워진다() throws Exception {
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"description\":\" 사내 작업 관리 \"}"))
+                .andExpect(status().isOk())
+                .andExpect(jsonPath("$.description").value("사내 작업 관리"));
+        mockMvc.perform(auth(get("/workspaces"), memberSession))
+                .andExpect(jsonPath("$[0].description").value("사내 작업 관리"));
+
+        mockMvc.perform(auth(patch("/admin/workspaces/" + visibleWorkspaceId), adminSession)
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"description\":\"\"}"))
+                .andExpect(jsonPath("$.description").doesNotExist());
     }
 
     @Test
